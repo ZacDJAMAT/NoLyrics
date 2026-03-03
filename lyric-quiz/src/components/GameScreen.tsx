@@ -3,6 +3,7 @@ import { Song } from '../types';
 import { useGame } from '../hooks/useGame';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext'; // <-- NOUVEL IMPORT
+import { saveGameResult } from '../lib/history'; // <-- NOUVEL IMPORT
 import GameHeader from './GameHeader';
 import ScoreBoard from './ScoreBoard';
 import LyricsGrid from './LyricsGrid';
@@ -12,8 +13,7 @@ export default function GameScreen() {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // On récupère les infos de l'utilisateur pour savoir s'il faut lui proposer de sauvegarder
-    const { user, loginWithGoogle } = useAuth();
+    const { user, isGuest, loginWithGoogle } = useAuth();
 
     // NOUVEAUX ÉTATS POUR LA MODALE
     const [showSaveModal, setShowSaveModal] = useState<boolean>(false);
@@ -25,7 +25,7 @@ export default function GameScreen() {
         return <Navigate to="/" replace />;
     }
 
-    const handleBack = useCallback(() => {
+    const handleInitFailure = useCallback(() => {
         navigate('/');
     }, [navigate]);
 
@@ -33,7 +33,16 @@ export default function GameScreen() {
         lyricsData, totalWords, isFetchingLyrics, currentInput, foundWordsCount,
         timeLeft, gameStatus, scorePercentage, formattedTime, handleInputChange, setGameStatus,
         startGame
-    } = useGame(song, handleBack);
+    } = useGame(song, handleInitFailure);
+
+    const handleUserBack = () => {
+        // Si la partie est en cours, on sauvegarde comme une défaite (abandon)
+        if (gameStatus === 'playing') {
+            saveGameResult(user, isGuest, song, scorePercentage, 'lost', timeLeft);
+        }
+        // Puis on retourne à l'accueil
+        navigate('/');
+    };
 
     // Fonction personnalisée pour l'abandon (pour le différencier d'une fin de temps)
     const handleGiveUp = () => {
@@ -59,7 +68,6 @@ export default function GameScreen() {
     return (
         <div className="min-h-screen bg-neutral-900 text-white font-sans selection:bg-pink-500 selection:text-white flex flex-col relative">
 
-            {/* Affichage conditionnel de la modale */}
             {showSaveModal && (
                 <SaveScoreModal
                     onAccept={loginWithGoogle}
@@ -69,10 +77,10 @@ export default function GameScreen() {
 
             <GameHeader
                 song={song}
-                onBack={handleBack}
+                onBack={handleUserBack} // <-- NOUVEAU : On donne notre nouvelle fonction au header !
                 gameStatus={gameStatus}
                 isFetchingLyrics={isFetchingLyrics}
-                onGiveUp={handleGiveUp} // <-- On utilise notre nouvelle fonction ici
+                onGiveUp={handleGiveUp}
             />
 
             <main className="flex-1 p-6 max-w-4xl mx-auto w-full flex flex-col gap-8">
