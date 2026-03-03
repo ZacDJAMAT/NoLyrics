@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { fetchLyrics } from '../utils/api';
 import { parseLyrics, normalizeWord } from '../utils/lyricsParser';
 import { Song, Word, GameStatus } from '../types';
+import { useAuth } from '../contexts/AuthContext';
+import { saveGameResult } from '../lib/history';
 
 export const useGame = (song: Song, onBack: () => void) => {
     const [lyricsData, setLyricsData] = useState<Word[][] | null>(null);
@@ -13,6 +15,9 @@ export const useGame = (song: Song, onBack: () => void) => {
 
     const [timeLeft, setTimeLeft] = useState<number>(0);
     const [gameStatus, setGameStatus] = useState<GameStatus>('idle');
+
+    const { user, isGuest } = useAuth();
+    const [hasSaved, setHasSaved] = useState<boolean>(false);
 
     // 1. Initialisation du jeu
     useEffect(() => {
@@ -116,6 +121,20 @@ export const useGame = (song: Song, onBack: () => void) => {
     };
 
     const scorePercentage = totalWords > 0 ? Math.round((foundWordsCount / totalWords) * 100) : 0;
+
+    useEffect(() => {
+        if ((gameStatus === 'won' || gameStatus === 'lost') && !hasSaved) {
+            // On calcule le score exact au moment précis de la fin
+            const finalScore = totalWords > 0 ? Math.round((foundWordsCount / totalWords) * 100) : 0;
+
+            // On sauvegarde !
+            saveGameResult(user, isGuest, song, finalScore, gameStatus, timeLeft);
+
+            // On verrouille pour éviter que React ne sauvegarde en boucle
+            setHasSaved(true);
+        }
+    }, [gameStatus, hasSaved, user, isGuest, song, foundWordsCount, totalWords, timeLeft]);
+
 
     return {
         lyricsData,

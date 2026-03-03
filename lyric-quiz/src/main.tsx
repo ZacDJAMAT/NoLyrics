@@ -2,10 +2,13 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App'
+import { AuthProvider } from './contexts/AuthContext' // NOUVEAU: On importe notre Provider
 
-// Le "!" indique à TypeScript que l'élément 'root' n'est jamais null
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
-        <App />
+        {/* On englobe l'application ici */}
+        <AuthProvider>
+            <App />
+        </AuthProvider>
     </StrictMode>,
 )
