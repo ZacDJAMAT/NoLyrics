@@ -4,9 +4,11 @@ import GameScreen from './components/GameScreen';
 import LoginScreen from './components/LoginScreen'; // Le nouvel écran
 import { Song } from './types';
 import { useAuth } from './contexts/AuthContext'; // Le cerveau
+import SyncModal from './components/SyncModal';
 
 function App() {
     const [selectedSong, setSelectedSong] = useState<Song | null>(null);
+    const [showSyncModal, setShowSyncModal] = useState<boolean>(true); // Nouveau !
 
     // On interroge le cerveau
     const { user, isGuest, isLoading } = useAuth();
@@ -25,9 +27,11 @@ function App() {
         return <LoginScreen />;
     }
 
-    // 3. Sinon, on affiche le jeu normal !
     return (
         <>
+            {/* On ajoute la modale ici. Elle se cachera toute seule une fois terminée */}
+            {showSyncModal && <SyncModal onComplete={() => setShowSyncModal(false)} />}
+
             {selectedSong ? (
                 <GameScreen
                     song={selectedSong}
@@ -41,5 +45,6 @@ function App() {
         </>
     );
 }
+
 
 export default App;
