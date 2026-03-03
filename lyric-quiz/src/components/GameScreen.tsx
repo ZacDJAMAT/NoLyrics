@@ -31,7 +31,8 @@ export default function GameScreen() {
 
     const {
         lyricsData, totalWords, isFetchingLyrics, currentInput, foundWordsCount,
-        timeLeft, gameStatus, scorePercentage, formattedTime, handleInputChange, setGameStatus
+        timeLeft, gameStatus, scorePercentage, formattedTime, handleInputChange, setGameStatus,
+        startGame
     } = useGame(song, handleBack);
 
     // Fonction personnalisée pour l'abandon (pour le différencier d'une fin de temps)
@@ -98,13 +99,32 @@ export default function GameScreen() {
                     isFetchingLyrics={isFetchingLyrics}
                     timeLeft={timeLeft}
                     formattedTime={formattedTime}
+                    onStartGame={startGame} // <-- NOUVEAU
                 />
 
-                <LyricsGrid
-                    lyricsData={lyricsData}
-                    isFetchingLyrics={isFetchingLyrics}
-                    gameStatus={gameStatus}
-                />
+                <div className="relative">
+                    <LyricsGrid
+                        lyricsData={lyricsData}
+                        isFetchingLyrics={isFetchingLyrics}
+                        gameStatus={gameStatus}
+                    />
+
+                    {gameStatus === 'ready' && (
+                        <div
+                            onClick={startGame}
+                            // 1. On enlève le flex et items-center d'ici
+                            className="absolute inset-0 z-10 bg-neutral-900/40 backdrop-blur-md rounded-2xl cursor-pointer group transition-all"
+                        >
+                            {/* 2. On crée un conteneur "sticky" qui va suivre le scroll de l'utilisateur.
+                                top-[50vh] le place au milieu de l'écran, et -translate-y-1/2 le centre parfaitement */}
+                            <div className="sticky top-[50vh] w-full flex justify-center -translate-y-1/2">
+                                <button className="bg-pink-600 text-white font-black text-3xl px-12 py-6 rounded-2xl shadow-2xl group-hover:bg-pink-500 group-hover:scale-105 transition-all animate-bounce">
+                                    Clique ici !
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </main>
         </div>
     );

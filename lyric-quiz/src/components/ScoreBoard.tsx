@@ -11,10 +11,11 @@ interface ScoreBoardProps {
     isFetchingLyrics: boolean;
     timeLeft: number;
     formattedTime: string;
+    onStartGame?: () => void; // <-- NOUVEAU : On accepte la fonction pour démarrer
 }
 
 export default function ScoreBoard({
-                                       scorePercentage, foundWordsCount, totalWords, currentInput, handleInputChange, gameStatus, isFetchingLyrics, timeLeft, formattedTime
+                                       scorePercentage, foundWordsCount, totalWords, currentInput, handleInputChange, gameStatus, isFetchingLyrics, timeLeft, formattedTime, onStartGame
                                    }: ScoreBoardProps) {
     return (
         <div className={`flex justify-between items-center bg-neutral-800 p-6 rounded-2xl shadow-xl sticky top-[88px] z-10 border transition-colors ${gameStatus === 'won' ? 'border-green-500' : gameStatus === 'lost' ? 'border-red-500' : 'border-neutral-700'}`}>
@@ -35,6 +36,15 @@ export default function ScoreBoard({
                         autoFocus
                         className="w-full bg-neutral-700 text-white px-6 py-4 rounded-xl outline-none focus:ring-2 focus:ring-pink-500 transition-all text-2xl text-center placeholder:text-neutral-500 shadow-inner font-semibold"
                     />
+                ) : gameStatus === 'ready' ? (
+                    // <-- NOUVEAU : C'est maintenant un bouton cliquable qui réagit au survol !
+                    <button
+                        onClick={onStartGame}
+                        className="text-2xl font-bold text-neutral-300 animate-pulse hover:text-white transition-colors cursor-pointer"
+                        title="Démarrer la partie"
+                    >
+                        Prêt à jouer ?
+                    </button>
                 ) : (
                     <div className="text-2xl font-bold text-neutral-300">
                         {gameStatus === 'won' ? 'Score Parfait !' : 'Partie terminée'}

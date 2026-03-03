@@ -46,7 +46,7 @@ export const useGame = (song: Song, onBack: () => void) => {
                 setTimeLeft(calculatedTime);
                 setFoundWordsCount(0);
                 setCurrentInput('');
-                setGameStatus('playing');
+                setGameStatus('ready');
 
             } catch (error) {
                 alert("Erreur lors de la récupération des paroles.");
@@ -135,6 +135,9 @@ export const useGame = (song: Song, onBack: () => void) => {
         }
     }, [gameStatus, hasSaved, user, isGuest, song, foundWordsCount, totalWords, timeLeft]);
 
+    const startGame = () => {
+        setGameStatus('playing');
+    };
 
     return {
         lyricsData,
@@ -147,6 +150,7 @@ export const useGame = (song: Song, onBack: () => void) => {
         scorePercentage,
         formattedTime: formatTime(timeLeft),
         handleInputChange,
-        setGameStatus
+        setGameStatus,
+        startGame
     };
 };

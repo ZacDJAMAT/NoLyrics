@@ -34,7 +34,7 @@ export interface ParsedLyricsResult {
 }
 
 // NOUVEAU : On centralise le statut du jeu ici
-export type GameStatus = 'idle' | 'playing' | 'won' | 'lost';
+export type GameStatus = 'idle' | 'ready' | 'playing' | 'won' | 'lost';
 
 // NOUVEAU : On type le retour de l'API LRCLIB pour éviter le "any"
 export interface LRCLIBTrack {
