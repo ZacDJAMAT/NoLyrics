@@ -30,13 +30,13 @@ export default function UserMenuButton() {
 
         return (
             <button
-                onClick={() => navigate('/profile')} // <-- Le routeur gère la navigation !
-                className="flex items-center gap-3 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 px-4 py-2 rounded-xl transition-all active:scale-95 group"
+                onClick={() => navigate('/profile')}
+                title="Mon Profil"
+                className="flex items-center justify-center bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 p-2 rounded-xl transition-all active:scale-95"
             >
                 <div className="w-8 h-8 rounded-full bg-pink-600 flex items-center justify-center text-white font-bold text-sm shadow-inner">
                     {initial}
                 </div>
-                <span className="text-white font-medium text-sm hidden sm:block group-hover:text-pink-400 transition-colors"></span>
             </button>
         );
     }

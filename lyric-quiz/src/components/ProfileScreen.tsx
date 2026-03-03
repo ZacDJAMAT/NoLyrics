@@ -1,20 +1,34 @@
+import { useState } from 'react'; // <-- NOUVEL IMPORT
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import LogoutConfirmModal from './LogoutConfirmModal'; // <-- NOUVEL IMPORT
 
 export default function ProfileScreen() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
 
+    // État pour gérer l'affichage de la modale de confirmation
+    const [showLogoutModal, setShowLogoutModal] = useState<boolean>(false);
+
     const handleLogout = async () => {
         await logout();
-        navigate('/'); // On retourne à la racine après la déconnexion
+        navigate('/'); // On retourne à l'accueil après la déconnexion
     };
 
     return (
-        <div className="min-h-screen bg-neutral-900 text-white font-sans p-6 selection:bg-pink-500 selection:text-white animate-fade-in-up">
+        <div className="min-h-screen bg-neutral-900 text-white font-sans p-6 selection:bg-pink-500 selection:text-white animate-fade-in-up relative">
+
+            {/* Affichage conditionnel de la modale de confirmation */}
+            {showLogoutModal && (
+                <LogoutConfirmModal
+                    onConfirm={handleLogout}
+                    onCancel={() => setShowLogoutModal(false)}
+                />
+            )}
+
             <header className="max-w-4xl mx-auto flex items-center mb-8">
                 <button
-                    onClick={() => navigate('/')} // Retour à l'accueil
+                    onClick={() => navigate('/')}
                     className="text-neutral-400 hover:text-white flex items-center gap-2 transition-colors font-medium"
                 >
                     ← Retour à la recherche
@@ -37,7 +51,7 @@ export default function ProfileScreen() {
 
                 <div className="pt-8 border-t border-neutral-700 mt-12 flex justify-end">
                     <button
-                        onClick={handleLogout}
+                        onClick={() => setShowLogoutModal(true)} // <-- Ouvre la modale au lieu de déconnecter
                         className="bg-red-600/10 text-red-500 hover:bg-red-500 hover:text-white px-6 py-3 rounded-xl font-bold transition-all border border-red-600/20 hover:border-red-500 active:scale-95"
                     >
                         Se déconnecter
