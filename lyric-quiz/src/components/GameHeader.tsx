@@ -1,4 +1,5 @@
 import { Song, GameStatus } from '../types';
+import UserMenuButton from './UserMenuButton';
 
 interface GameHeaderProps {
     song: Song;
@@ -11,6 +12,8 @@ interface GameHeaderProps {
 export default function GameHeader({ song, onBack, gameStatus, isFetchingLyrics, onGiveUp }: GameHeaderProps) {
     return (
         <header className="p-6 border-b border-neutral-800 flex items-center justify-between sticky top-0 bg-neutral-900/95 backdrop-blur z-20">
+
+            {/* 1. Côté Gauche : Bouton Retour et Infos Musique */}
             <div className="flex items-center gap-6">
                 <button
                     onClick={onBack}
@@ -27,21 +30,32 @@ export default function GameHeader({ song, onBack, gameStatus, isFetchingLyrics,
                 </div>
             </div>
 
-            {!isFetchingLyrics && (
-                <button
-                    onClick={() => {
-                        if (gameStatus === 'playing') onGiveUp();
-                        else onBack();
-                    }}
-                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                        gameStatus === 'playing'
-                            ? 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
-                            : 'bg-pink-600 text-white hover:bg-pink-500 shadow-lg'
-                    }`}
-                >
-                    {gameStatus === 'playing' ? 'Abandonner' : 'Chercher une autre musique'}
-                </button>
-            )}
+            {/* 2. Côté Droit : Bouton d'action ET Bouton Profil */}
+            <div className="flex items-center gap-4">
+
+                {/* Le bouton d'action (Unique !) */}
+                {!isFetchingLyrics && (
+                    <button
+                        onClick={() => {
+                            if (gameStatus === 'playing') onGiveUp();
+                            else onBack();
+                        }}
+                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                            gameStatus === 'playing'
+                                ? 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
+                                : 'bg-pink-600 text-white hover:bg-pink-500 shadow-lg'
+                        }`}
+                    >
+                        {gameStatus === 'playing' ? 'Abandonner' : 'Chercher une autre musique'}
+                    </button>
+                )}
+
+                {/* Le bouton Profil qui s'affiche à la fin */}
+                {(gameStatus === 'won' || gameStatus === 'lost') && (
+                    <UserMenuButton />
+                )}
+            </div>
+
         </header>
     );
 }

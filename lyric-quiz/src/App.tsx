@@ -3,7 +3,7 @@ import SearchScreen from './components/SearchScreen';
 import GameScreen from './components/GameScreen';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginScreen from './components/LoginScreen'; // Le nouvel écran
-// import ProfileScreen from './components/ProfileScreen';
+import ProfileScreen from './components/ProfileScreen';
 import { useAuth } from './contexts/AuthContext'; // Le cerveau
 import SyncModal from './components/SyncModal';
 
@@ -37,8 +37,8 @@ function App() {
                 {/* Page du jeu */}
                 <Route path="/game" element={<GameScreen />} />
 
-                {/* Page du profil (Commentée pour l'instant) */}
-                {/* <Route path="/profile" element={<ProfileScreen />} /> */}
+                {/* Page du profil */}
+                <Route path="/profile" element={<ProfileScreen />} />
 
                 {/* Sécurité : Si l'utilisateur tape une URL qui n'existe pas, on le renvoie à l'accueil */}
                 <Route path="*" element={<Navigate to="/" replace />} />
