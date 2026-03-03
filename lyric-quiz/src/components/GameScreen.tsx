@@ -4,6 +4,7 @@ import { useGame } from '../hooks/useGame';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext'; // <-- NOUVEL IMPORT
 import { saveGameResult } from '../lib/history'; // <-- NOUVEL IMPORT
+import GiveUpConfirmModal from './GiveUpConfirmModal'; // <-- NOUVEL IMPORT
 import GameHeader from './GameHeader';
 import ScoreBoard from './ScoreBoard';
 import LyricsGrid from './LyricsGrid';
@@ -12,12 +13,14 @@ import SaveScoreModal from './SaveScoreModal'; // <-- NOUVEL IMPORT
 export default function GameScreen() {
     const location = useLocation();
     const navigate = useNavigate();
-
     const { user, isGuest, loginWithGoogle } = useAuth();
 
-    // NOUVEAUX ÉTATS POUR LA MODALE
     const [showSaveModal, setShowSaveModal] = useState<boolean>(false);
     const [hasGivenUp, setHasGivenUp] = useState<boolean>(false);
+
+    // NOUVEAUX ÉTATS POUR LA MODALE D'ABANDON
+    const [showGiveUpModal, setShowGiveUpModal] = useState<boolean>(false);
+    const [pendingAction, setPendingAction] = useState<'back' | 'giveup' | null>(null);
 
     const song = location.state?.song as Song | undefined;
 
@@ -35,19 +38,41 @@ export default function GameScreen() {
         startGame
     } = useGame(song, handleInitFailure);
 
+    // ACTION : Clic sur Retour
     const handleUserBack = () => {
-        // Si la partie est en cours, on sauvegarde comme une défaite (abandon)
         if (gameStatus === 'playing') {
-            saveGameResult(user, isGuest, song, scorePercentage, 'lost', timeLeft);
+            // Si en jeu, on bloque et on demande confirmation
+            setPendingAction('back');
+            setShowGiveUpModal(true);
+        } else {
+            // Sinon, on retourne direct à l'accueil
+            navigate('/');
         }
-        // Puis on retourne à l'accueil
-        navigate('/');
     };
 
-    // Fonction personnalisée pour l'abandon (pour le différencier d'une fin de temps)
-    const handleGiveUp = () => {
-        setHasGivenUp(true);
-        setGameStatus('lost');
+    // ACTION : Clic sur Abandonner
+    const handleGiveUpClick = () => {
+        setPendingAction('giveup');
+        setShowGiveUpModal(true);
+    };
+
+    // ACTION : L'utilisateur a cliqué sur "Oui, abandonner" dans la modale
+    const confirmGiveUp = () => {
+        if (pendingAction === 'back') {
+            saveGameResult(user, isGuest, song, scorePercentage, 'lost', timeLeft);
+            navigate('/');
+        } else if (pendingAction === 'giveup') {
+            setHasGivenUp(true);
+            setGameStatus('lost');
+        }
+        setShowGiveUpModal(false);
+        setPendingAction(null);
+    };
+
+    // ACTION : L'utilisateur a annulé son abandon
+    const cancelGiveUp = () => {
+        setShowGiveUpModal(false);
+        setPendingAction(null);
     };
 
     // EFFET : Détecte la fin de partie et affiche la modale après un léger délai
@@ -75,12 +100,20 @@ export default function GameScreen() {
                 />
             )}
 
+            {/* NOUVEAU : Affichage conditionnel de la modale d'abandon */}
+            {showGiveUpModal && (
+                <GiveUpConfirmModal
+                    onConfirm={confirmGiveUp}
+                    onCancel={cancelGiveUp}
+                />
+            )}
+
             <GameHeader
                 song={song}
-                onBack={handleUserBack} // <-- NOUVEAU : On donne notre nouvelle fonction au header !
+                onBack={handleUserBack}
                 gameStatus={gameStatus}
                 isFetchingLyrics={isFetchingLyrics}
-                onGiveUp={handleGiveUp}
+                onGiveUp={handleGiveUpClick} // <-- On donne la nouvelle fonction ici !
             />
 
             <main className="flex-1 p-6 max-w-4xl mx-auto w-full flex flex-col gap-8">
