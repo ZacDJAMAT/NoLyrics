@@ -1,4 +1,3 @@
-// src/components/GameScreen.tsx
 import { Song } from '../types';
 import { useGame } from '../hooks/useGame';
 import GameHeader from './GameHeader';

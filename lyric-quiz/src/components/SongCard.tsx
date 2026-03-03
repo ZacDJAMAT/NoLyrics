@@ -1,4 +1,3 @@
-// src/components/SongCard.tsx
 import { Song } from '../types';
 
 interface SongCardProps {

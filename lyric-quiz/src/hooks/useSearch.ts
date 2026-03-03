@@ -1,4 +1,3 @@
-// src/hooks/useSearch.ts
 import { useState } from 'react';
 import { searchSongs } from '../utils/api';
 import { Song } from '../types';

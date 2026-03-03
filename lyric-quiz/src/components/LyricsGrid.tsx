@@ -1,4 +1,3 @@
-// src/components/LyricsGrid.tsx
 import { Word, GameStatus } from '../types';
 
 interface LyricsGridProps {

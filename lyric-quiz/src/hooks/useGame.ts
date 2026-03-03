@@ -1,4 +1,3 @@
-// src/hooks/useGame.ts
 import { useState, useEffect } from 'react';
 import { fetchLyrics } from '../utils/api';
 import { parseLyrics, normalizeWord } from '../utils/lyricsParser';

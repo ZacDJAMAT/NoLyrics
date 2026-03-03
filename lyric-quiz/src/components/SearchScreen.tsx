@@ -1,4 +1,3 @@
-// src/components/SearchScreen.tsx
 import React from 'react';
 import { Song } from '../types';
 import { useSearch } from '../hooks/useSearch';

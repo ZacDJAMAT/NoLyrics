@@ -1,4 +1,3 @@
-// src/components/ScoreBoard.tsx
 import React from 'react';
 import { GameStatus } from '../types';
 

@@ -1,4 +1,3 @@
-// src/utils/api.ts
 import { SearchResult, LRCLIBTrack } from '../types';
 
 export const searchSongs = async (searchQuery: string, pageNumber: number, limit: number = 12): Promise<SearchResult> => {

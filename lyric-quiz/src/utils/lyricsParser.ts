@@ -1,4 +1,3 @@
-// src/utils/lyricsParser.ts
 import { Word, ParsedLyricsResult } from '../types';
 
 export const normalizeWord = (text: string): string => {

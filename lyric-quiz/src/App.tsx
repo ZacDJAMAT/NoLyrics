@@ -1,4 +1,3 @@
-// src/App.tsx
 import { useState } from 'react';
 import SearchScreen from './components/SearchScreen';
 import GameScreen from './components/GameScreen';

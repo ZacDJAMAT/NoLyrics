@@ -1,4 +1,3 @@
-// src/components/GameHeader.tsx
 import { Song, GameStatus } from '../types';
 
 interface GameHeaderProps {
