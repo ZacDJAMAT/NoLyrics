@@ -1,49 +1,80 @@
+import { useState, useEffect, useCallback } from 'react'; // <-- NOUVEAUX IMPORTS REACT
 import { Song } from '../types';
 import { useGame } from '../hooks/useGame';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
-import { useCallback } from 'react';
+import { useAuth } from '../contexts/AuthContext'; // <-- NOUVEL IMPORT
 import GameHeader from './GameHeader';
 import ScoreBoard from './ScoreBoard';
 import LyricsGrid from './LyricsGrid';
-
+import SaveScoreModal from './SaveScoreModal'; // <-- NOUVEL IMPORT
 
 export default function GameScreen() {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // On récupère la chanson qu'on a fait passer dans le "state" de la route
+    // On récupère les infos de l'utilisateur pour savoir s'il faut lui proposer de sauvegarder
+    const { user, loginWithGoogle } = useAuth();
+
+    // NOUVEAUX ÉTATS POUR LA MODALE
+    const [showSaveModal, setShowSaveModal] = useState<boolean>(false);
+    const [hasGivenUp, setHasGivenUp] = useState<boolean>(false);
+
     const song = location.state?.song as Song | undefined;
 
-    // SÉCURITÉ : Si quelqu'un accède directement à /game sans choisir de chanson, on le renvoie à l'accueil
     if (!song) {
         return <Navigate to="/" replace />;
     }
 
     const handleBack = useCallback(() => {
         navigate('/');
-    }, [navigate]); // React ne recréera cette fonction que si 'navigate' change (ce qui n'arrive jamais)
+    }, [navigate]);
 
     const {
         lyricsData, totalWords, isFetchingLyrics, currentInput, foundWordsCount,
         timeLeft, gameStatus, scorePercentage, formattedTime, handleInputChange, setGameStatus
     } = useGame(song, handleBack);
 
-    // 🎨 2. On assemble l'interface avec nos "muscles" (les petits composants visuels)
-    return (
-        <div className="min-h-screen bg-neutral-900 text-white font-sans selection:bg-pink-500 selection:text-white flex flex-col">
+    // Fonction personnalisée pour l'abandon (pour le différencier d'une fin de temps)
+    const handleGiveUp = () => {
+        setHasGivenUp(true);
+        setGameStatus('lost');
+    };
 
-            {/* L'en-tête du jeu */}
+    // EFFET : Détecte la fin de partie et affiche la modale après un léger délai
+    useEffect(() => {
+        // Condition : Pas connecté + Partie terminée + N'a pas abandonné
+        const isGameFinished = gameStatus === 'won' || (gameStatus === 'lost' && !hasGivenUp);
+
+        if (!user && isGameFinished) {
+            // On attend 1.5 seconde pour le laisser voir son score final avant de lui sauter dessus
+            const timer = setTimeout(() => {
+                setShowSaveModal(true);
+            }, 1500);
+
+            return () => clearTimeout(timer); // Nettoyage si on quitte la page avant la fin du délai
+        }
+    }, [gameStatus, user, hasGivenUp]);
+
+    return (
+        <div className="min-h-screen bg-neutral-900 text-white font-sans selection:bg-pink-500 selection:text-white flex flex-col relative">
+
+            {/* Affichage conditionnel de la modale */}
+            {showSaveModal && (
+                <SaveScoreModal
+                    onAccept={loginWithGoogle}
+                    onDecline={() => setShowSaveModal(false)}
+                />
+            )}
+
             <GameHeader
                 song={song}
                 onBack={handleBack}
                 gameStatus={gameStatus}
                 isFetchingLyrics={isFetchingLyrics}
-                onGiveUp={() => setGameStatus('lost')}
+                onGiveUp={handleGiveUp} // <-- On utilise notre nouvelle fonction ici
             />
 
             <main className="flex-1 p-6 max-w-4xl mx-auto w-full flex flex-col gap-8">
-
-                {/* Les bannières de Victoire ou de Défaite */}
                 {gameStatus === 'won' && (
                     <div className="bg-green-600/20 border border-green-500 text-green-400 p-4 rounded-xl text-center font-bold text-lg animate-pulse">
                         🎉 Félicitations ! Tu as trouvé toutes les paroles !
@@ -51,11 +82,12 @@ export default function GameScreen() {
                 )}
                 {gameStatus === 'lost' && (
                     <div className="bg-red-600/20 border border-red-500 text-red-400 p-4 rounded-xl text-center font-bold text-lg">
-                        Temps écoulé (ou partie abandonnée). Regarde les mots en rouge !
+                        {hasGivenUp
+                            ? "Partie abandonnée. Regarde les mots en rouge !"
+                            : "Temps écoulé ! Regarde les mots en rouge !"}
                     </div>
                 )}
 
-                {/* Le tableau des scores et l'input */}
                 <ScoreBoard
                     scorePercentage={scorePercentage}
                     foundWordsCount={foundWordsCount}
@@ -68,13 +100,11 @@ export default function GameScreen() {
                     formattedTime={formattedTime}
                 />
 
-                {/* La grille des paroles */}
                 <LyricsGrid
                     lyricsData={lyricsData}
                     isFetchingLyrics={isFetchingLyrics}
                     gameStatus={gameStatus}
                 />
-
             </main>
         </div>
     );
