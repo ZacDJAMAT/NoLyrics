@@ -1,16 +1,14 @@
 import { useState } from 'react';
 import SearchScreen from './components/SearchScreen';
 import GameScreen from './components/GameScreen';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginScreen from './components/LoginScreen'; // Le nouvel écran
-import { Song } from './types';
+// import ProfileScreen from './components/ProfileScreen';
 import { useAuth } from './contexts/AuthContext'; // Le cerveau
 import SyncModal from './components/SyncModal';
 
 function App() {
-    const [selectedSong, setSelectedSong] = useState<Song | null>(null);
-    const [showSyncModal, setShowSyncModal] = useState<boolean>(true); // Nouveau !
-
-    // On interroge le cerveau
+    const [showSyncModal, setShowSyncModal] = useState<boolean>(true);
     const { user, isGuest, isLoading } = useAuth();
 
     // 1. Si Supabase est encore en train de vérifier qui est là, on affiche un loader
@@ -29,19 +27,22 @@ function App() {
 
     return (
         <>
-            {/* On ajoute la modale ici. Elle se cachera toute seule une fois terminée */}
             {showSyncModal && <SyncModal onComplete={() => setShowSyncModal(false)} />}
 
-            {selectedSong ? (
-                <GameScreen
-                    song={selectedSong}
-                    onBack={() => setSelectedSong(null)}
-                />
-            ) : (
-                <SearchScreen
-                    onSelectSong={setSelectedSong}
-                />
-            )}
+            {/* LE NOUVEAU SYSTÈME DE ROUTAGE */}
+            <Routes>
+                {/* Page par défaut : La recherche */}
+                <Route path="/" element={<SearchScreen />} />
+
+                {/* Page du jeu */}
+                <Route path="/game" element={<GameScreen />} />
+
+                {/* Page du profil (Commentée pour l'instant) */}
+                {/* <Route path="/profile" element={<ProfileScreen />} /> */}
+
+                {/* Sécurité : Si l'utilisateur tape une URL qui n'existe pas, on le renvoie à l'accueil */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
         </>
     );
 }

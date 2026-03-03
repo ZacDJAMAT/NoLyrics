@@ -1,29 +1,32 @@
 import { Song } from '../types';
 import { useGame } from '../hooks/useGame';
+import { useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { useCallback } from 'react';
 import GameHeader from './GameHeader';
 import ScoreBoard from './ScoreBoard';
 import LyricsGrid from './LyricsGrid';
 
-interface GameScreenProps {
-    song: Song;
-    onBack: () => void;
-}
 
-export default function GameScreen({ song, onBack }: GameScreenProps) {
-    // 🧠 1. On charge notre "cerveau" (toute la logique complexe)
+export default function GameScreen() {
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    // On récupère la chanson qu'on a fait passer dans le "state" de la route
+    const song = location.state?.song as Song | undefined;
+
+    // SÉCURITÉ : Si quelqu'un accède directement à /game sans choisir de chanson, on le renvoie à l'accueil
+    if (!song) {
+        return <Navigate to="/" replace />;
+    }
+
+    const handleBack = useCallback(() => {
+        navigate('/');
+    }, [navigate]); // React ne recréera cette fonction que si 'navigate' change (ce qui n'arrive jamais)
+
     const {
-        lyricsData,
-        totalWords,
-        isFetchingLyrics,
-        currentInput,
-        foundWordsCount,
-        timeLeft,
-        gameStatus,
-        scorePercentage,
-        formattedTime,
-        handleInputChange,
-        setGameStatus
-    } = useGame(song, onBack);
+        lyricsData, totalWords, isFetchingLyrics, currentInput, foundWordsCount,
+        timeLeft, gameStatus, scorePercentage, formattedTime, handleInputChange, setGameStatus
+    } = useGame(song, handleBack);
 
     // 🎨 2. On assemble l'interface avec nos "muscles" (les petits composants visuels)
     return (
@@ -32,7 +35,7 @@ export default function GameScreen({ song, onBack }: GameScreenProps) {
             {/* L'en-tête du jeu */}
             <GameHeader
                 song={song}
-                onBack={onBack}
+                onBack={handleBack}
                 gameStatus={gameStatus}
                 isFetchingLyrics={isFetchingLyrics}
                 onGiveUp={() => setGameStatus('lost')}

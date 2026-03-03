@@ -1,14 +1,12 @@
 import React from 'react';
 import { Song } from '../types';
+import { useNavigate } from 'react-router-dom';
 import { useSearch } from '../hooks/useSearch';
 import SongCard from './SongCard';
 import Pagination from './Pagination';
 
-interface SearchScreenProps {
-    onSelectSong: (song: Song) => void;
-}
 
-export default function SearchScreen({ onSelectSong }: SearchScreenProps) {
+export default function SearchScreen() {
     // 🧠 1. On délègue TOUTE la logique complexe à notre Hook personnalisé
     const {
         query,
@@ -21,6 +19,13 @@ export default function SearchScreen({ onSelectSong }: SearchScreenProps) {
         handleSearch,
         handlePageChange
     } = useSearch();
+
+    const navigate = useNavigate();
+
+    const handleSelectSong = (song: Song) => {
+        // On navigue vers la page /game, et on glisse l'objet "song" dans les bagages (state)
+        navigate('/game', { state: { song } });
+    };
 
     // 🎨 2. On ne garde que l'affichage (qui utilise nos "Dumb Components")
     return (
@@ -59,7 +64,7 @@ export default function SearchScreen({ onSelectSong }: SearchScreenProps) {
                             <SongCard
                                 key={song.id}
                                 song={song}
-                                onClick={onSelectSong}
+                                onClick={handleSelectSong}
                             />
                         ))}
                     </div>
