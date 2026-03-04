@@ -8,4 +8,21 @@
     button:disabled {
         @apply cursor-not-allowed;
     }
+
+    /* L'animation pour les mots volants (Floating Text) */
+    @keyframes fly-up-fade {
+        0% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(-80px) scale(1.1); /* Monte de 80px et grossit à peine */
+        }
+    }
+
+    .animate-fly-up {
+        /* Durée de 1 seconde avec un effet de ralentissement à la fin (ease-out) */
+        animation: fly-up-fade 1s ease-out forwards;
+    }
 }

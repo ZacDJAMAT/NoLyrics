@@ -15,6 +15,7 @@ export const useGame = (song: Song, onBack: () => void) => {
 
     const [timeLeft, setTimeLeft] = useState<number>(0);
     const [gameStatus, setGameStatus] = useState<GameStatus>('idle');
+    const [lastFoundWord, setLastFoundWord] = useState<string | null>(null);
 
     const { user, isGuest } = useAuth();
     const [hasSaved, setHasSaved] = useState<boolean>(false);
@@ -47,6 +48,7 @@ export const useGame = (song: Song, onBack: () => void) => {
                 setFoundWordsCount(0);
                 setCurrentInput('');
                 setGameStatus('ready');
+
 
             } catch (error) {
                 alert("Erreur lors de la récupération des paroles.");
@@ -110,6 +112,7 @@ export const useGame = (song: Song, onBack: () => void) => {
                 const updatedFoundCount = foundWordsCount + newWordsFoundCount;
                 setFoundWordsCount(updatedFoundCount);
                 setCurrentInput('');
+                setLastFoundWord(normalizedInput);
 
                 if (updatedFoundCount === totalWords) {
                     setGameStatus('won');
@@ -151,6 +154,7 @@ export const useGame = (song: Song, onBack: () => void) => {
         formattedTime: formatTime(timeLeft),
         handleInputChange,
         setGameStatus,
-        startGame
+        startGame,
+        lastFoundWord
     };
 };

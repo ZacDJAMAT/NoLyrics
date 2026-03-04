@@ -35,7 +35,7 @@ export default function GameScreen() {
     const {
         lyricsData, totalWords, isFetchingLyrics, currentInput, foundWordsCount,
         timeLeft, gameStatus, scorePercentage, formattedTime, handleInputChange, setGameStatus,
-        startGame
+        startGame, lastFoundWord
     } = useGame(song, handleInitFailure);
 
     // ACTION : Clic sur Retour
@@ -140,7 +140,8 @@ export default function GameScreen() {
                     isFetchingLyrics={isFetchingLyrics}
                     timeLeft={timeLeft}
                     formattedTime={formattedTime}
-                    onStartGame={startGame} // <-- NOUVEAU
+                    onStartGame={startGame}
+                    lastFoundWord={lastFoundWord}
                 />
 
                 <div className="relative">
@@ -148,6 +149,7 @@ export default function GameScreen() {
                         lyricsData={lyricsData}
                         isFetchingLyrics={isFetchingLyrics}
                         gameStatus={gameStatus}
+                        lastFoundWord={lastFoundWord}
                     />
 
                     {gameStatus === 'ready' && (
@@ -158,9 +160,9 @@ export default function GameScreen() {
                         >
                             {/* 2. On crée un conteneur "sticky" qui va suivre le scroll de l'utilisateur.
                                 top-[50vh] le place au milieu de l'écran, et -translate-y-1/2 le centre parfaitement */}
-                            <div className="sticky top-[50vh] w-full flex justify-center -translate-y-1/2">
-                                <button className="bg-pink-600 text-white font-black text-3xl px-12 py-6 rounded-2xl shadow-2xl group-hover:bg-pink-500 group-hover:scale-105 transition-all animate-bounce">
-                                    Clique ici !
+                            <div className="sticky top-[70vh] w-full flex justify-center -translate-y-1/2">
+                                <button className="text-white font-black text-3xl px-12 py-6 rounded-2xl shadow-2xl group-hover:scale-105 transition-all">
+                                    Cliquez pour commencer
                                 </button>
                             </div>
                         </div>
