@@ -44,7 +44,7 @@ export default function ScoreBoard({
     }, [foundWordsCount, lastFoundWord]);
 
     return (
-        <div className={`glass-panel flex justify-between items-center p-6 sticky top-[88px] z-10 transition-[box-shadow,border-color] duration-500 ${
+        <div className={`glass-panel flex justify-between items-center p-6 sticky top-6 z-30 transition-[box-shadow,border-color] duration-500 ${
             gameStatus === 'won' ? 'border-secondary shadow-[0_0_20px_rgba(64,201,255,0.3)]'
                 : gameStatus === 'lost' ? 'border-destructive shadow-[0_0_20px_rgba(255,42,95,0.3)]'
                     : ''
@@ -70,12 +70,17 @@ export default function ScoreBoard({
                     ))}
                 </div>
 
-                {gameStatus === 'playing' ? (
+                {isFetchingLyrics ? (
+                    <div className="flex items-center gap-3 text-2xl font-titre text-primary animate-pulse drop-shadow-[0_0_8px_rgba(232,28,255,0.4)]">
+                        <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                        <span>Chargement...</span>
+                    </div>
+                ) : gameStatus === 'playing' ? (
                     <Input
                         variant="glass"
                         type="text"
                         placeholder="Tape un mot ici..."
-                        disabled={isFetchingLyrics || gameStatus !== 'playing'}
+                        disabled={gameStatus !== 'playing'}
                         value={currentInput}
                         onChange={handleInputChange}
                         autoFocus

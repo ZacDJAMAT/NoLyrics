@@ -142,6 +142,32 @@ export const useGame = (song: Song, onBack: () => void) => {
         setGameStatus('playing');
     };
 
+    const restartGame = () => {
+        if (!lyricsData) return;
+
+        // 1. On recache tous les mots
+        const resetLyrics = lyricsData.map(line =>
+            line.map(word => ({ ...word, isFound: false }))
+        );
+
+        // 2. On réinitialise les compteurs et les textes
+        setLyricsData(resetLyrics);
+        setFoundWordsCount(0);
+        setCurrentInput('');
+        setLastFoundWord(null);
+
+        // 3. On déverrouille la sauvegarde pour la nouvelle partie
+        setHasSaved(false);
+
+        // 4. On recalcule le temps initial
+        const audioDuration = song.duration || 180;
+        const typingTime = Math.floor(totalWords * 1.2);
+        setTimeLeft(audioDuration + typingTime);
+
+        // 5. On repasse en mode prêt
+        setGameStatus('ready');
+    };
+
     return {
         lyricsData,
         totalWords,
@@ -155,6 +181,7 @@ export const useGame = (song: Song, onBack: () => void) => {
         handleInputChange,
         setGameStatus,
         startGame,
-        lastFoundWord
+        lastFoundWord,
+        restartGame,
     };
 };

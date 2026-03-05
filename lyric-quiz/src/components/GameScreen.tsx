@@ -33,7 +33,7 @@ export default function GameScreen() {
     const {
         lyricsData, totalWords, isFetchingLyrics, currentInput, foundWordsCount,
         timeLeft, gameStatus, scorePercentage, formattedTime, handleInputChange, setGameStatus,
-        startGame, lastFoundWord
+        startGame, lastFoundWord, restartGame
     } = useGame(song, handleInitFailure);
 
     const handleUserBack = () => {
@@ -67,6 +67,11 @@ export default function GameScreen() {
         setPendingAction(null);
     };
 
+    const handleRestart = () => {
+        setHasGivenUp(false); // On réinitialise le statut d'abandon local
+        restartGame();        // On appelle la réinitialisation complète du hook
+    };
+
     useEffect(() => {
         const isGameFinished = gameStatus === 'won' || (gameStatus === 'lost' && !hasGivenUp);
         if (!user && isGameFinished) {
@@ -77,7 +82,7 @@ export default function GameScreen() {
 
     return (
         // Conteneur principal en "relative" et sans couleur de fond (c'est le body qui gère)
-        <div className="min-h-screen font-sans selection:bg-primary selection:text-primary-foreground flex flex-col relative overflow-hidden">
+        <div className="min-h-screen font-sans selection:bg-primary selection:text-primary-foreground flex flex-col relative overflow-clip">
 
             {showSaveModal && (
                 <SaveScoreModal onAccept={loginWithGoogle} onDecline={() => setShowSaveModal(false)} />
@@ -93,6 +98,7 @@ export default function GameScreen() {
                 gameStatus={gameStatus}
                 isFetchingLyrics={isFetchingLyrics}
                 onGiveUp={handleGiveUpClick}
+                onRestart={handleRestart}
             />
 
             <main className="flex-1 p-6 max-w-4xl mx-auto w-full flex flex-col gap-8 relative z-10">

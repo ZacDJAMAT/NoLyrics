@@ -8,14 +8,15 @@ interface GameHeaderProps {
     gameStatus: GameStatus;
     isFetchingLyrics: boolean;
     onGiveUp: () => void;
+    onRestart: () => void; // NOUVEAU : On ajoute la fonction pour recommencer
 }
 
-export default function GameHeader({ song, onBack, gameStatus, isFetchingLyrics, onGiveUp }: GameHeaderProps) {
+export default function GameHeader({ song, onBack, gameStatus, onGiveUp, onRestart }: GameHeaderProps) {
     return (
-        <header className="p-6 border-b border-border flex items-center justify-between sticky top-0 bg-background/50 backdrop-blur-md z-20">
+        // On a retiré "sticky top-0 bg-background/50 backdrop-blur-md"
+        <header className="p-6 border-b border-border flex items-center justify-between relative z-20">
 
             <div className="flex items-center gap-6">
-                {/* 1. BOUTON RETOUR : Plus de fond bleu agressif, juste un léger éclaircissement */}
                 <Button
                     variant="back"
                     onClick={onBack}
@@ -35,23 +36,32 @@ export default function GameHeader({ song, onBack, gameStatus, isFetchingLyrics,
 
             <div className="flex items-center gap-4">
 
-                {!isFetchingLyrics && (
+                {/* 1. Pendant la partie : Uniquement le bouton Abandonner */}
+                {gameStatus === 'playing' && (
                     <Button
-                        variant={gameStatus === 'playing' ? "destructive" : "default"}
-                        onClick={() => {
-                            if (gameStatus === 'playing') onGiveUp();
-                            else onBack();
-                        }}
+                        variant="destructive"
+                        onClick={onGiveUp}
+                        className="font-texte text-base"
                     >
-                        {gameStatus === 'playing' ? 'Abandonner' : 'Chercher une autre musique'}
+                        Abandonner
                     </Button>
                 )}
 
+                {/* 2. Fin de partie (Gagné/Perdu) : Bouton Recommencer */}
+                {(gameStatus === 'won' || gameStatus === 'lost') && (
+                    <Button
+                        onClick={onRestart}
+                        className="font-texte text-base shadow-[0_0_15px_rgba(232,28,255,0.3)]"
+                    >
+                        Recommencer
+                    </Button>
+                )}
+
+                {/* Avatar utilisateur à la fin de la partie */}
                 {(gameStatus === 'won' || gameStatus === 'lost') && (
                     <UserMenuButton />
                 )}
             </div>
-
         </header>
     );
 }
