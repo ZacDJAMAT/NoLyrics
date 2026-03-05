@@ -31,7 +31,7 @@ export default function LyricsGrid({ lyricsData, isFetchingLyrics, gameStatus, l
 
                             // 2. SI LE MOT EST TROUVÉ
                             if (word.isFound) {
-                                const isLastFound = word.normalized === lastFoundWord;
+                                const isLastFound = word.normalized === lastFoundWord && gameStatus === 'playing';
 
                                 // On utilise notre utilitaire text-neon-secondary pour le dernier mot !
                                 styleClass = `bg-transparent font-texte animate-pop-word transition-colors duration-500 ${
