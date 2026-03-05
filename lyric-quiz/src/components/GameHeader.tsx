@@ -17,9 +17,9 @@ export default function GameHeader({ song, onBack, gameStatus, isFetchingLyrics,
             <div className="flex items-center gap-6">
                 {/* 1. BOUTON RETOUR : Plus de fond bleu agressif, juste un léger éclaircissement */}
                 <Button
-                    variant="ghost"
+                    variant="back"
                     onClick={onBack}
-                    className="text-muted-foreground hover:bg-white/5 hover:text-foreground font-texte text-lg px-2 transition-all"
+                    className="font-texte text-lg px-3"
                 >
                     ← Retour
                 </Button>

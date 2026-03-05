@@ -9,16 +9,21 @@ export default function SongCard({ song, onClick }: SongCardProps) {
     return (
         <div
             onClick={() => onClick(song)}
-            className="group cursor-pointer flex flex-col gap-3 p-3 rounded-2xl hover:bg-card/40 transition-colors border border-transparent hover:border-border"
+            // On ajoute relative et overflow-hidden ici
+            className="group cursor-pointer flex flex-col gap-3 p-3 rounded-2xl hover:bg-card/40 transition-colors border border-transparent hover:border-border relative overflow-hidden"
         >
+            {/* LE FILTRE BLEU GLOBAL : Positionné en absolu sur toute la carte, il passe par-dessus le texte et l'image */}
+            <div className="absolute inset-0 bg-secondary/15 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-10"></div>
+
             <div className="aspect-square overflow-hidden rounded-xl bg-card shadow-lg border border-border/50">
                 <img
                     src={song.album.cover_xl}
                     alt={`Pochette de ${song.title}`}
-                    className="w-full h-full object-cover group-hover:scale-105 group-hover:opacity-90 transition-all duration-300"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
             </div>
-            <div className="px-1">
+
+            <div className="px-1 relative z-0">
                 <h3 className="font-titre text-xl truncate text-foreground group-hover:text-secondary transition-colors drop-shadow-sm">
                     {song.title}
                 </h3>

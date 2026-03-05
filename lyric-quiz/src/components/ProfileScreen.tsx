@@ -27,11 +27,11 @@ export default function ProfileScreen() {
 
             <header className="max-w-4xl mx-auto flex items-center mb-8">
                 <Button
-                    variant="ghost"
+                    variant="back"
                     onClick={() => navigate('/')}
-                    className="text-muted-foreground hover:text-foreground flex items-center gap-2 font-texte text-lg px-2"
+                    className="font-texte text-lg px-3 mb-8"
                 >
-                    ← Retour à la recherche
+                    ← Retour
                 </Button>
             </header>
 
