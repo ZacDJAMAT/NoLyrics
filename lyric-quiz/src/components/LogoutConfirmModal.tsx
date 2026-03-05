@@ -18,7 +18,7 @@ export default function LogoutConfirmModal({ onConfirm, onCancel }: LogoutConfir
     return (
          // On force open={true} car c'est ton composant parent (ProfileScreen) qui décide quand l'afficher
     <AlertDialog open={true} onOpenChange={(isOpen) => !isOpen && onCancel()}>
-        <AlertDialogContent className="bg-card text-card-foreground border-border rounded-2xl">
+        <AlertDialogContent className="glass-modal">
 
             <AlertDialogHeader>
                 <AlertDialogTitle className="font-titre text-2xl text-primary text-center">

@@ -17,7 +17,7 @@ interface SaveScoreModalProps {
 export default function SaveScoreModal({ onAccept, onDecline }: SaveScoreModalProps) {
     return (
         <AlertDialog open={true} onOpenChange={(isOpen) => !isOpen && onDecline()}>
-            <AlertDialogContent className="bg-card text-card-foreground border-border rounded-2xl">
+            <AlertDialogContent className="glass-modal shadow-[0_0_50px_rgba(64,201,255,0.15)]">
 
                 <AlertDialogHeader>
                     <AlertDialogTitle className="font-titre text-2xl text-secondary text-center">

@@ -17,7 +17,7 @@ interface GiveUpConfirmModalProps {
 export default function GiveUpConfirmModal({ onConfirm, onCancel }: GiveUpConfirmModalProps) {
     return (
         <AlertDialog open={true} onOpenChange={(isOpen) => !isOpen && onCancel()}>
-            <AlertDialogContent className="bg-popover/95 backdrop-blur-2xl border border-white/10 shadow-[0_0_50px_rgba(232,28,255,0.15)] rounded-3xl">
+            <AlertDialogContent className="glass-modal">
 
                 <AlertDialogHeader>
                     {/* Le Titre reste en Rose (Primary) */}
