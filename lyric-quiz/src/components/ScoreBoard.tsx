@@ -43,7 +43,7 @@ export default function ScoreBoard({
     }, [foundWordsCount, lastFoundWord]);
 
     return (
-        <div className={`glass-panel flex justify-between items-center p-6 sticky top-[88px] z-10 transition-all duration-500 ${
+        <div className={`glass-panel flex justify-between items-center p-6 sticky top-[88px] z-10 transition-[box-shadow,border-color] duration-500 ${
             gameStatus === 'won' ? 'border-secondary shadow-[0_0_20px_rgba(64,201,255,0.3)]'
                 : gameStatus === 'lost' ? 'border-destructive shadow-[0_0_20px_rgba(255,42,95,0.3)]'
                     : ''
@@ -71,14 +71,14 @@ export default function ScoreBoard({
 
                 {gameStatus === 'playing' ? (
                     <Input
+                        variant="glass"
                         type="text"
                         placeholder="Tape un mot ici..."
                         disabled={isFetchingLyrics || gameStatus !== 'playing'}
                         value={currentInput}
                         onChange={handleInputChange}
                         autoFocus
-                        /* 3. INPUT : Bien visible tout le temps grâce au bg-white/10 et border-white/20 */
-                        className="w-full h-14 px-6 rounded-xl text-2xl text-center font-texte bg-white/10 border border-white/20 text-foreground placeholder:text-muted-foreground/70 focus-visible:ring-primary focus-visible:bg-white/20 shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)] transition-all"
+                        className="h-14 px-6 rounded-xl text-2xl text-center font-texte"
                     />
                 ) : gameStatus === 'ready' ? (
                     <button
