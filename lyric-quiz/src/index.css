@@ -9,6 +9,20 @@
         @apply cursor-not-allowed;
     }
 
+    /* 1. On charge le fichier physique de la police */
+    @font-face {
+        font-family: 'Title'; /* Remplace par le vrai nom de ta police */
+        src: url('./assets/fonts/Camar.otf') format('opentype');
+        font-weight: normal;
+        font-style: normal;
+        font-display: swap;
+    }
+
+    /* 2. On configure Tailwind v4 directement ici ! */
+    @theme {
+        --font-title: 'Title', sans-serif;
+    }
+
     /* L'animation pour les mots volants (Floating Text) */
     @keyframes fly-up-fade {
         0% {

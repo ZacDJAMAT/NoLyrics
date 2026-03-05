@@ -14,7 +14,7 @@ export default function LoginScreen() {
                     </svg>
                 </div>
 
-                <h1 className="text-3xl font-bold mb-3 tracking-tight">Trouve les paroles.</h1>
+                <h1 className="text-3xl font-title mb-3 tracking-tight">NoLyrics</h1>
                 <p className="text-neutral-400 mb-10 leading-relaxed">
                     Connecte-toi pour sauvegarder tes scores, débloquer ton historique et te comparer aux autres joueurs !
                 </p>

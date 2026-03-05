@@ -37,7 +37,7 @@ export default function SearchScreen() {
                     <UserMenuButton />
                 </div>
 
-                <h1 className="text-4xl font-bold mb-8 tracking-tight">Trouve les paroles.</h1>
+                <h1 className="text-6xl font-title mb-8 tracking-tight">NoLyrics</h1>
                 <form onSubmit={handleSearch} className="w-full max-w-xl flex gap-3">
                     <input
                         type="text"
