@@ -41,8 +41,10 @@ export const useGame = (song: Song, onBack: () => void) => {
                 setTotalWords(totalWords);
 
                 const audioDuration = song.duration || 180;
-                const typingTime = Math.floor(totalWords * 1.2);
-                const calculatedTime = audioDuration + typingTime;
+                const baseTime = audioDuration + (totalWords * 1.65);
+
+                const MAX_TIME = 3600;
+                const calculatedTime = Math.floor(MAX_TIME * (1 - Math.exp(-baseTime / MAX_TIME)));
 
                 setTimeLeft(calculatedTime);
                 setFoundWordsCount(0);

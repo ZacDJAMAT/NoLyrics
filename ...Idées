@@ -5,8 +5,6 @@ gsap pour animations
 
 ---------- PAGE D'ACCUEIL
 
-Ajouter le léger filtre bleu quand on passe sur les covers
-
 ---------- PENDANT UNE PARTIE
 
 changer les icons
@@ -15,11 +13,7 @@ changer les icons
 
 changer la les boutons destructive et secondary (plus smooth)
 
-ne pas voir les paroles au dessus de la card input lors des scrolls
-
 mettre des parametres dans la partie qui te permettent de choisir l'alignement du texte
-
-enlever le bouton abandonner du header
 
 - phrases personnalisées en fin de parties (mê.. même nous)
 
@@ -27,6 +21,9 @@ enlever le bouton abandonner du header
 
 
 ----------------------------------------------------------------------------------------------
+
+
+Texte fuck les méchants comme femtogo
 
 Mettre le theme en fonction de la cover (parametre de compte)
 
