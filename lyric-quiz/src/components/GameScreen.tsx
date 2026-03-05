@@ -153,7 +153,12 @@ export default function GameScreen() {
                     onRestart={handleRestartClick}
                 />
 
-                <div className="relative">
+                {/* --- 🌟 LE PLAFOND DE VERRE (Nouveau) --- */}
+                {/* Il est fixé en haut, ne bloque pas les clics, et utilise un flou très fort qui s'efface en dégradé */}
+                <div className="fixed top-0 inset-x-0 h-24 backdrop-blur-[12px] z-20 pointer-events-none [mask-image:linear-gradient(to_bottom,black_20%,transparent_100%)]" aria-hidden="true" />
+
+                {/* --- On englobe LyricsGrid pour le forcer à passer sous le flou (z-0) --- */}
+                <div className="relative z-0">
                     <LyricsGrid
                         lyricsData={lyricsData}
                         isFetchingLyrics={isFetchingLyrics}
