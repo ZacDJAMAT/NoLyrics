@@ -10,8 +10,7 @@ interface LyricsGridProps {
 export default function LyricsGrid({ lyricsData, isFetchingLyrics, gameStatus, lastFoundWord }: LyricsGridProps) {
     if (isFetchingLyrics) {
         return (
-            // Chargement en Glassmorphism
-            <div className="glass-panel p-8 min-h-[400px] flex flex-col items-center justify-center text-muted-foreground gap-4 py-20">
+            <div className="glass-panel min-h-[400px] flex flex-col items-center justify-center text-muted-foreground gap-4 py-20">
                 <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                 <p className="font-texte text-lg">Création du jeu en cours...</p>
             </div>
@@ -21,25 +20,26 @@ export default function LyricsGrid({ lyricsData, isFetchingLyrics, gameStatus, l
     if (!lyricsData) return null;
 
     return (
-        // Grille en Glassmorphism (bg-card/30, backdrop-blur-xl)
         <div className="glass-panel p-8 min-h-[400px]">
             <div className="space-y-6 text-center text-xl leading-relaxed select-none">
                 {lyricsData.map((line, lineIndex) => (
                     <div key={lineIndex} className="flex flex-wrap justify-center gap-x-2 gap-y-2">
                         {line.map((word, wordIndex) => {
 
-                            // NOUVEL EFFET INCORPORÉ : Un trou noir transparent creusé dans le verre
-                            let styleClass = 'bg-white/10 text-transparent min-w-[3rem] rounded-md border border-white/10 border-b-white/20 shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]';
+                            // 1. STYLE PAR DÉFAUT : La case en verre vide
+                            let styleClass = 'glass-cell';
+
+                            // 2. SI LE MOT EST TROUVÉ
                             if (word.isFound) {
                                 const isLastFound = word.normalized === lastFoundWord;
 
+                                // On utilise notre utilitaire text-neon-secondary pour le dernier mot !
                                 styleClass = `bg-transparent font-texte animate-pop-word transition-colors duration-500 ${
-                                    isLastFound
-                                        ? 'text-secondary drop-shadow-[0_0_10px_rgba(64,201,255,0.6)]'
-                                        : 'text-foreground'
+                                    isLastFound ? 'text-neon-secondary' : 'text-foreground'
                                 }`;
-
-                            } else if (gameStatus === 'lost' || gameStatus === 'won') {
+                            }
+                            // 3. SI LA PARTIE EST FINIE ET LE MOT N'EST PAS TROUVÉ
+                            else if (gameStatus === 'lost' || gameStatus === 'won') {
                                 styleClass = 'text-destructive bg-transparent font-texte opacity-80';
                             }
 
