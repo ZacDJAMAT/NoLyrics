@@ -124,5 +124,5 @@
 }
 
 .animate-fly-up {
-    animation: fly-up-fade 1s ease-out forwards;
+    animation: fly-up-fade 1.6s ease-out forwards;
 }
