@@ -15,7 +15,6 @@ const buttonVariants = cva(
           outline:
               "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
 
-          /* NOUVEAU SECONDARY : Gris vitreux au repos -> Filtre bleuté (secondary) au survol */
           secondary:
               "bg-white/5 text-foreground border border-white/10 hover:bg-secondary/20 hover:border-secondary/30 transition-all shadow-sm",
 
@@ -25,6 +24,12 @@ const buttonVariants = cva(
           ghost:
               "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
           link: "text-primary underline-offset-4 hover:underline",
+
+          "glass-icon-blue":
+              "bg-white/5 text-muted-foreground border border-white/10 hover:bg-secondary/20 hover:border-secondary/30 hover:text-secondary transition-all shadow-sm",
+
+          "glass-icon-red":
+              "bg-white/5 text-muted-foreground border border-white/10 hover:bg-destructive/20 hover:border-destructive/30 hover:text-destructive transition-all shadow-sm",
         },
         size: {
           default: "h-9 px-4 py-2 has-[>svg]:px-3",

@@ -1,22 +1,18 @@
-import { Song, GameStatus } from '../types';
+import { Song } from '../types';
 import UserMenuButton from './UserMenuButton';
 import { Button } from './ui/button';
 
 interface GameHeaderProps {
     song: Song;
     onBack: () => void;
-    gameStatus: GameStatus;
-    isFetchingLyrics: boolean;
-    onGiveUp: () => void;
-    onRestart: () => void; // NOUVEAU : On ajoute la fonction pour recommencer
 }
 
-export default function GameHeader({ song, onBack, gameStatus, onGiveUp, onRestart }: GameHeaderProps) {
+export default function GameHeader({ song, onBack }: GameHeaderProps) {
     return (
-        // On a retiré "sticky top-0 bg-background/50 backdrop-blur-md"
-        <header className="p-6 border-b border-border flex items-center justify-between relative z-20">
+        <header className="flex items-center justify-between px-6 py-4 border-b border-border relative z-20 gap-4">
 
-            <div className="flex items-center gap-6">
+            {/* 1. Bouton Retour (Zone Gauche) */}
+            <div className="flex-1 flex justify-start">
                 <Button
                     variant="back"
                     onClick={onBack}
@@ -24,44 +20,39 @@ export default function GameHeader({ song, onBack, gameStatus, onGiveUp, onResta
                 >
                     ← Retour
                 </Button>
+            </div>
 
-                <div className="flex items-center gap-4">
-                    <img src={song.album.cover_small} alt="Pochette" className="w-12 h-12 rounded-lg shadow-md border border-white/10" />
-                    <div>
-                        <h2 className="font-titre text-xl leading-tight text-foreground">{song.title}</h2>
-                        <p className="text-secondary font-texte text-sm drop-shadow-sm">{song.artist.name}</p>
-                    </div>
+            {/* 2. Bloc Central : Cover géante + Textes ajustés */}
+            <div className="flex items-center gap-5 flex-none">
+                <img
+                    src={song.album.cover_xl}
+                    alt={`Pochette de ${song.title}`}
+                    className="w-20 h-20 md:w-24 md:h-24 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-white/10 object-cover"
+                />
+
+                <div className="flex flex-col justify-center text-left">
+                    {/* Le Logo en haut (PLUS GROS : text-3xl / md:text-4xl) */}
+                    <h1 className="text-neon-primary text-3xl md:text-4xl tracking-widest mb-1">
+                        NOLYRICS
+                    </h1>
+
+                    {/* Titre (PLUS PETIT : text-base / md:text-lg) */}
+                    <h2 className="font-titre text-base md:text-lg leading-tight text-foreground drop-shadow-sm truncate max-w-[200px] md:max-w-[300px]">
+                        {song.title}
+                    </h2>
+
+                    {/* Artiste (PLUS PETIT : text-xs / md:text-sm) */}
+                    <p className="text-secondary font-texte text-xs md:text-sm drop-shadow-sm truncate max-w-[200px] md:max-w-[300px] mt-0.5">
+                        {song.artist.name}
+                    </p>
                 </div>
             </div>
 
-            <div className="flex items-center gap-4">
-
-                {/* 1. Pendant la partie : Uniquement le bouton Abandonner */}
-                {gameStatus === 'playing' && (
-                    <Button
-                        variant="destructive"
-                        onClick={onGiveUp}
-                        className="font-texte text-base"
-                    >
-                        Abandonner
-                    </Button>
-                )}
-
-                {/* 2. Fin de partie (Gagné/Perdu) : Bouton Recommencer */}
-                {(gameStatus === 'won' || gameStatus === 'lost') && (
-                    <Button
-                        onClick={onRestart}
-                        className="font-texte text-base shadow-[0_0_15px_rgba(232,28,255,0.3)]"
-                    >
-                        Recommencer
-                    </Button>
-                )}
-
-                {/* Avatar utilisateur à la fin de la partie */}
-                {(gameStatus === 'won' || gameStatus === 'lost') && (
-                    <UserMenuButton />
-                )}
+            {/* 3. Avatar (Zone Droite) */}
+            <div className="flex-1 flex justify-end">
+                <UserMenuButton />
             </div>
+
         </header>
     );
 }

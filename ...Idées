@@ -9,11 +9,13 @@ Ajouter le léger filtre bleu quand on passe sur les covers
 
 ---------- PENDANT UNE PARTIE
 
-remplacer le bouton chercher une autre musique par recommencer
+changer les icons
 
-Calmer le contour de la barre d'input des paroles
+à la recharge de la page, garder le même état ou prevenir de l'abandon
 
-changer la gueule des boutons
+changer la les boutons destructive et secondary (plus smooth)
+
+ne pas voir les paroles au dessus de la card input lors des scrolls
 
 mettre des parametres dans la partie qui te permettent de choisir l'alignement du texte
 

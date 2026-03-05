@@ -82,7 +82,11 @@ export const useGame = (song: Song, onBack: () => void) => {
 
     // 3. Gestion de l'input utilisateur
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (gameStatus !== 'playing') return;
+        if (gameStatus === 'ready') {
+            startGame();
+        } else if (gameStatus !== 'playing') {
+            return; // On bloque la saisie si la partie est finie ou en chargement
+        }
 
         const val = e.target.value;
         const normalizedInput = normalizeWord(val);
