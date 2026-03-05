@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GameStatus } from '../types';
 import { Input } from './ui/input';
+import { Button } from "./ui/button.tsx";
 
 interface FloatingWord {
     id: number;
@@ -81,13 +82,14 @@ export default function ScoreBoard({
                         className="h-14 px-6 rounded-xl text-2xl text-center font-texte"
                     />
                 ) : gameStatus === 'ready' ? (
-                    <button
+                    <Button
+                        variant="ghost"
                         onClick={onStartGame}
-                        className="text-2xl font-titre text-muted-foreground animate-pulse hover:text-foreground transition-colors cursor-pointer"
+                        className="text-2xl font-titre text-muted-foreground animate-pulse hover:text-foreground hover:bg-transparent h-auto py-2 px-6"
                         title="Démarrer la partie"
                     >
                         Prêt à jouer ?
-                    </button>
+                    </Button>
                 ) : (
                     <div className="text-2xl font-titre text-muted-foreground">
                         {gameStatus === 'won' ? 'Score Parfait !' : 'Partie terminée'}

@@ -28,17 +28,17 @@ export default function UserMenuButton() {
         const initial = user.email ? user.email.charAt(0).toUpperCase() : 'U';
 
         return (
-            <button
+            <Button
+                variant="outline"
+                size="icon"
                 onClick={() => navigate('/profile')}
                 title="Mon Profil"
-                // Le bouton extérieur devient aussi rond pour que le survol (hover) soit circulaire
-                className="flex items-center justify-center bg-card hover:bg-muted border border-border p-1.5 rounded-full transition-all shadow-md group"
+                className="rounded-full w-14 h-14 border-white/10 bg-card/30 hover:bg-white/10 backdrop-blur-md group shadow-md"
             >
-                {/* L'avatar passe en rounded-full (cercle parfait) */}
                 <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-titre text-xl shadow-[0_0_10px_rgba(232,28,255,0.4)] group-hover:scale-105 transition-transform">
                     {initial}
                 </div>
-            </button>
+            </Button>
         );
     }
 
