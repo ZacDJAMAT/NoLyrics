@@ -1,42 +1,60 @@
-@import "tailwindcss";
-
 @layer base {
+    :root {
+        /* Un fond violet/nuit profond (moins noir, plus "jeu") */
+        --background: #0f0518;
+
+        /* Un halo plus grand, plus coloré et plus diffus */
+        --bg-gradient: radial-gradient(
+                circle at 50% 0%,
+                rgba(232, 28, 255, 0.35) 0%,   /* Cœur Rose plus intense */
+                rgba(64, 201, 255, 0.15) 45%,  /* Cyan qui s'étale plus loin */
+                rgba(15, 5, 24, 1) 85%         /* Se fond dans le violet de fond */
+        );
+
+        --foreground: #FCDEFF;
+        --popover: rgba(15, 5, 24, 0.9);
+        --popover-foreground: #F2FBFF;
+        --primary: #E81CFF;
+        --primary-foreground: #120014;
+        --secondary: #40C9FF;
+        --secondary-foreground: #001017;
+
+        /* Éléments en retrait (fond des boutons secondaires) */
+        --muted: rgba(255, 255, 255, 0.1);
+        --muted-foreground: #a17aa3;
+
+        --accent: #40C9FF;
+        --accent-foreground: #001017;
+
+        --destructive: #bb0000;
+        --destructive-foreground: #FCDEFF;
+
+        /* Inputs : un peu plus clairs pour mieux les voir */
+        --input: rgba(255, 255, 255, 0.05);
+        --ring: #E81CFF;
+
+        /* GLASSMORPHISM PLUS CLAIR ET VISIBLE */
+        --card: rgba(30, 15, 45, 0.4); /* Un verre teinté violet plus clair */
+        --card-foreground: #F2FBFF;
+        --border: rgba(255, 255, 255, 0.12); /* Des bordures un peu plus marquées */
+    }
+
+    * {
+        @apply border-border outline-ring/50;
+    }
+
+    body {
+        @apply text-foreground font-sans antialiased;
+        background-color: var(--background);
+        background-image: var(--bg-gradient);
+        background-attachment: fixed;
+    }
+
     button {
         @apply cursor-pointer;
     }
 
     button:disabled {
         @apply cursor-not-allowed;
-    }
-
-    /* 1. On charge le fichier physique de la police */
-    @font-face {
-        font-family: 'Title'; /* Remplace par le vrai nom de ta police */
-        src: url('./assets/fonts/Camar.otf') format('opentype');
-        font-weight: normal;
-        font-style: normal;
-        font-display: swap;
-    }
-
-    /* 2. On configure Tailwind v4 directement ici ! */
-    @theme {
-        --font-title: 'Title', sans-serif;
-    }
-
-    /* L'animation pour les mots volants (Floating Text) */
-    @keyframes fly-up-fade {
-        0% {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
-        100% {
-            opacity: 0;
-            transform: translateY(-80px) scale(1.1); /* Monte de 80px et grossit à peine */
-        }
-    }
-
-    .animate-fly-up {
-        /* Durée de 1 seconde avec un effet de ralentissement à la fin (ease-out) */
-        animation: fly-up-fade 1s ease-out forwards;
     }
 }

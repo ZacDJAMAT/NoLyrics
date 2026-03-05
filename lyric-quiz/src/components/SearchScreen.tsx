@@ -5,67 +5,61 @@ import { useSearch } from '../hooks/useSearch';
 import UserMenuButton from './UserMenuButton';
 import SongCard from './SongCard';
 import Pagination from './Pagination';
-
+import { Button } from './ui/button';
+import { Input } from './ui/input'; // <-- NOUVEL IMPORT
 
 export default function SearchScreen() {
-    // 🧠 1. On délègue TOUTE la logique complexe à notre Hook personnalisé
     const {
-        query,
-        setQuery,
-        results,
-        isLoading,
-        currentPage,
-        totalResults,
-        totalPages,
-        handleSearch,
-        handlePageChange
+        query, setQuery, results, isLoading, currentPage, totalResults, totalPages, handleSearch, handlePageChange
     } = useSearch();
 
     const navigate = useNavigate();
 
     const handleSelectSong = (song: Song) => {
-        // On navigue vers la page /game, et on glisse l'objet "song" dans les bagages (state)
         navigate('/game', { state: { song } });
     };
 
-    // 🎨 2. On ne garde que l'affichage (qui utilise nos "Dumb Components")
     return (
-        <div className="min-h-screen bg-neutral-900 text-white font-sans selection:bg-pink-500 selection:text-white pb-12">
-            <header className="pt-16 pb-8 px-6 flex flex-col items-center border-b border-neutral-800 relative">
+        // On passe sur le vrai fond sombre (bg-background) et on sélectionne en rose
+        <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary selection:text-primary-foreground pb-12">
 
+            <header className="pt-16 pb-8 px-6 flex flex-col items-center border-b border-border relative">
                 <div className="absolute top-6 right-6">
                     <UserMenuButton />
                 </div>
 
-                <h1 className="text-6xl font-title mb-8 tracking-tight">NoLyrics</h1>
+                {/* Le Titre principal en Rose Fluo avec un effet "Néon" (drop-shadow) */}
+                <h1 className="text-6xl md:text-8xl font-titre text-primary mb-10 tracking-widest drop-shadow-[0_0_20px_rgba(232,28,255,0.4)]">
+                    NoLyrics
+                </h1>
+
                 <form onSubmit={handleSearch} className="w-full max-w-xl flex gap-3">
-                    <input
+                    <Input
                         type="text"
                         placeholder="Rechercher un artiste, un titre..."
                         value={query}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
-                        className="flex-1 bg-neutral-800 text-white px-5 py-4 rounded-2xl outline-none focus:ring-2 focus:ring-pink-500 transition-all text-lg placeholder:text-neutral-500 shadow-inner"
+                        className="flex-1 font-texte text-xl h-14 rounded-2xl bg-input border-border focus-visible:ring-primary focus-visible:ring-2 shadow-inner"
                     />
-                    <button
+                    <Button
                         type="submit"
-                        className="bg-pink-600 hover:bg-pink-500 px-8 py-4 rounded-2xl font-semibold transition-colors disabled:opacity-50 shadow-lg"
                         disabled={isLoading}
+                        className="h-14 px-8 rounded-2xl font-texte text-xl bg-primary text-primary-foreground hover:bg-primary/80 shadow-[0_0_15px_rgba(232,28,255,0.3)] transition-all"
                     >
                         {isLoading ? '...' : 'Chercher'}
-                    </button>
+                    </Button>
                 </form>
             </header>
 
             <main className="p-6 max-w-7xl mx-auto">
                 {totalResults > 0 && (
-                    <p className="text-neutral-400 mb-6 text-sm">
+                    <p className="text-muted-foreground font-texte mb-6 text-lg">
                         {totalResults} résultats trouvés
                     </p>
                 )}
 
                 {results.length > 0 && (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {/* On utilise notre composant SongCard pour chaque résultat */}
                         {results.map((song) => (
                             <SongCard
                                 key={song.id}
@@ -76,7 +70,6 @@ export default function SearchScreen() {
                     </div>
                 )}
 
-                {/* On utilise notre composant Pagination */}
                 <Pagination
                     currentPage={currentPage}
                     totalPages={totalPages}

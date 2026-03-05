@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { GameStatus } from '../types';
+import { Input } from './ui/input';
 
-// On crée un petit type pour nos particules (les mots volants)
 interface FloatingWord {
     id: number;
     text: string;
-    leftPercentage: number; // Pour la position aléatoire sur l'axe X
+    leftPercentage: number;
 }
 
 interface ScoreBoardProps {
@@ -19,59 +19,49 @@ interface ScoreBoardProps {
     timeLeft: number;
     formattedTime: string;
     onStartGame?: () => void;
-    lastFoundWord?: string | null; // <-- NOUVEAU
+    lastFoundWord?: string | null;
 }
 
 export default function ScoreBoard({
                                        scorePercentage, foundWordsCount, totalWords, currentInput, handleInputChange, gameStatus, isFetchingLyrics, timeLeft, formattedTime, onStartGame, lastFoundWord
                                    }: ScoreBoardProps) {
 
-    // Notre liste de mots actuellement en train de voler à l'écran
     const [floatingWords, setFloatingWords] = useState<FloatingWord[]>([]);
 
     useEffect(() => {
-        // Si on a bien un mot et que le compteur a augmenté
         if (lastFoundWord && foundWordsCount > 0) {
-
-            // 1. On crée un nouveau mot volant
             const newFloatingWord: FloatingWord = {
-                id: Date.now() + Math.random(), // Un ID unique
+                id: Date.now() + Math.random(),
                 text: lastFoundWord,
-                // Un point de départ aléatoire (entre 10% et 90% de la largeur de la barre)
                 leftPercentage: 10 + Math.random() * 80
             };
-
-            // 2. On l'ajoute à la liste pour l'afficher
             setFloatingWords(prev => [...prev, newFloatingWord]);
-
-            // 3. On programme sa destruction exacte au bout d'1 seconde (fin de l'animation)
             setTimeout(() => {
                 setFloatingWords(prev => prev.filter(w => w.id !== newFloatingWord.id));
             }, 1000);
         }
-    }, [foundWordsCount]); // On déclenche ce code à chaque fois que le compteur augmente
+    }, [foundWordsCount, lastFoundWord]);
 
     return (
-        // Les bordures restent fixes et s'allument juste à la fin du jeu (plus de flash)
-        <div className={`flex justify-between items-center bg-neutral-800 p-6 rounded-2xl shadow-xl sticky top-[88px] z-10 border transition-colors duration-500 ${gameStatus === 'won' ? 'border-green-500' : gameStatus === 'lost' ? 'border-red-500' : 'border-neutral-700'}`}>
+        <div className={`flex justify-between items-center bg-card p-6 rounded-3xl shadow-[0_20px_50px_rgba(232,28,255,0.05),_0_20px_50px_rgba(64,201,255,0.05)] sticky top-[88px] z-10 border border-white/5 backdrop-blur-xl transition-all duration-500 ${
+            gameStatus === 'won' ? 'border-secondary shadow-[0_0_20px_rgba(64,201,255,0.3)]'
+                : gameStatus === 'lost' ? 'border-destructive shadow-[0_0_20px_rgba(255,42,95,0.3)]'
+                    : 'border-white/5'
+        }`}>
 
             <div className="text-center w-24">
-                <p className="text-neutral-400 text-xs uppercase tracking-wider font-semibold mb-1">Score</p>
-                <p className="text-3xl font-bold text-pink-500">{scorePercentage}%</p>
-                <p className="text-neutral-500 text-sm">{foundWordsCount} / {totalWords}</p>
+                <p className="text-muted-foreground text-xs uppercase tracking-wider font-semibold mb-1">Score</p>
+                <p className="text-3xl font-titre text-primary drop-shadow-[0_0_8px_rgba(232,28,255,0.4)]">{scorePercentage}%</p>
+                <p className="text-muted-foreground font-texte text-sm">{foundWordsCount} / {totalWords}</p>
             </div>
 
-            {/* LA ZONE CENTRALE */}
             <div className="flex-1 max-w-sm mx-8 flex justify-center relative">
 
-                {/* LES MOTS VOLANTS */}
                 <div className="absolute inset-0 pointer-events-none overflow-visible">
                     {floatingWords.map(fw => (
                         <span
                             key={fw.id}
-                            // On applique notre animation "animate-fly-up" en absolu
-                            className="absolute text-white font-bold text-2xl animate-fly-up drop-shadow-md"
-                            // On le positionne au centre verticalement (bottom 75%) et aléatoirement horizontalement
+                            className="absolute text-foreground font-titre text-2xl animate-fly-up drop-shadow-[0_0_5px_rgba(252,222,255,0.5)]"
                             style={{ left: `${fw.leftPercentage}%`, bottom: '75%', transform: 'translateX(-50%)' }}
                         >
                             {fw.text}
@@ -79,35 +69,35 @@ export default function ScoreBoard({
                     ))}
                 </div>
 
-                {/* L'INPUT NORMAL (Nettoyé des flashs verts) */}
                 {gameStatus === 'playing' ? (
-                    <input
+                    <Input
                         type="text"
                         placeholder="Tape un mot ici..."
                         disabled={isFetchingLyrics || gameStatus !== 'playing'}
                         value={currentInput}
                         onChange={handleInputChange}
                         autoFocus
-                        className="w-full bg-neutral-700 text-white px-6 py-4 rounded-xl outline-none text-2xl text-center font-semibold focus:ring-2 focus:ring-pink-500 shadow-inner transition-all"
+                        /* 3. INPUT : Bien visible tout le temps grâce au bg-white/10 et border-white/20 */
+                        className="w-full h-14 px-6 rounded-xl text-2xl text-center font-texte bg-white/10 border border-white/20 text-foreground placeholder:text-muted-foreground/70 focus-visible:ring-primary focus-visible:bg-white/20 shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)] transition-all"
                     />
                 ) : gameStatus === 'ready' ? (
                     <button
                         onClick={onStartGame}
-                        className="text-2xl font-bold text-neutral-300 animate-pulse hover:text-white transition-colors cursor-pointer"
+                        className="text-2xl font-titre text-muted-foreground animate-pulse hover:text-foreground transition-colors cursor-pointer"
                         title="Démarrer la partie"
                     >
                         Prêt à jouer ?
                     </button>
                 ) : (
-                    <div className="text-2xl font-bold text-neutral-300">
+                    <div className="text-2xl font-titre text-muted-foreground">
                         {gameStatus === 'won' ? 'Score Parfait !' : 'Partie terminée'}
                     </div>
                 )}
             </div>
 
             <div className="text-center w-24">
-                <p className={`text-xs uppercase tracking-wider font-semibold mb-1 ${timeLeft <= 30 && gameStatus === 'playing' ? 'text-red-400 animate-pulse' : 'text-neutral-400'}`}>Temps</p>
-                <p className={`text-3xl font-bold font-mono ${timeLeft <= 30 && gameStatus === 'playing' ? 'text-red-400' : ''}`}>
+                <p className={`text-xs uppercase tracking-wider font-semibold mb-1 ${timeLeft <= 30 && gameStatus === 'playing' ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`}>Temps</p>
+                <p className={`text-3xl font-texte font-bold ${timeLeft <= 30 && gameStatus === 'playing' ? 'text-destructive drop-shadow-[0_0_8px_rgba(255,42,95,0.5)]' : 'text-foreground'}`}>
                     {formattedTime}
                 </p>
             </div>

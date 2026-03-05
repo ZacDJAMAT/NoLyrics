@@ -14,9 +14,22 @@ animations gsap
 
 ---------- PENDANT UNE PARTIE
 
+remplacer le bouton chercher une autre musique par recommencer
+
+Calmer le contour de la barre d'input des paroles
+
+mettre des parametres dans la partie qui te permettent de choisir l'alignement du texte
+
+enlever le bouton abandonner du header
+
+- phrases personnalisées en fin de parties (mê.. même nous)
+
+- Obtenir indice (lettres ou extrait musical)
 
 
+----------------------------------------------------------------------------------------------
 
+Mettre le theme en fonction de la cover (parametre de compte)
 
 Demander à l'ia les pratiques pas éthiques tah tiktok pour créer de la dépendance (public cible, etc.)
 
@@ -30,7 +43,7 @@ chercher une police
 
 pas mettre de popup direct quand on arrive mais mettre une page d'accueil avec les différents modes puis en fonction du mode demander ou non une connexion
 
-remplacer le bouton chercher une autre musique par recommencer
+
 
 - Mettre un mode ajout de mots auto ou ajout manuel (mode hardcore uniquement manuel)
 - ajouter un logo en haut à gauche pour aller à l'accueil
@@ -41,13 +54,13 @@ remplacer le bouton chercher une autre musique par recommencer
 - entre amis
 - classement
 - mode blind test
-- phrases personnalisées en fin de parties (mê.. même nous)
+
 - mode concert (musiques connues d'une selection d'artiste)
 - Mode Survie (Mort Subite)
 - Mode reversed langue
 - Thèmes Personnalisables
 - Défis Quotidiens
-- Obtenir indice (lettres ou extrait musical)
+
 - Lier avec compte spotify/deezer pour playlist, etc.
 
 ---------------------

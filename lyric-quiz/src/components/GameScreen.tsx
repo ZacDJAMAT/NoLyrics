@@ -1,14 +1,14 @@
-import { useState, useEffect, useCallback } from 'react'; // <-- NOUVEAUX IMPORTS REACT
+import { useState, useEffect, useCallback } from 'react';
 import { Song } from '../types';
 import { useGame } from '../hooks/useGame';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext'; // <-- NOUVEL IMPORT
-import { saveGameResult } from '../lib/history'; // <-- NOUVEL IMPORT
-import GiveUpConfirmModal from './GiveUpConfirmModal'; // <-- NOUVEL IMPORT
+import { useAuth } from '../contexts/AuthContext';
+import { saveGameResult } from '../lib/history';
+import GiveUpConfirmModal from './GiveUpConfirmModal';
 import GameHeader from './GameHeader';
 import ScoreBoard from './ScoreBoard';
 import LyricsGrid from './LyricsGrid';
-import SaveScoreModal from './SaveScoreModal'; // <-- NOUVEL IMPORT
+import SaveScoreModal from './SaveScoreModal';
 
 export default function GameScreen() {
     const location = useLocation();
@@ -17,8 +17,6 @@ export default function GameScreen() {
 
     const [showSaveModal, setShowSaveModal] = useState<boolean>(false);
     const [hasGivenUp, setHasGivenUp] = useState<boolean>(false);
-
-    // NOUVEAUX ÉTATS POUR LA MODALE D'ABANDON
     const [showGiveUpModal, setShowGiveUpModal] = useState<boolean>(false);
     const [pendingAction, setPendingAction] = useState<'back' | 'giveup' | null>(null);
 
@@ -38,25 +36,20 @@ export default function GameScreen() {
         startGame, lastFoundWord
     } = useGame(song, handleInitFailure);
 
-    // ACTION : Clic sur Retour
     const handleUserBack = () => {
         if (gameStatus === 'playing') {
-            // Si en jeu, on bloque et on demande confirmation
             setPendingAction('back');
             setShowGiveUpModal(true);
         } else {
-            // Sinon, on retourne direct à l'accueil
             navigate('/');
         }
     };
 
-    // ACTION : Clic sur Abandonner
     const handleGiveUpClick = () => {
         setPendingAction('giveup');
         setShowGiveUpModal(true);
     };
 
-    // ACTION : L'utilisateur a cliqué sur "Oui, abandonner" dans la modale
     const confirmGiveUp = () => {
         if (pendingAction === 'back') {
             saveGameResult(user, isGuest, song, scorePercentage, 'lost', timeLeft);
@@ -69,43 +62,29 @@ export default function GameScreen() {
         setPendingAction(null);
     };
 
-    // ACTION : L'utilisateur a annulé son abandon
     const cancelGiveUp = () => {
         setShowGiveUpModal(false);
         setPendingAction(null);
     };
 
-    // EFFET : Détecte la fin de partie et affiche la modale après un léger délai
     useEffect(() => {
-        // Condition : Pas connecté + Partie terminée + N'a pas abandonné
         const isGameFinished = gameStatus === 'won' || (gameStatus === 'lost' && !hasGivenUp);
-
         if (!user && isGameFinished) {
-            // On attend 1.5 seconde pour le laisser voir son score final avant de lui sauter dessus
-            const timer = setTimeout(() => {
-                setShowSaveModal(true);
-            }, 1500);
-
-            return () => clearTimeout(timer); // Nettoyage si on quitte la page avant la fin du délai
+            const timer = setTimeout(() => setShowSaveModal(true), 1500);
+            return () => clearTimeout(timer);
         }
     }, [gameStatus, user, hasGivenUp]);
 
     return (
-        <div className="min-h-screen bg-neutral-900 text-white font-sans selection:bg-pink-500 selection:text-white flex flex-col relative">
+        // Conteneur principal en "relative" et sans couleur de fond (c'est le body qui gère)
+        <div className="min-h-screen font-sans selection:bg-primary selection:text-primary-foreground flex flex-col relative overflow-hidden">
 
             {showSaveModal && (
-                <SaveScoreModal
-                    onAccept={loginWithGoogle}
-                    onDecline={() => setShowSaveModal(false)}
-                />
+                <SaveScoreModal onAccept={loginWithGoogle} onDecline={() => setShowSaveModal(false)} />
             )}
 
-            {/* NOUVEAU : Affichage conditionnel de la modale d'abandon */}
             {showGiveUpModal && (
-                <GiveUpConfirmModal
-                    onConfirm={confirmGiveUp}
-                    onCancel={cancelGiveUp}
-                />
+                <GiveUpConfirmModal onConfirm={confirmGiveUp} onCancel={cancelGiveUp} />
             )}
 
             <GameHeader
@@ -113,17 +92,21 @@ export default function GameScreen() {
                 onBack={handleUserBack}
                 gameStatus={gameStatus}
                 isFetchingLyrics={isFetchingLyrics}
-                onGiveUp={handleGiveUpClick} // <-- On donne la nouvelle fonction ici !
+                onGiveUp={handleGiveUpClick}
             />
 
-            <main className="flex-1 p-6 max-w-4xl mx-auto w-full flex flex-col gap-8">
+            <main className="flex-1 p-6 max-w-4xl mx-auto w-full flex flex-col gap-8 relative z-10">
+
+                {/* Message de Victoire (Néon Cyan) */}
                 {gameStatus === 'won' && (
-                    <div className="bg-green-600/20 border border-green-500 text-green-400 p-4 rounded-xl text-center font-bold text-lg animate-pulse">
+                    <div className="bg-secondary/10 border border-secondary text-secondary p-4 rounded-xl text-center font-titre text-xl animate-pulse shadow-[0_0_15px_rgba(64,201,255,0.2)] tracking-wide">
                         🎉 Félicitations ! Tu as trouvé toutes les paroles !
                     </div>
                 )}
+
+                {/* Message de Défaite (Néon Rouge) */}
                 {gameStatus === 'lost' && (
-                    <div className="bg-red-600/20 border border-red-500 text-red-400 p-4 rounded-xl text-center font-bold text-lg">
+                    <div className="bg-destructive/10 border border-destructive text-destructive p-4 rounded-xl text-center font-titre text-xl shadow-[0_0_15px_rgba(255,77,79,0.2)] tracking-wide">
                         {hasGivenUp
                             ? "Partie abandonnée. Regarde les mots en rouge !"
                             : "Temps écoulé ! Regarde les mots en rouge !"}
@@ -152,16 +135,14 @@ export default function GameScreen() {
                         lastFoundWord={lastFoundWord}
                     />
 
+                    {/* OVERLAY DE DÉMARRAGE (Flou sombre + Bouton Rose Fluo) */}
                     {gameStatus === 'ready' && (
                         <div
                             onClick={startGame}
-                            // 1. On enlève le flex et items-center d'ici
-                            className="absolute inset-0 z-10 bg-neutral-900/40 backdrop-blur-md rounded-2xl cursor-pointer group transition-all"
+                            className="absolute inset-0 z-10 bg-background/60 backdrop-blur-md rounded-2xl cursor-pointer group transition-all"
                         >
-                            {/* 2. On crée un conteneur "sticky" qui va suivre le scroll de l'utilisateur.
-                                top-[50vh] le place au milieu de l'écran, et -translate-y-1/2 le centre parfaitement */}
                             <div className="sticky top-[70vh] w-full flex justify-center -translate-y-1/2">
-                                <button className="text-white font-black text-3xl px-12 py-6 rounded-2xl shadow-2xl group-hover:scale-105 transition-all">
+                                <button className="bg-primary text-primary-foreground font-titre text-3xl px-12 py-6 rounded-2xl shadow-[0_0_30px_rgba(232,28,255,0.4)] group-hover:bg-primary/80 group-hover:scale-105 transition-all">
                                     Cliquez pour commencer
                                 </button>
                             </div>

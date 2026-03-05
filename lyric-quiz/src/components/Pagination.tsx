@@ -1,3 +1,5 @@
+import { Button } from './ui/button';
+
 interface PaginationProps {
     currentPage: number;
     totalPages: number;
@@ -6,7 +8,6 @@ interface PaginationProps {
 }
 
 export default function Pagination({ currentPage, totalPages, isLoading, onPageChange }: PaginationProps) {
-    // Si on a qu'une seule page ou zéro, on n'affiche pas la pagination
     if (totalPages <= 1) return null;
 
     const getPageNumbers = () => {
@@ -25,36 +26,43 @@ export default function Pagination({ currentPage, totalPages, isLoading, onPageC
     return (
         <div className="flex flex-col items-center mt-12 gap-4">
             <div className="flex items-center gap-2">
-                <button
+                <Button
+                    variant="outline"
                     onClick={() => onPageChange(currentPage - 1)}
                     disabled={currentPage === 1 || isLoading}
-                    className="px-4 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50 transition-colors font-medium"
+                    className="font-texte text-base border-border hover:bg-muted"
                 >
                     Précédent
-                </button>
+                </Button>
 
-                <div className="flex gap-1">
+                <div className="flex gap-2 mx-2">
                     {getPageNumbers().map(num => (
-                        <button
+                        <Button
                             key={num}
+                            variant={currentPage === num ? "default" : "outline"}
                             onClick={() => onPageChange(num)}
                             disabled={isLoading}
-                            className={`w-10 h-10 rounded-lg font-medium transition-colors ${currentPage === num ? 'bg-pink-600 text-white' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'}`}
+                            className={`w-10 h-10 p-0 font-texte text-lg ${
+                                currentPage === num
+                                    ? 'bg-secondary text-secondary-foreground shadow-[0_0_10px_rgba(64,201,255,0.4)]'
+                                    : 'border-border text-foreground hover:bg-muted'
+                            }`}
                         >
                             {num}
-                        </button>
+                        </Button>
                     ))}
                 </div>
 
-                <button
+                <Button
+                    variant="outline"
                     onClick={() => onPageChange(currentPage + 1)}
                     disabled={currentPage === totalPages || isLoading}
-                    className="px-4 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50 transition-colors font-medium"
+                    className="font-texte text-base border-border hover:bg-muted"
                 >
                     Suivant
-                </button>
+                </Button>
             </div>
-            <p className="text-neutral-500 text-sm">Page {currentPage} / {totalPages}</p>
+            <p className="text-muted-foreground font-texte text-base mt-2">Page {currentPage} / {totalPages}</p>
         </div>
     );
 }

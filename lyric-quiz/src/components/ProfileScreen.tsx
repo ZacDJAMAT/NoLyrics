@@ -1,24 +1,23 @@
-import { useState } from 'react'; // <-- NOUVEL IMPORT
+import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import LogoutConfirmModal from './LogoutConfirmModal'; // <-- NOUVEL IMPORT
+import LogoutConfirmModal from './LogoutConfirmModal';
+import { Button } from './ui/button';
 
 export default function ProfileScreen() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
 
-    // État pour gérer l'affichage de la modale de confirmation
     const [showLogoutModal, setShowLogoutModal] = useState<boolean>(false);
 
     const handleLogout = async () => {
         await logout();
-        navigate('/'); // On retourne à l'accueil après la déconnexion
+        navigate('/');
     };
 
     return (
-        <div className="min-h-screen bg-neutral-900 text-white font-sans p-6 selection:bg-pink-500 selection:text-white animate-fade-in-up relative">
+        <div className="min-h-screen bg-background text-foreground font-texte p-6 selection:bg-secondary selection:text-secondary-foreground animate-fade-in-up relative">
 
-            {/* Affichage conditionnel de la modale de confirmation */}
             {showLogoutModal && (
                 <LogoutConfirmModal
                     onConfirm={handleLogout}
@@ -27,35 +26,37 @@ export default function ProfileScreen() {
             )}
 
             <header className="max-w-4xl mx-auto flex items-center mb-8">
-                <button
+                <Button
+                    variant="ghost"
                     onClick={() => navigate('/')}
-                    className="text-neutral-400 hover:text-white flex items-center gap-2 transition-colors font-medium"
+                    className="text-muted-foreground hover:text-foreground flex items-center gap-2 font-texte text-lg px-2"
                 >
                     ← Retour à la recherche
-                </button>
+                </Button>
             </header>
 
-            <main className="max-w-4xl mx-auto bg-neutral-800 rounded-3xl p-8 md:p-12 border border-neutral-700 shadow-2xl">
-                <h1 className="text-3xl font-bold mb-8 tracking-tight">Mon Compte</h1>
+            <main className="max-w-4xl mx-auto bg-card rounded-3xl p-8 md:p-12 border border-border shadow-[0_0_30px_rgba(64,201,255,0.05)]">
+                <h1 className="text-4xl font-titre text-secondary mb-8 tracking-widest drop-shadow-[0_0_10px_rgba(64,201,255,0.3)]">
+                    Mon Compte
+                </h1>
 
                 <div className="space-y-6">
                     <div>
-                        <p className="text-neutral-400 text-sm uppercase tracking-wider font-semibold mb-1">Email</p>
-                        <p className="text-xl font-medium text-white">
+                        <p className="text-muted-foreground text-sm uppercase tracking-wider font-semibold mb-1">Email</p>
+                        <p className="text-2xl font-texte text-foreground">
                             {user?.email || "Email non disponible"}
                         </p>
                     </div>
-
-                    {/* Espace prévu pour les futurs onglets (Statistiques, Historique, etc.) */}
                 </div>
 
-                <div className="pt-8 border-t border-neutral-700 mt-12 flex justify-end">
-                    <button
-                        onClick={() => setShowLogoutModal(true)} // <-- Ouvre la modale au lieu de déconnecter
-                        className="bg-red-600/10 text-red-500 hover:bg-red-500 hover:text-white px-6 py-3 rounded-xl font-bold transition-all border border-red-600/20 hover:border-red-500 active:scale-95"
+                <div className="pt-8 border-t border-border mt-12 flex justify-end">
+                    <Button
+                        variant="destructive"
+                        onClick={() => setShowLogoutModal(true)}
+                        className="font-texte text-lg px-8 py-6 rounded-xl shadow-[0_0_15px_rgba(255,77,79,0.3)]"
                     >
                         Se déconnecter
-                    </button>
+                    </Button>
                 </div>
             </main>
         </div>

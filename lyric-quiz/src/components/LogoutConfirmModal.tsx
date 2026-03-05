@@ -1,3 +1,14 @@
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "./ui/alert-dialog"; // ou "@/components/ui/alert-dialog" si l'alias fonctionne bien
+
 interface LogoutConfirmModalProps {
     onConfirm: () => void;
     onCancel: () => void;
@@ -5,35 +16,35 @@ interface LogoutConfirmModalProps {
 
 export default function LogoutConfirmModal({ onConfirm, onCancel }: LogoutConfirmModalProps) {
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6 animate-fade-in">
-            <div className="bg-neutral-800 p-8 rounded-3xl shadow-2xl max-w-sm w-full border border-neutral-700 text-center animate-fade-in-up">
+         // On force open={true} car c'est ton composant parent (ProfileScreen) qui décide quand l'afficher
+    <AlertDialog open={true} onOpenChange={(isOpen) => !isOpen && onCancel()}>
+        <AlertDialogContent className="bg-card text-card-foreground border-border rounded-2xl">
 
-                <div className="w-16 h-16 bg-red-600/20 rounded-2xl flex items-center justify-center mx-auto mb-6 text-red-500 shadow-inner">
-                    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                </div>
-
-                <h2 className="text-2xl font-bold mb-3 text-white">Déconnexion</h2>
-                <p className="text-neutral-400 mb-8 leading-relaxed">
+            <AlertDialogHeader>
+                <AlertDialogTitle className="font-titre text-2xl text-primary text-center">
+                    Déconnexion
+                </AlertDialogTitle>
+                <AlertDialogDescription className="font-texte text-muted-foreground text-lg text-center mt-2">
                     Es-tu sûr de vouloir te déconnecter de ton compte ?
-                </p>
+                </AlertDialogDescription>
+            </AlertDialogHeader>
 
-                <div className="flex flex-col gap-3">
-                    <button
-                        onClick={onConfirm}
-                        className="w-full bg-red-600/10 text-red-500 hover:bg-red-500 hover:text-white px-6 py-4 rounded-xl font-bold transition-all border border-red-600/20 hover:border-red-500 active:scale-95"
-                    >
-                        Oui, me déconnecter
-                    </button>
-                    <button
-                        onClick={onCancel}
-                        className="w-full bg-neutral-700 hover:bg-neutral-600 text-white px-6 py-4 rounded-xl font-bold transition-all active:scale-95"
-                    >
-                        Annuler
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
+            <AlertDialogFooter className="flex-col sm:flex-col gap-3 mt-6">
+                <AlertDialogAction
+                    onClick={onConfirm}
+                    className="w-full font-texte text-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
+                >
+                    Oui, me déconnecter
+                </AlertDialogAction>
+                <AlertDialogCancel
+                    onClick={onCancel}
+                    className="w-full font-texte text-lg bg-muted text-foreground hover:bg-muted/80 border-none rounded-xl mt-0"
+                >
+                    Annuler
+                </AlertDialogCancel>
+            </AlertDialogFooter>
+
+        </AlertDialogContent>
+    </AlertDialog>
+);
 }
