@@ -1,3 +1,55 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* 1. DÉCLARATION DES POLICES */
+@font-face {
+    font-family: 'Titre';
+    src: url('./assets/fonts/Camar.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Texte';
+    src: url('./assets/fonts/ContrailOne-Regular.ttf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* 2. CONFIGURATION DU THÈME (Au premier niveau) */
+@theme {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --radius: 0.75rem;
+
+    --font-titre: 'Titre', sans-serif;
+    --font-texte: 'Texte', sans-serif;
+    --font-sans: 'Texte', sans-serif;
+}
+
+/* 3. VARIABLES DE COULEURS ET STYLES DE BASE (Un seul @layer base) */
 @layer base {
     :root {
         /* Un fond violet/nuit profond (moins noir, plus "jeu") */
@@ -57,4 +109,20 @@
     button:disabled {
         @apply cursor-not-allowed;
     }
+}
+
+/* 4. ANIMATIONS */
+@keyframes fly-up-fade {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-80px) scale(1.1);
+    }
+}
+
+.animate-fly-up {
+    animation: fly-up-fade 1s ease-out forwards;
 }
