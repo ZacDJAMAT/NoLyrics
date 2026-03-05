@@ -4,8 +4,9 @@
 Tasty crousty, puff, 92i, chatelet, esteban, vody, redbull, etc.
 Coloré avec un couleur dominante ROSE et un accent bleu ciel (tasty crousty)
 Un style qui rappel l'été même de par la police
-
-
+Trouver une bibliothèque de composants UI
+personnaliser les composants UI via tailwind
+animations gsap
 
 ---------- PAGE D'ACCUEIL
 
@@ -19,6 +20,15 @@ Un style qui rappel l'été même de par la police
 
 Demander à l'ia les pratiques pas éthiques tah tiktok pour créer de la dépendance (public cible, etc.)
 
+METTRE UNE PAGE HOME QUI REDIRIGE PAR LA SUITE VERS LES DIFFERENTS MODES
+
+FINIR PAR CHANGER LE BOUTON DE CONNEXION SI PLUSIEURS SONT POSSIBLES
+
+METTRE DU CONTENU SATISFAISANT (OPTIONNEL)
+
+chercher une police
+
+remplacer le bouton chercher une autre musique par recommencer
 
 - mettre un feedback quand un mot est compté (qu'on voit qu'il est parti)
 - surligner les derniers mots ajoutés
