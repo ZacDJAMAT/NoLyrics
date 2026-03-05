@@ -43,10 +43,10 @@ export default function ScoreBoard({
     }, [foundWordsCount, lastFoundWord]);
 
     return (
-        <div className={`flex justify-between items-center bg-card p-6 rounded-3xl shadow-[0_20px_50px_rgba(232,28,255,0.05),_0_20px_50px_rgba(64,201,255,0.05)] sticky top-[88px] z-10 border border-white/5 backdrop-blur-xl transition-all duration-500 ${
+        <div className={`glass-panel flex justify-between items-center p-6 sticky top-[88px] z-10 transition-all duration-500 ${
             gameStatus === 'won' ? 'border-secondary shadow-[0_0_20px_rgba(64,201,255,0.3)]'
                 : gameStatus === 'lost' ? 'border-destructive shadow-[0_0_20px_rgba(255,42,95,0.3)]'
-                    : 'border-white/5'
+                    : ''
         }`}>
 
             <div className="text-center w-24">

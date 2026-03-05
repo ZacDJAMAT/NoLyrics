@@ -111,6 +111,13 @@
     }
 }
 
+/* 5. COMPOSANTS CENTRALISÉS */
+@layer components {
+    .glass-panel {
+        @apply bg-card/30 rounded-3xl border border-white/5 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.2)];
+    }
+}
+
 /* 4. ANIMATIONS */
 @keyframes fly-up-fade {
     0% {

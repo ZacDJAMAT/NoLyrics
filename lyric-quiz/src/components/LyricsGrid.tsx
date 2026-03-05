@@ -11,7 +11,7 @@ export default function LyricsGrid({ lyricsData, isFetchingLyrics, gameStatus, l
     if (isFetchingLyrics) {
         return (
             // Chargement en Glassmorphism
-            <div className="bg-card/30 p-8 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-border backdrop-blur-xl min-h-[400px] flex flex-col items-center justify-center text-muted-foreground gap-4 py-20">
+            <div className="glass-panel p-8 min-h-[400px] flex flex-col items-center justify-center text-muted-foreground gap-4 py-20">
                 <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                 <p className="font-texte text-lg">Création du jeu en cours...</p>
             </div>
@@ -22,7 +22,7 @@ export default function LyricsGrid({ lyricsData, isFetchingLyrics, gameStatus, l
 
     return (
         // Grille en Glassmorphism (bg-card/30, backdrop-blur-xl)
-        <div className="bg-card/30 p-8 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-border backdrop-blur-xl min-h-[400px]">
+        <div className="glass-panel p-8 min-h-[400px]">
             <div className="space-y-6 text-center text-xl leading-relaxed select-none">
                 {lyricsData.map((line, lineIndex) => (
                     <div key={lineIndex} className="flex flex-wrap justify-center gap-x-2 gap-y-2">

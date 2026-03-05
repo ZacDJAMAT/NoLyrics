@@ -6,8 +6,7 @@ export default function LoginScreen() {
 
     return (
         <div className="min-h-screen bg-background text-foreground font-texte flex flex-col items-center justify-center p-6 selection:bg-primary selection:text-primary-foreground">
-            <div className="bg-card p-8 md:p-12 rounded-3xl shadow-[0_0_40px_rgba(232,28,255,0.1)] max-w-md w-full border border-border text-center animate-fade-in-up">
-
+            <div className="glass-panel p-8 md:p-12 max-w-md w-full text-center animate-fade-in-up">
                 <div className="w-20 h-20 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-6 text-primary shadow-inner">
                     <svg className="w-10 h-10 drop-shadow-[0_0_8px_rgba(232,28,255,0.8)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />

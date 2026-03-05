@@ -35,7 +35,7 @@ export default function ProfileScreen() {
                 </Button>
             </header>
 
-            <main className="max-w-4xl mx-auto bg-card rounded-3xl p-8 md:p-12 border border-border shadow-[0_0_30px_rgba(64,201,255,0.05)]">
+            <main className="glass-panel max-w-4xl mx-auto p-8 md:p-12">
                 <h1 className="text-4xl font-titre text-secondary mb-8 tracking-widest drop-shadow-[0_0_10px_rgba(64,201,255,0.3)]">
                     Mon Compte
                 </h1>
