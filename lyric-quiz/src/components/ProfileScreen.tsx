@@ -4,7 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import LogoutConfirmModal from './LogoutConfirmModal';
 import { Button } from './ui/button';
 
-export default function ProfileScreen() {
+// 1. On accepte une prop onClose optionnelle
+interface ProfileScreenProps {
+    onClose?: () => void;
+}
+
+export default function ProfileScreen({ onClose }: ProfileScreenProps) {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
 
@@ -15,8 +20,18 @@ export default function ProfileScreen() {
         navigate('/');
     };
 
+    // 2. Le bouton retour s'adapte à la situation
+    const handleBack = () => {
+        if (onClose) {
+            onClose(); // Ferme le calque (retour au jeu actif)
+        } else {
+            navigate(-1); // Comportement classique
+        }
+    };
+
     return (
-        <div className="min-h-screen bg-background text-foreground font-texte p-6 selection:bg-secondary selection:text-secondary-foreground animate-fade-in-up relative">
+        // 3. Si "onClose" existe, on ajoute "fixed inset-0 z-[100]" pour recouvrir tout l'écran de jeu !
+        <div className={`min-h-screen bg-background text-foreground font-texte p-6 selection:bg-secondary selection:text-secondary-foreground animate-fade-in-up relative ${onClose ? 'fixed inset-0 z-[100] overflow-y-auto' : ''}`}>
 
             {showLogoutModal && (
                 <LogoutConfirmModal
@@ -28,7 +43,7 @@ export default function ProfileScreen() {
             <header className="max-w-4xl mx-auto flex items-center mb-8">
                 <Button
                     variant="back"
-                    onClick={() => navigate('/')}
+                    onClick={handleBack}
                     className="font-texte text-lg px-3 mb-8"
                 >
                     ← Retour

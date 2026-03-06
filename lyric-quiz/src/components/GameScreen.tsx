@@ -11,6 +11,7 @@ import ScoreBoard from './ScoreBoard';
 import LyricsGrid from './LyricsGrid';
 import SaveScoreModal from './SaveScoreModal';
 import { Button } from './ui/button';
+import ProfileScreen from './ProfileScreen';
 
 export default function GameScreen() {
     const location = useLocation();
@@ -24,6 +25,7 @@ export default function GameScreen() {
     const [pendingAction, setPendingAction] = useState<'back' | 'giveup' | null>(null);
 
     const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+    const [showProfile, setShowProfile] = useState<boolean>(false);
 
     const song = location.state?.song as Song | undefined;
 
@@ -104,6 +106,11 @@ export default function GameScreen() {
     return (
         <div className="min-h-screen font-sans selection:bg-primary selection:text-primary-foreground flex flex-col relative overflow-clip">
 
+            {/* LE CALQUE DU PROFIL */}
+            {showProfile && (
+                <ProfileScreen onClose={() => setShowProfile(false)} />
+            )}
+
             {showSaveModal && (
                 <SaveScoreModal onAccept={loginWithGoogle} onDecline={() => setShowSaveModal(false)} />
             )}
@@ -119,6 +126,7 @@ export default function GameScreen() {
             <GameHeader
                 song={song}
                 onBack={handleUserBack}
+                onProfileClick={() => setShowProfile(true)}
             />
 
             <main className="flex-1 p-6 max-w-4xl mx-auto w-full flex flex-col gap-8 relative z-10">
