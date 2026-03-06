@@ -5,9 +5,11 @@ interface LyricsGridProps {
     isFetchingLyrics: boolean;
     gameStatus: GameStatus;
     lastFoundWord?: string | null;
+    // NOUVELLE PROP : L'alignement choisi par le joueur
+    alignment?: 'left' | 'center' | 'right';
 }
 
-export default function LyricsGrid({ lyricsData, isFetchingLyrics, gameStatus, lastFoundWord }: LyricsGridProps) {
+export default function LyricsGrid({ lyricsData, isFetchingLyrics, gameStatus, lastFoundWord, alignment = 'center' }: LyricsGridProps) {
     if (isFetchingLyrics) {
         return (
             <div className="glass-panel min-h-[400px] flex flex-col items-center justify-center text-muted-foreground gap-4 py-20">
@@ -19,26 +21,29 @@ export default function LyricsGrid({ lyricsData, isFetchingLyrics, gameStatus, l
 
     if (!lyricsData) return null;
 
+    // On convertit le choix en classe Tailwind pour flexbox
+    const justificationClass = alignment === 'left' ? 'justify-start' : alignment === 'right' ? 'justify-end' : 'justify-center';
+
     return (
-        <div className="glass-panel p-8 min-h-[400px]">
-            <div className="space-y-6 text-center text-xl leading-relaxed select-none">
+        // flex flex-col items-center : Maintient le bloc de texte entier au centre de la carte
+        <div className="glass-panel p-8 min-h-[400px] flex flex-col items-center">
+
+            {/* w-fit max-w-full : Le bloc prend exactement la largeur de la phrase la plus longue */}
+            <div className="w-fit max-w-full space-y-6 text-xl leading-relaxed select-none">
                 {lyricsData.map((line, lineIndex) => (
-                    <div key={lineIndex} className="flex flex-wrap justify-center gap-x-2 gap-y-2">
+                    // On applique la classe d'alignement sur chaque ligne
+                    <div key={lineIndex} className={`flex flex-wrap gap-x-2 gap-y-2 ${justificationClass}`}>
                         {line.map((word, wordIndex) => {
 
-                            // 1. STYLE PAR DÉFAUT : La case en verre vide
                             let styleClass = 'glass-cell';
 
-                            // 2. SI LE MOT EST TROUVÉ
                             if (word.isFound) {
                                 const isLastFound = word.normalized === lastFoundWord && gameStatus === 'playing';
 
-                                // On utilise notre utilitaire text-neon-secondary pour le dernier mot !
                                 styleClass = `bg-transparent font-texte animate-pop-word transition-colors duration-500 ${
                                     isLastFound ? 'text-neon-secondary' : 'text-foreground'
                                 }`;
                             }
-                            // 3. SI LA PARTIE EST FINIE ET LE MOT N'EST PAS TROUVÉ
                             else if (gameStatus === 'lost' || gameStatus === 'won') {
                                 styleClass = 'text-destructive bg-transparent font-texte opacity-80';
                             }

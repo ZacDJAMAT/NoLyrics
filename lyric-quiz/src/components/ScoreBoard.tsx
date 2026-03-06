@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { GameStatus } from '../types';
 import { Input } from './ui/input';
 import { Button } from "./ui/button";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "./ui/popover";
 
 interface FloatingWord {
     id: number;
@@ -20,13 +25,15 @@ interface ScoreBoardProps {
     timeLeft: number;
     formattedTime: string;
     lastFoundWord?: string | null;
-    onOpenSettings: () => void;
     onGiveUp: () => void;
     onRestart: () => void;
+    // NOUVEAU : On gère l'alignement directement depuis le ScoreBoard
+    lyricsAlignment: 'left' | 'center' | 'right';
+    onAlignmentChange: (alignment: 'left' | 'center' | 'right') => void;
 }
 
 export default function ScoreBoard({
-                                       scorePercentage, foundWordsCount, totalWords, currentInput, handleInputChange, gameStatus, isFetchingLyrics, timeLeft, formattedTime, lastFoundWord, onOpenSettings, onGiveUp, onRestart
+                                       scorePercentage, foundWordsCount, totalWords, currentInput, handleInputChange, gameStatus, isFetchingLyrics, timeLeft, formattedTime, lastFoundWord, onGiveUp, onRestart, lyricsAlignment, onAlignmentChange
                                    }: ScoreBoardProps) {
 
     const [floatingWords, setFloatingWords] = useState<FloatingWord[]>([]);
@@ -59,8 +66,6 @@ export default function ScoreBoard({
             </div>
 
             <div className="flex-1 max-w-sm mx-4 md:mx-8 flex justify-center items-center relative transition-all duration-500">
-
-                {/* LES MOTS VOLANTS UNIQUEMENT AU-DESSUS DE L'INPUT */}
                 <div className="absolute inset-0 pointer-events-none overflow-visible z-50">
                     {floatingWords.map(fw => (
                         <span
@@ -111,11 +116,48 @@ export default function ScoreBoard({
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
                         </Button>
                     </div>
+
+                    {/* --- LE POPOVER DES PARAMÈTRES (ENGRENAGE) --- */}
                     <div className="w-10 flex items-center transition-all duration-500">
-                        <Button variant="glass-icon-blue" size="icon" onClick={onOpenSettings} className="w-10 h-10 rounded-xl hover:text-foreground" title="Paramètres">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                        </Button>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="glass-icon-blue" size="icon" className="w-10 h-10 rounded-xl hover:text-foreground" title="Paramètres">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent
+                                align="end"
+                                sideOffset={16}
+                                className="w-72 glass-modal border-white/10 p-6 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] bg-background/40 backdrop-blur-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-4 duration-300 ease-out"
+                            >
+                                <div className="flex flex-col gap-5">
+                                    <div className="bg-black/20 p-4 rounded-xl border border-white/5 flex flex-col gap-3">
+                                        <p className="text-muted-foreground font-texte text-xs text-center uppercase tracking-wider font-semibold">
+                                            Alignement du texte
+                                        </p>
+                                        <div className="flex justify-center gap-1 bg-black/40 p-1 rounded-lg">
+                                            <Button variant="ghost" size="icon" className={`rounded-md w-10 h-8 ${lyricsAlignment === 'left' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-white/10'}`} onClick={() => onAlignmentChange('left')} title="Aligner à gauche">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="21" y1="6" x2="3" y2="6"></line><line x1="15" y1="12" x2="3" y2="12"></line><line x1="17" y1="18" x2="3" y2="18"></line></svg>
+                                            </Button>
+                                            <Button variant="ghost" size="icon" className={`rounded-md w-10 h-8 ${lyricsAlignment === 'center' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-white/10'}`} onClick={() => onAlignmentChange('center')} title="Centrer">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="21" y1="6" x2="3" y2="6"></line><line x1="19" y1="12" x2="5" y2="12"></line><line x1="21" y1="18" x2="3" y2="18"></line></svg>
+                                            </Button>
+                                            <Button variant="ghost" size="icon" className={`rounded-md w-10 h-8 ${lyricsAlignment === 'right' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-white/10'}`} onClick={() => onAlignmentChange('right')} title="Aligner à droite">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="12" x2="9" y2="12"></line><line x1="21" y1="18" x2="7" y2="18"></line></svg>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    <div className="bg-black/20 p-4 rounded-xl border border-white/5">
+                                        <p className="text-muted-foreground font-texte text-xs text-center leading-relaxed">
+                                            <span className="text-foreground font-bold">PROCHAINEMENT</span><br/>
+                                            Mode de frappe simplifié<br/>Thèmes visuels
+                                        </p>
+                                    </div>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
                     </div>
+
                 </div>
             </div>
         </div>

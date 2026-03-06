@@ -7,15 +7,13 @@ gsap pour animations
 
 ---------- PENDANT UNE PARTIE
 
-changer les icons
+changer les icons (chadcn/ui)
 
 à la recharge de la page, garder le même état ou prevenir de l'abandon
 
 changer la les boutons destructive et secondary (plus smooth)
 
-mettre des parametres dans la partie qui te permettent de choisir l'alignement du texte
-
-- phrases personnalisées en fin de parties (mê.. même nous)
+- phrases personnalisées en fin de parties (mê.. même nous) (plus tard)
 
 - Obtenir indice (lettres ou extrait musical)
 
