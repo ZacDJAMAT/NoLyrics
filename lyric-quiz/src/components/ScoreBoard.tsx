@@ -62,7 +62,7 @@ export default function ScoreBoard({
 
             <div className="text-center w-24 shrink-0 transition-all duration-500">
                 <p className="text-muted-foreground text-xs uppercase tracking-wider font-semibold mb-1">Score</p>
-                <p className="titre-neon-primary text-3xl">{scorePercentage}%</p>
+                <p className="titre-neon-primary font-titre text-3xl text-foreground">{scorePercentage}%</p>
                 <p className="text-muted-foreground font-texte text-sm">{foundWordsCount} / {totalWords}</p>
             </div>
 
@@ -101,7 +101,7 @@ export default function ScoreBoard({
             <div className="flex items-center gap-4 shrink-0 transition-all duration-500">
                 <div className="text-center w-24 mr-2 transition-all duration-500">
                     <p className={`text-xs uppercase tracking-wider font-semibold mb-1 ${timeLeft <= 30 && gameStatus === 'playing' ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`}>Temps</p>
-                    <p className={`text-foreground font-titre text-2xl ${timeLeft <= 30 && gameStatus === 'playing' ? 'titre-neon-destructive' : 'text-foreground'}`}>
+                    <p className={`titre-neon-primary font-titre text-3xl ${timeLeft <= 30 && gameStatus === 'playing' ? 'titre-neon-destructive' : 'text-foreground'}`}>
                         {formattedTime}
                     </p>
                 </div>
