@@ -24,7 +24,7 @@ export default function SongCard({ song, onClick }: SongCardProps) {
             </div>
 
             <div className="px-1 relative z-0">
-                <h3 className="text-neon-secondary font-titre text-xl truncate transition-all duration-300">
+                <h3 className="font-titre text-xl truncate text-foreground group-hover:text-secondary transition-colors drop-shadow-sm">
                     {song.title}
                 </h3>
                 <p className="text-muted-foreground font-texte text-lg truncate mt-1">

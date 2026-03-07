@@ -162,7 +162,6 @@
     }
 
     /* --- TEXTES NÉON (Plus subtils, police texte) --- */
-    /* --- TEXTES NÉON (Plus subtils, police texte) --- */
     .text-neon-primary {
         @apply font-texte text-primary;
         /* Un halo très resserré (4px) pour ne pas faire d'effet "nuage/fond" */
@@ -177,6 +176,11 @@
     .text-neon-destructive {
         @apply font-texte text-destructive;
         text-shadow: 0 0 4px rgba(255, 42, 95, 0.8);
+    }
+
+    .text-neon-base {
+        @apply font-texte text-base;
+        text-shadow: 0 0 4px rgba(5%, 5%, 5%, 0.8);
     }
 
     .glass-cell {
