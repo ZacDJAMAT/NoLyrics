@@ -9,6 +9,10 @@ gsap pour animations
 
 changer les icons (chadcn/ui)
 
+changer toutes les alertes d'erreur (erreur lors de la recupération des commandes)
+
+ajouter du texte si aucune musique n'est trouvée lors d'une recherche
+
 à la recharge de la page, garder le même état ou prevenir de l'abandon
 
 changer les boutons destructive et secondary (plus smooth)
