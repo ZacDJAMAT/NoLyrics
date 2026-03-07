@@ -51,7 +51,7 @@ export default function ProfileScreen({ onClose }: ProfileScreenProps) {
             </header>
 
             <main className="glass-panel max-w-4xl mx-auto p-8 md:p-12">
-                <h1 className="text-neon-secondary text-4xl mb-8 tracking-widest">
+                <h1 className="titre-neon-secondary text-4xl mb-8 tracking-widest">
                     Mon Compte
                 </h1>
 

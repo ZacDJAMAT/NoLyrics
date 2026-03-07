@@ -4,6 +4,8 @@ import { useGame } from '../hooks/useGame';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { saveGameResult } from '../lib/history';
+import { Alert, AlertDescription } from "./ui/alert";
+import { Trophy, AlertTriangle } from "lucide-react";
 import GiveUpConfirmModal from './GiveUpConfirmModal';
 import RestartConfirmModal from './RestartConfirmModal';
 import GameHeader from './GameHeader';
@@ -112,15 +114,21 @@ export default function GameScreen() {
             <main className="flex-1 p-6 max-w-4xl mx-auto w-full flex flex-col gap-8 relative z-10 pt-16 md:pt-6">
 
                 {gameStatus === 'won' && (
-                    <div className="bg-secondary/10 border border-secondary text-secondary p-4 rounded-xl text-center font-titre text-xl animate-pulse shadow-[0_0_15px_rgba(64,201,255,0.2)] tracking-wide">
-                        🎉 Félicitations ! Tu as trouvé toutes les paroles !
-                    </div>
+                    <Alert variant="success" className="text-center flex items-center justify-center gap-2">
+                        <Trophy className="h-5 w-5" />
+                        <AlertDescription className="text-xl">
+                            Félicitations ! Tu as trouvé toutes les paroles !
+                        </AlertDescription>
+                    </Alert>
                 )}
 
                 {gameStatus === 'lost' && (
-                    <div className="bg-destructive/10 border border-destructive text-destructive p-4 rounded-xl text-center font-titre text-xl shadow-[0_0_15px_rgba(255,77,79,0.2)] tracking-wide">
-                        {hasGivenUp ? "Partie abandonnée. Regarde les mots en rouge !" : "Temps écoulé ! Regarde les mots en rouge !"}
-                    </div>
+                    <Alert variant="destructive" className="text-center flex items-center justify-center gap-2">
+                        <AlertTriangle className="h-5 w-5" />
+                        <AlertDescription className="text-xl">
+                            {hasGivenUp ? "Partie abandonnée. Regarde les mots en rouge !" : "Temps écoulé ! Regarde les mots en rouge !"}
+                        </AlertDescription>
+                    </Alert>
                 )}
 
                 <ScoreBoard

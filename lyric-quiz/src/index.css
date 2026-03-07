@@ -7,7 +7,7 @@
 /* 1. DÉCLARATION DES POLICES */
 @font-face {
     font-family: 'Titre';
-    src: url('./assets/fonts/Camar.otf') format('opentype');
+    src: url('./assets/fonts/Rubik-VariableFont_wght.ttf') format('opentype');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
@@ -15,7 +15,7 @@
 
 @font-face {
     font-family: 'Texte';
-    src: url('./assets/fonts/ContrailOne-Regular.ttf') format('opentype');
+    src: url('./assets/fonts/ExpletusSans-VariableFont_wght.ttf') format('opentype');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
@@ -51,6 +51,9 @@
 
 /* 3. VARIABLES DE COULEURS ET STYLES DE BASE (Un seul @layer base) */
 @layer base {
+    [class*="font-titre"] {
+        letter-spacing: 0.05em; /* Ajustez la valeur selon vos besoins */
+    }
     :root {
         /* Un fond violet/nuit profond (moins noir, plus "jeu") */
         --background: #0f0518;
@@ -119,16 +122,61 @@
     .glass-modal {
         @apply bg-popover/95 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-[0_0_50px_rgba(232,28,255,0.15)];
     }
+
+    /* --- TITRES 3D RÉTRO-ARCADE & NÉON --- */
+    .titre-neon-primary {
+        @apply font-titre text-primary;
+        /* 1. Tranches claires, 2. Tranches sombres, 3. Ombre de fond, 4. Halo lumineux global */
+        text-shadow:
+                1px 1px 0 #9a12a8,
+                2px 2px 0 #9a12a8,
+                3px 3px 0 #5c0966,
+                4px 4px 0 #5c0966,
+                5px 5px 0 #2e0333,
+                6px 6px 10px rgba(232, 28, 255, 0.4),
+                0 0 20px rgba(232, 28, 255, 0.6);
+    }
+
+    .titre-neon-secondary {
+        @apply font-titre text-secondary;
+        text-shadow:
+                1px 1px 0 #1e87ab,
+                2px 2px 0 #1e87ab,
+                3px 3px 0 #11536b,
+                4px 4px 0 #11536b,
+                5px 5px 0 #082d3b,
+                6px 6px 10px rgba(64, 201, 255, 0.4),
+                0 0 20px rgba(64, 201, 255, 0.6);
+    }
+
+    .titre-neon-destructive {
+        @apply font-titre text-destructive;
+        text-shadow:
+                1px 1px 0 #b31739,
+                2px 2px 0 #b31739,
+                3px 3px 0 #700d22,
+                4px 4px 0 #700d22,
+                5px 5px 0 #38040f,
+                6px 6px 10px rgba(255, 42, 95, 0.4),
+                0 0 20px rgba(255, 42, 95, 0.6);
+    }
+
+    /* --- TEXTES NÉON (Plus subtils, police texte) --- */
+    /* --- TEXTES NÉON (Plus subtils, police texte) --- */
     .text-neon-primary {
-        @apply font-titre text-primary drop-shadow-[0_0_10px_rgba(232,28,255,0.4)];
+        @apply font-texte text-primary;
+        /* Un halo très resserré (4px) pour ne pas faire d'effet "nuage/fond" */
+        text-shadow: 0 0 4px rgba(232, 28, 255, 0.8);
     }
 
     .text-neon-secondary {
-        @apply font-titre text-secondary drop-shadow-[0_0_10px_rgba(64,201,255,0.4)];
+        @apply font-texte text-secondary;
+        text-shadow: 0 0 4px rgba(64, 201, 255, 0.8);
     }
 
     .text-neon-destructive {
-        @apply font-titre text-destructive drop-shadow-[0_0_10px_rgba(255,42,95,0.4)];
+        @apply font-texte text-destructive;
+        text-shadow: 0 0 4px rgba(255, 42, 95, 0.8);
     }
 
     .glass-cell {

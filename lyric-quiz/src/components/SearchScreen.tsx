@@ -29,7 +29,7 @@ export default function SearchScreen() {
                 </div>
 
                 {/* Le Titre principal en Rose Fluo avec un effet "Néon" (drop-shadow) */}
-                <h1 className="text-6xl md:text-8xl font-titre text-primary mb-10 tracking-widest drop-shadow-[0_0_20px_rgba(232,28,255,0.4)]">
+                <h1 className="text-6xl md:text-8xl font-titre titre-neon-primary mb-10 tracking-widest drop-shadow-[0_0_20px_rgba(232,28,255,0.4)]">
                     NoLyrics
                 </h1>
 

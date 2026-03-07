@@ -13,7 +13,7 @@ export default function LoginScreen() {
                     </svg>
                 </div>
 
-                <h1 className="text-neon-primary text-5xl mb-4 tracking-widest">
+                <h1 className="titre-neon-primary text-5xl mb-4 tracking-widest">
                     NOLYRICS
                 </h1>
                 <p className="text-muted-foreground mb-10 text-lg leading-relaxed">

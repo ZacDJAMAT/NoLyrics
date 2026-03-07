@@ -41,7 +41,7 @@ export default function LyricsGrid({ lyricsData, isFetchingLyrics, gameStatus, l
                                 const isLastFound = word.normalized === lastFoundWord && gameStatus === 'playing';
 
                                 styleClass = `bg-transparent font-texte animate-pop-word transition-colors duration-500 ${
-                                    isLastFound ? 'text-neon-secondary' : 'text-foreground'
+                                    isLastFound ? 'text-secondary shadow' : 'text-foreground'
                                 }`;
                             }
                             else if (gameStatus === 'lost' || gameStatus === 'won') {

@@ -20,7 +20,7 @@ export default function GiveUpConfirmModal({ onConfirm, onCancel }: GiveUpConfir
             <AlertDialogContent className="glass-modal">
 
                 <AlertDialogHeader>
-                    <AlertDialogTitle className="text-neon-primary text-3xl text-center">
+                    <AlertDialogTitle className="titre-neon-primary text-3xl text-center">
                         Abandonner ?
                     </AlertDialogTitle>
                     <AlertDialogDescription className="font-texte text-muted-foreground text-lg text-center mt-2">

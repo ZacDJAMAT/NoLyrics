@@ -19,7 +19,7 @@ export default function RestartConfirmModal({ onConfirm, onCancel }: RestartConf
         <AlertDialog open={true} onOpenChange={(isOpen) => !isOpen && onCancel()}>
             <AlertDialogContent className="glass-modal">
                 <AlertDialogHeader>
-                    <AlertDialogTitle className="text-neon-secondary text-3xl text-center">
+                    <AlertDialogTitle className="titre-neon-secondary text-3xl text-center">
                         Recommencer ?
                     </AlertDialogTitle>
                     <AlertDialogDescription className="font-texte text-muted-foreground text-lg text-center mt-2">
