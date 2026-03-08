@@ -51,7 +51,17 @@ export const useSearch = (limit: number = 12) => {
     const handlePageChange = (newPage: number) => {
         setCurrentPage(newPage);
         fetchResults(query, newPage);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // On attend 50ms pour laisser à React le temps de dessiner la nouvelle grille de chansons
+        setTimeout(() => {
+            const resultsContainer = document.getElementById('results-top');
+            if (resultsContainer) {
+                // scrollIntoView est plus robuste sur mobile pour ce genre d'effet
+                resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }, 50);
     };
 
     const totalPages = Math.ceil(totalResults / limit);

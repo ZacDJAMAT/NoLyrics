@@ -111,7 +111,8 @@ export default function GameScreen() {
 
             <GameHeader song={song} onBack={handleUserBack} onProfileClick={() => setShowProfile(true)} />
 
-            <main className="flex-1 p-6 max-w-4xl mx-auto w-full flex flex-col gap-8 relative z-10 pt-16 md:pt-6">
+            {/* On passe en pb-28 sur mobile pour laisser l'espace à la barre d'input fixe, et on revient en pb-6 sur PC */}
+            <main className="flex-1 p-4 md:p-6 max-w-4xl mx-auto w-full flex flex-col gap-4 md:gap-8 relative z-10 pt-4 md:pt-6">
 
                 {gameStatus === 'won' && (
                     <Alert variant="success" className="text-center flex items-center justify-center gap-2">
