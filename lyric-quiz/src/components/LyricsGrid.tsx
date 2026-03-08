@@ -25,9 +25,7 @@ export default function LyricsGrid({ lyricsData, isFetchingLyrics, gameStatus, l
     const justificationClass = alignment === 'left' ? 'justify-start' : alignment === 'right' ? 'justify-end' : 'justify-center';
 
     return (
-        // flex flex-col items-center : Maintient le bloc de texte entier au centre de la carte
-        // P-4 au lieu de P-8 sur mobile
-        <div className="glass-panel p-4 md:p-8 min-h-[300px] md:min-h-[400px] flex flex-col items-center">
+        <div translate="no" className="glass-panel p-4 md:p-8 min-h-[300px] md:min-h-[400px] flex flex-col items-center notranslate">
 
             {/* Police un peu plus petite et espacement réduit sur mobile */}
             <div className="w-fit max-w-full space-y-4 md:space-y-6 text-lg md:text-xl leading-relaxed select-none">

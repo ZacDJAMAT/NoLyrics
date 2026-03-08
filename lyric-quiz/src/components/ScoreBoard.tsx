@@ -160,6 +160,10 @@ export default function ScoreBoard({
                     value={currentInput}
                     onChange={(e) => handleInputChange(e.target.value)}
                     autoFocus
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    autoCapitalize="none"
                     className="h-10 md:h-14 px-3 md:px-6 rounded-xl text-lg md:text-2xl text-center font-texte w-full transition-all duration-500"
                 />
             )}
