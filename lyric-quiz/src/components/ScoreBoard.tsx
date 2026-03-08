@@ -53,11 +53,17 @@ export default function ScoreBoard({
     }, [foundWordsCount, lastFoundWord]);
 
     return (
-    <div className={`glass-panel flex flex-wrap md:flex-nowrap justify-between items-center p-3 md:p-6 sticky top-2 md:top-6 z-30 gap-y-3 md:gap-y-0 transition-[box-shadow,border-color] duration-500 ease-in-out ${
-        gameStatus === 'won' ? 'border-secondary shadow-[0_0_20px_rgba(64,201,255,0.3)]'
-            : gameStatus === 'lost' ? 'border-destructive shadow-[0_0_20px_rgba(255,42,95,0.3)]'
-                : ''
-    }`}>
+    <div
+        className={`glass-panel flex flex-wrap md:flex-nowrap justify-between items-center p-3 md:p-6 sticky top-2 md:top-6 z-50 gap-y-3 md:gap-y-0 transition-[box-shadow,border-color] duration-500 ease-in-out ${
+            gameStatus === 'won' ? 'border-secondary shadow-[0_0_20px_rgba(64,201,255,0.3)]'
+                : gameStatus === 'lost' ? 'border-destructive shadow-[0_0_20px_rgba(255,42,95,0.3)]'
+                    : ''
+        }`}
+        style={{
+            WebkitTransform: 'translate3d(0,0,0)',
+            transform: 'translate3d(0,0,0)'
+        }}
+    >
 
         {/* 1. SCORE : Textes et conteneur beaucoup plus petits sur mobile */}
         <div className="text-center w-16 md:w-24 shrink-0 transition-all duration-500 order-1">
