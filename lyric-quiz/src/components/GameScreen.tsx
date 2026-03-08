@@ -95,12 +95,10 @@ export default function GameScreen() {
     };
 
     useEffect(() => {
-        const isGameFinished = gameStatus === 'won' || (gameStatus === 'lost' && !hasGivenUp);
-        if (!user && isGameFinished) {
-            const timer = setTimeout(() => setShowSaveModal(true), 1500);
-            return () => clearTimeout(timer);
+        if (user && showSaveModal) {
+            setShowSaveModal(false);
         }
-    }, [gameStatus, user, hasGivenUp]);
+    }, [user, showSaveModal]);
 
     return (
         <div className="min-h-screen font-sans selection:bg-primary selection:text-primary-foreground flex flex-col relative overflow-clip">
