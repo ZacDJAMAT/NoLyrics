@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { GameStatus } from '../types';
 import { Input } from './ui/input';
 import { Button } from "./ui/button";
@@ -20,7 +20,7 @@ interface ScoreBoardProps {
     foundWordsCount: number;
     totalWords: number;
     currentInput: string;
-    handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    handleInputChange: (text: string) => void;
     gameStatus: GameStatus;
     isFetchingLyrics: boolean;
     timeLeft: number;
@@ -158,7 +158,7 @@ export default function ScoreBoard({
                     placeholder={gameStatus === 'ready' ? "Commence à taper..." : gameStatus === 'playing' ? "Tape un mot ici..." : "Partie terminée"}
                     disabled={gameStatus === 'won' || gameStatus === 'lost'}
                     value={currentInput}
-                    onChange={handleInputChange}
+                    onChange={(e) => handleInputChange(e.target.value)}
                     autoFocus
                     className="h-10 md:h-14 px-3 md:px-6 rounded-xl text-lg md:text-2xl text-center font-texte w-full transition-all duration-500"
                 />

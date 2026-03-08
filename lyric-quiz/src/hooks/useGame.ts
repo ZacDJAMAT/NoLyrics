@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { fetchLyrics } from '../utils/api';
 import { parseLyrics, normalizeWord } from '../utils/lyricsParser';
 import { Song, Word, GameStatus } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { saveGameResult } from '../lib/history';
 
-export const useGame = (song: Song, onBack: () => void) => {
+// NOUVEAU : On remplace onBack par onError pour que l'interface gère l'affichage des erreurs
+export const useGame = (song: Song, onError: (message: string) => void) => {
     const [lyricsData, setLyricsData] = useState<Word[][] | null>(null);
     const [totalWords, setTotalWords] = useState<number>(0);
     const [isFetchingLyrics, setIsFetchingLyrics] = useState<boolean>(true);
@@ -30,8 +31,8 @@ export const useGame = (song: Song, onBack: () => void) => {
                 const rawLyrics = await fetchLyrics(song.artist.name, song.title);
 
                 if (!rawLyrics) {
-                    alert("Mince, les paroles de cette musique ne sont pas encore disponibles ! Essaie une autre chanson.");
-                    onBack();
+                    // Fini les alert() ! On délègue l'affichage de l'erreur à la vue.
+                    onError("Les paroles de cette musique ne sont pas encore disponibles !");
                     return;
                 }
 
@@ -51,17 +52,15 @@ export const useGame = (song: Song, onBack: () => void) => {
                 setCurrentInput('');
                 setGameStatus('ready');
 
-
             } catch (error) {
-                alert("Erreur lors de la récupération des paroles.");
-                onBack();
+                onError("Erreur lors de la récupération des paroles.");
             } finally {
                 setIsFetchingLyrics(false);
             }
         };
 
         initGame();
-    }, [song, onBack]);
+    }, [song, onError]);
 
     // 2. Gestion du Chronomètre
     useEffect(() => {
@@ -76,25 +75,35 @@ export const useGame = (song: Song, onBack: () => void) => {
         return () => clearInterval(timer);
     }, [gameStatus, timeLeft]);
 
-    const formatTime = (seconds: number) => {
-        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-        const s = (seconds % 60).toString().padStart(2, '0');
+    // NOUVEAU : On mémorise la chaîne de temps pour ne pas la recalculer inutilement
+    const formattedTime = useMemo(() => {
+        const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+        const s = (timeLeft % 60).toString().padStart(2, '0');
         return `${m}:${s}`;
-    };
+    }, [timeLeft]);
+
+    // NOUVEAU : On mémorise le calcul du score
+    const scorePercentage = useMemo(() => {
+        return totalWords > 0 ? Math.round((foundWordsCount / totalWords) * 100) : 0;
+    }, [foundWordsCount, totalWords]);
+
+    const startGame = useCallback(() => {
+        setGameStatus('playing');
+    }, []);
 
     // 3. Gestion de l'input utilisateur
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // NOUVEAU : On ne demande plus un événement HTML, mais juste le texte tapé !
+    const handleInputChange = useCallback((text: string) => {
         if (gameStatus === 'ready') {
             startGame();
         } else if (gameStatus !== 'playing') {
-            return; // On bloque la saisie si la partie est finie ou en chargement
+            return;
         }
 
-        const val = e.target.value;
-        const normalizedInput = normalizeWord(val);
+        const normalizedInput = normalizeWord(text);
 
         if (!normalizedInput) {
-            setCurrentInput(val);
+            setCurrentInput(text);
             return;
         }
 
@@ -124,55 +133,36 @@ export const useGame = (song: Song, onBack: () => void) => {
                     setGameStatus('won');
                 }
             } else {
-                setCurrentInput(val);
+                setCurrentInput(text);
             }
         }
-    };
-
-    const scorePercentage = totalWords > 0 ? Math.round((foundWordsCount / totalWords) * 100) : 0;
+    }, [gameStatus, lyricsData, foundWordsCount, totalWords, startGame]);
 
     useEffect(() => {
         if ((gameStatus === 'won' || gameStatus === 'lost') && !hasSaved) {
-            // On calcule le score exact au moment précis de la fin
-            const finalScore = totalWords > 0 ? Math.round((foundWordsCount / totalWords) * 100) : 0;
-
-            // On sauvegarde !
-            saveGameResult(user, isGuest, song, finalScore, gameStatus, timeLeft);
-
-            // On verrouille pour éviter que React ne sauvegarde en boucle
+            saveGameResult(user, isGuest, song, scorePercentage, gameStatus, timeLeft);
             setHasSaved(true);
         }
-    }, [gameStatus, hasSaved, user, isGuest, song, foundWordsCount, totalWords, timeLeft]);
+    }, [gameStatus, hasSaved, user, isGuest, song, scorePercentage, timeLeft]);
 
-    const startGame = () => {
-        setGameStatus('playing');
-    };
-
-    const restartGame = () => {
+    const restartGame = useCallback(() => {
         if (!lyricsData) return;
 
-        // 1. On recache tous les mots
         const resetLyrics = lyricsData.map(line =>
             line.map(word => ({ ...word, isFound: false }))
         );
 
-        // 2. On réinitialise les compteurs et les textes
         setLyricsData(resetLyrics);
         setFoundWordsCount(0);
         setCurrentInput('');
         setLastFoundWord(null);
-
-        // 3. On déverrouille la sauvegarde pour la nouvelle partie
         setHasSaved(false);
 
-        // 4. On recalcule le temps initial
         const audioDuration = song.duration || 180;
         const typingTime = Math.floor(totalWords * 1.2);
         setTimeLeft(audioDuration + typingTime);
-
-        // 5. On repasse en mode prêt
         setGameStatus('ready');
-    };
+    }, [lyricsData, song, totalWords]);
 
     return {
         lyricsData,
@@ -183,7 +173,7 @@ export const useGame = (song: Song, onBack: () => void) => {
         timeLeft,
         gameStatus,
         scorePercentage,
-        formattedTime: formatTime(timeLeft),
+        formattedTime,
         handleInputChange,
         setGameStatus,
         startGame,

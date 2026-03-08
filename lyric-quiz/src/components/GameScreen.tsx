@@ -36,7 +36,8 @@ export default function GameScreen() {
         return <Navigate to="/" replace />;
     }
 
-    const handleInitFailure = useCallback(() => {
+    const handleError = useCallback((message: string) => {
+        alert(message); // Ici, plus tard, on pourra remplacer par un beau Toast ou une Modale !
         navigate('/');
     }, [navigate]);
 
@@ -44,7 +45,7 @@ export default function GameScreen() {
         lyricsData, totalWords, isFetchingLyrics, currentInput, foundWordsCount,
         timeLeft, gameStatus, scorePercentage, formattedTime, handleInputChange, setGameStatus,
         lastFoundWord, restartGame
-    } = useGame(song, handleInitFailure);
+    } = useGame(song, handleError);
 
     const handleUserBack = () => {
         if (gameStatus === 'playing') {
