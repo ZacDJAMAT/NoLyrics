@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { Storage } from '../lib/storage'; // NOUVEL IMPORT
 
-// 1. On définit la forme de notre "Cerveau"
 interface AuthContextType {
     user: User | null;
     isGuest: boolean;
@@ -12,23 +12,20 @@ interface AuthContextType {
     continueAsGuest: () => void;
 }
 
-// 2. On crée le Context avec des valeurs par défaut vides
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// 3. On crée le Provider (le composant qui va englober notre application)
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [isGuest, setIsGuest] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(true);
 
     useEffect(() => {
-        // Au chargement, on vérifie si l'utilisateur est déjà connecté à Supabase
         const checkSession = async () => {
             const { data: { session } } = await supabase.auth.getSession();
             setUser(session?.user || null);
 
-            // Si on a un utilisateur en local storage qui était invité, on le récupère
-            const storedGuest = localStorage.getItem('isGuest') === 'true';
+            // Utilisation de l'adaptateur au lieu de localStorage
+            const storedGuest = Storage.getGuestStatus();
             if (!session?.user && storedGuest) {
                 setIsGuest(true);
             }
@@ -38,12 +35,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         checkSession();
 
-        // On écoute les changements (ex: quand il clique sur "Se connecter avec Google")
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             setUser(session?.user || null);
             if (session?.user) {
-                setIsGuest(false); // S'il se connecte, il n'est plus invité
-                localStorage.removeItem('isGuest');
+                setIsGuest(false);
+                Storage.setGuestStatus(false); // Utilisation de l'adaptateur
             }
             setIsLoading(false);
         });
@@ -51,11 +47,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => subscription.unsubscribe();
     }, []);
 
-    // Les fonctions d'action
     const loginWithGoogle = async () => {
         await supabase.auth.signInWithOAuth({
             provider: 'google',
-            // On redirige vers la page d'accueil après la connexion
             options: { redirectTo: window.location.origin }
         });
     };
@@ -64,12 +58,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await supabase.auth.signOut();
         setUser(null);
         setIsGuest(false);
-        localStorage.removeItem('isGuest');
+        Storage.setGuestStatus(false); // Utilisation de l'adaptateur
     };
 
     const continueAsGuest = () => {
         setIsGuest(true);
-        localStorage.setItem('isGuest', 'true');
+        Storage.setGuestStatus(true); // Utilisation de l'adaptateur
     };
 
     return (
@@ -79,7 +73,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 }
 
-// 4. On crée un petit hook personnalisé pour utiliser tout ça facilement
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (context === undefined) {

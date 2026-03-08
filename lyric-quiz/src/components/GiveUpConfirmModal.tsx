@@ -17,30 +17,32 @@ interface GiveUpConfirmModalProps {
 export default function GiveUpConfirmModal({ onConfirm, onCancel }: GiveUpConfirmModalProps) {
     return (
         <AlertDialog open={true} onOpenChange={(isOpen) => !isOpen && onCancel()}>
-            <AlertDialogContent className="glass-modal">
+            {/* NOUVEAU : w-[95vw] max-w-md et p-6 pour prendre tout l'écran sur mobile mais rester propre sur PC */}
+            <AlertDialogContent className="glass-modal w-[95vw] max-w-md p-6 sm:p-8 rounded-[2rem]">
 
                 <AlertDialogHeader>
-                    <AlertDialogTitle className="titre-neon-primary text-3xl text-center">
+                    <AlertDialogTitle className="titre-neon-primary text-2xl sm:text-3xl text-center">
                         Abandonner ?
                     </AlertDialogTitle>
-                    <AlertDialogDescription className="font-texte text-muted-foreground text-lg text-center mt-2">
+                    <AlertDialogDescription className="font-texte text-muted-foreground text-base sm:text-lg text-center mt-2">
                         Es-tu sûr de vouloir abandonner cette partie en cours ? Ton score actuel sera enregistré.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
 
-                <AlertDialogFooter className="flex-col sm:flex-col gap-3 mt-6">
-                    {/* Le bouton "Oui, abandonner" repasse en Destructive (Rouge Néon) */}
+                <AlertDialogFooter className="flex flex-col gap-3 mt-6 sm:mt-8">
+                    {/* Boutons plus hauts (h-12 ou h-14) pour être facilement cliquables */}
                     <AlertDialogAction
                         onClick={onConfirm}
                         variant={"destructive"}
+                        className="h-12 sm:h-14 text-base sm:text-lg rounded-xl"
                     >
                         Oui, abandonner
                     </AlertDialogAction>
 
-                    {/* Bouton d'annulation neutre */}
                     <AlertDialogCancel
                         onClick={onCancel}
                         variant={"secondary"}
+                        className="h-12 sm:h-14 text-base sm:text-lg rounded-xl mt-0"
                     >
                         Non, continuer à jouer
                     </AlertDialogCancel>

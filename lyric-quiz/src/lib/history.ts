@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { User } from '@supabase/supabase-js';
 import { Song, GameStatus } from '../types';
+import { Storage } from './storage'; // NOUVEL IMPORT
 
 export const saveGameResult = async (
     user: User | null,
@@ -10,7 +11,6 @@ export const saveGameResult = async (
     status: GameStatus,
     timeLeft: number
 ) => {
-    // 1. On prépare le "colis" avec les données exactes attendues par la base de données
     const historyData = {
         song_id: song.id.toString(),
         song_title: song.title,
@@ -18,12 +18,10 @@ export const saveGameResult = async (
         score_percentage: scorePercentage,
         status: status,
         time_left: timeLeft,
-        // Note : Supabase gère le 'created_at' tout seul, mais on l'ajoute pour le local
         created_at: new Date().toISOString()
     };
 
     if (user) {
-        // 2. CAS A : Le joueur est connecté -> Envoi vers Supabase
         try {
             const { error } = await supabase.from('game_history').insert([{
                 user_id: user.id,
@@ -39,13 +37,8 @@ export const saveGameResult = async (
             console.error(err);
         }
     } else if (isGuest) {
-        // 3. CAS B : Le joueur est invité -> Sauvegarde dans le navigateur
-        const existingHistory = localStorage.getItem('guest_history');
-        const historyArray = existingHistory ? JSON.parse(existingHistory) : [];
-
-        // On ajoute la nouvelle partie à la fin de la liste
-        historyArray.push(historyData);
-        localStorage.setItem('guest_history', JSON.stringify(historyArray));
-        console.log("Score sauvegardé en local ! 💾");
+        // CAS B : Utilisation du nouvel adaptateur (Plus de localStorage direct !)
+        Storage.addGuestHistory(historyData);
+        console.log("Score sauvegardé en local via l'adaptateur ! 💾");
     }
 };

@@ -49,21 +49,21 @@
     --font-sans: 'Texte', sans-serif;
 }
 
-/* 3. VARIABLES DE COULEURS ET STYLES DE BASE (Un seul @layer base) */
+/* 3. VARIABLES DE COULEURS ET STYLES DE BASE */
 @layer base {
     [class*="font-titre"] {
-        letter-spacing: 0.05em; /* Ajustez la valeur selon vos besoins */
+        letter-spacing: 0.05em;
     }
+
     :root {
-        /* Un fond violet/nuit profond (moins noir, plus "jeu") */
         --background: #0f0518;
 
-        /* Un halo plus grand, plus coloré et plus diffus */
+        /* DÉGRADÉ MOBILE : Forme elliptique étirée vers le bas (100%) pour couvrir tout le téléphone */
         --bg-gradient: radial-gradient(
-                circle at 50% 0%,
-                rgba(232, 28, 255, 0.35) 0%,   /* Cœur Rose plus intense */
-                rgba(64, 201, 255, 0.15) 45%,  /* Cyan qui s'étale plus loin */
-                rgba(15, 5, 24, 1) 85%         /* Se fond dans le violet de fond */
+                ellipse at top,
+                rgba(232, 28, 255, 0.35) 0%,
+                rgba(64, 201, 255, 0.15) 55%,
+                rgba(15, 5, 24, 1) 100%
         );
 
         --foreground: #FCDEFF;
@@ -74,7 +74,6 @@
         --secondary: #40C9FF;
         --secondary-foreground: #001017;
 
-        /* Éléments en retrait (fond des boutons secondaires) */
         --muted: rgba(255, 255, 255, 0.1);
         --muted-foreground: #a17aa3;
 
@@ -84,14 +83,24 @@
         --destructive: #bb0000;
         --destructive-foreground: #FCDEFF;
 
-        /* Inputs : un peu plus clairs pour mieux les voir */
         --input: rgba(255, 255, 255, 0.05);
         --ring: #E81CFF;
 
-        /* GLASSMORPHISM PLUS CLAIR ET VISIBLE */
-        --card: rgba(30, 15, 45, 0.4); /* Un verre teinté violet plus clair */
+        --card: rgba(30, 15, 45, 0.4);
         --card-foreground: #F2FBFF;
-        --border: rgba(255, 255, 255, 0.12); /* Des bordures un peu plus marquées */
+        --border: rgba(255, 255, 255, 0.12);
+    }
+
+    /* DÉGRADÉ PC : On remet ton réglage circulaire d'origine pour les grands écrans */
+    @media (min-width: 768px) {
+        :root {
+            --bg-gradient: radial-gradient(
+                    circle at 50% 0%,
+                    rgba(232, 28, 255, 0.35) 0%,
+                    rgba(64, 201, 255, 0.15) 45%,
+                    rgba(15, 5, 24, 1) 85%
+            );
+        }
     }
 
     * {
@@ -104,15 +113,8 @@
         background-image: var(--bg-gradient);
         background-attachment: fixed;
     }
-
-    button {
-        @apply cursor-pointer;
-    }
-
-    button:disabled {
-        @apply cursor-not-allowed;
-    }
 }
+
 
 /* 5. COMPOSANTS CENTRALISÉS */
 @layer components {

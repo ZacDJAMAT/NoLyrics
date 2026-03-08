@@ -26,13 +26,14 @@ export default function LyricsGrid({ lyricsData, isFetchingLyrics, gameStatus, l
 
     return (
         // flex flex-col items-center : Maintient le bloc de texte entier au centre de la carte
-        <div className="glass-panel p-8 min-h-[400px] flex flex-col items-center">
+        // P-4 au lieu de P-8 sur mobile
+        <div className="glass-panel p-4 md:p-8 min-h-[300px] md:min-h-[400px] flex flex-col items-center">
 
-            {/* w-fit max-w-full : Le bloc prend exactement la largeur de la phrase la plus longue */}
-            <div className="w-fit max-w-full space-y-6 text-xl leading-relaxed select-none">
+            {/* Police un peu plus petite et espacement réduit sur mobile */}
+            <div className="w-fit max-w-full space-y-4 md:space-y-6 text-lg md:text-xl leading-relaxed select-none">
                 {lyricsData.map((line, lineIndex) => (
-                    // On applique la classe d'alignement sur chaque ligne
-                    <div key={lineIndex} className={`flex flex-wrap gap-x-2 gap-y-2 ${justificationClass}`}>
+
+                    <div key={lineIndex} className={`flex flex-wrap gap-x-1.5 gap-y-1.5 md:gap-x-2 md:gap-y-2 ${justificationClass}`}>
                         {line.map((word, wordIndex) => {
 
                             let styleClass = 'glass-cell';
@@ -49,7 +50,8 @@ export default function LyricsGrid({ lyricsData, isFetchingLyrics, gameStatus, l
                             }
 
                             return (
-                                <span key={wordIndex} className={`inline-block px-2 py-1 rounded ${styleClass}`}>
+                                // Padding ajusté sur mobile
+                                <span key={wordIndex} className={`inline-block px-1.5 py-0.5 md:px-2 md:py-1 rounded ${styleClass}`}>
                                     {word.original}
                                 </span>
                             )

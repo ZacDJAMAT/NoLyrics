@@ -7,6 +7,8 @@ gsap pour animations
 
 ---------- PENDANT UNE PARTIE
 
+ADAPTER LE SITE POUR QU'IL SOIT JOUABLE PEUT IMPORTE LA TAILLE DE L'ÉCRAN
+
 changer les icons (chadcn/ui)
 
 changer toutes les alertes d'erreur (erreur lors de la recupération des commandes)
