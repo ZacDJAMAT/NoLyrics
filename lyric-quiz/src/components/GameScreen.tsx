@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { saveGameResult } from '../lib/history';
 import { Alert, AlertDescription } from "./ui/alert";
 import { Trophy, AlertTriangle } from "lucide-react";
+import HundredPercentModal from './HundredPercentModal';
 import GiveUpConfirmModal from './GiveUpConfirmModal';
 import RestartConfirmModal from './RestartConfirmModal';
 import GameHeader from './GameHeader';
@@ -26,6 +27,8 @@ export default function GameScreen() {
     const [pendingAction, setPendingAction] = useState<'back' | 'giveup' | null>(null);
 
     const [showProfile, setShowProfile] = useState<boolean>(false);
+    const [showHundredPercentModal, setShowHundredPercentModal] = useState<boolean>(false);
+    const [hasPromptedHundred, setHasPromptedHundred] = useState<boolean>(false);
 
     // NOUVEAU : C'est le seul état qu'on garde pour les paramètres !
     const [lyricsAlignment, setLyricsAlignment] = useState<'left' | 'center' | 'right'>('center');
@@ -47,6 +50,14 @@ export default function GameScreen() {
         lastFoundWord, restartGame
     } = useGame(song, handleError);
 
+    // NOUVEAU : On écoute le score. S'il touche 100% et qu'il reste des mots, on affiche la modale UNE seule fois.
+    useEffect(() => {
+        if (scorePercentage >= 100 && foundWordsCount < totalWords && !hasPromptedHundred && gameStatus === 'playing') {
+            setShowHundredPercentModal(true);
+            setHasPromptedHundred(true);
+        }
+    }, [scorePercentage, foundWordsCount, totalWords, hasPromptedHundred, gameStatus]);
+
     const handleUserBack = () => {
         if (gameStatus === 'playing') {
             setPendingAction('back');
@@ -62,12 +73,14 @@ export default function GameScreen() {
     };
 
     const confirmGiveUp = () => {
+        const finalStatus = scorePercentage >= 100 ? 'won' : 'lost';
+
         if (pendingAction === 'back') {
-            saveGameResult(user, isGuest, song, scorePercentage, 'lost', timeLeft);
+            saveGameResult(user, isGuest, song, scorePercentage, finalStatus, timeLeft);
             navigate('/');
         } else if (pendingAction === 'giveup') {
             setHasGivenUp(true);
-            setGameStatus('lost');
+            setGameStatus(finalStatus);
         }
         setShowGiveUpModal(false);
         setPendingAction(null);
@@ -83,10 +96,12 @@ export default function GameScreen() {
 
     const confirmRestart = () => {
         if (gameStatus === 'playing') {
-            saveGameResult(user, isGuest, song, scorePercentage, 'lost', timeLeft);
+            const finalStatus = scorePercentage >= 100 ? 'won' : 'lost';
+            saveGameResult(user, isGuest, song, scorePercentage, finalStatus, timeLeft);
         }
         setShowRestartModal(false);
         setHasGivenUp(false);
+        setHasPromptedHundred(false); // NOUVEAU : On réinitialise la modale pour la prochaine partie
         if (restartGame) {
             restartGame();
         } else {
@@ -107,7 +122,15 @@ export default function GameScreen() {
             {showSaveModal && <SaveScoreModal onAccept={loginWithGoogle} onDecline={() => setShowSaveModal(false)} />}
             {showGiveUpModal && <GiveUpConfirmModal onConfirm={confirmGiveUp} onCancel={() => setShowGiveUpModal(false)} />}
             {showRestartModal && <RestartConfirmModal onConfirm={confirmRestart} onCancel={() => setShowRestartModal(false)} />}
-
+            {showHundredPercentModal && (
+                <HundredPercentModal
+                    onFinish={() => {
+                        setShowHundredPercentModal(false);
+                        setGameStatus('won');
+                    }}
+                    onContinue={() => setShowHundredPercentModal(false)}
+                />
+            )}
             <GameHeader song={song} onBack={handleUserBack} onProfileClick={() => setShowProfile(true)} />
 
             {/* On passe en pb-28 sur mobile pour laisser l'espace à la barre d'input fixe, et on revient en pb-6 sur PC */}
@@ -117,7 +140,9 @@ export default function GameScreen() {
                     <Alert variant="success" className="text-center flex items-center justify-center gap-2">
                         <Trophy className="h-5 w-5" />
                         <AlertDescription className="text-xl">
-                            Félicitations ! Tu as trouvé toutes les paroles !
+                            {foundWordsCount === totalWords
+                                ? "Incroyable ! Tu as trouvé absolument toutes les paroles !"
+                                : "Félicitations ! Tu as remporté la partie avec 100% !"}
                         </AlertDescription>
                     </Alert>
                 )}

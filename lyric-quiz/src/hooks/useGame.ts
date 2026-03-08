@@ -62,18 +62,18 @@ export const useGame = (song: Song, onError: (message: string) => void) => {
         initGame();
     }, [song, onError]);
 
-    // 2. Gestion du Chronomètre
+    // 2. Gestion du Chronomètre (Décompte)
     useEffect(() => {
         let timer: ReturnType<typeof setInterval>;
         if (gameStatus === 'playing' && timeLeft > 0) {
             timer = setInterval(() => {
                 setTimeLeft((prev) => prev - 1);
             }, 1000);
-        } else if (timeLeft === 0 && gameStatus === 'playing') {
-            setGameStatus('lost');
         }
         return () => clearInterval(timer);
     }, [gameStatus, timeLeft]);
+
+
 
     // NOUVEAU : On mémorise la chaîne de temps pour ne pas la recalculer inutilement
     const formattedTime = useMemo(() => {
@@ -86,6 +86,13 @@ export const useGame = (song: Song, onError: (message: string) => void) => {
     const scorePercentage = useMemo(() => {
         return totalWords > 0 ? Math.round((foundWordsCount / totalWords) * 100) : 0;
     }, [foundWordsCount, totalWords]);
+
+    useEffect(() => {
+        if (timeLeft === 0 && gameStatus === 'playing') {
+            // Si on a atteint les 100%, c'est gagné, sinon c'est perdu !
+            setGameStatus(scorePercentage >= 100 ? 'won' : 'lost');
+        }
+    }, [timeLeft, gameStatus, scorePercentage]);
 
     const startGame = useCallback(() => {
         setGameStatus('playing');
