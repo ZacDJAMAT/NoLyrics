@@ -26,6 +26,7 @@ export interface Word {
     original: string;
     normalized: string;
     isFound: boolean;
+    isHinted?: boolean;
 }
 
 export interface ParsedLyricsResult {
