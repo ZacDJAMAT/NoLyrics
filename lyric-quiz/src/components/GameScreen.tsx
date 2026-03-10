@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { saveGameResult } from '../lib/history';
 import { Alert, AlertDescription } from "./ui/alert";
 import { Trophy, AlertTriangle } from "lucide-react";
+import HintConfirmModal from './HintConfirmModal';
 import HundredPercentModal from './HundredPercentModal';
 import GiveUpConfirmModal from './GiveUpConfirmModal';
 import RestartConfirmModal from './RestartConfirmModal';
@@ -14,6 +15,7 @@ import ScoreBoard from './ScoreBoard';
 import LyricsGrid from './LyricsGrid';
 import SaveScoreModal from './SaveScoreModal';
 import ProfileScreen from './ProfileScreen';
+import DisableTimerModal from './DisableTimerModal';
 
 export default function GameScreen() {
     const location = useLocation();
@@ -30,8 +32,9 @@ export default function GameScreen() {
     const [showHundredPercentModal, setShowHundredPercentModal] = useState<boolean>(false);
     const [hasPromptedHundred, setHasPromptedHundred] = useState<boolean>(false);
 
-    // NOUVEAU : C'est le seul état qu'on garde pour les paramètres !
     const [lyricsAlignment, setLyricsAlignment] = useState<'left' | 'center' | 'right'>('center');
+    const [showHintModal, setShowHintModal] = useState<boolean>(false);
+    const [showTimerModal, setShowTimerModal] = useState<boolean>(false);
 
     const song = location.state?.song as Song | undefined;
 
@@ -47,7 +50,7 @@ export default function GameScreen() {
     const {
         lyricsData, totalWords, isFetchingLyrics, currentInput, foundWordsCount,
         timeLeft, gameStatus, scorePercentage, formattedTime, handleInputChange, setGameStatus,
-        lastFoundWord, restartGame
+        lastFoundWord, restartGame, hasUsedHint, applyHint, getMissingWords, isTimerDisabled, setIsTimerDisabled
     } = useGame(song, handleError);
 
     // NOUVEAU : On écoute le score. S'il touche 100% et qu'il reste des mots, on affiche la modale UNE seule fois.
@@ -76,7 +79,8 @@ export default function GameScreen() {
         const finalStatus = scorePercentage >= 100 ? 'won' : 'lost';
 
         if (pendingAction === 'back') {
-            saveGameResult(user, isGuest, song, scorePercentage, finalStatus, timeLeft);
+            const missing = foundWordsCount === totalWords ? [] : getMissingWords();
+            saveGameResult(user, isGuest, song, scorePercentage, finalStatus, timeLeft, hasUsedHint, missing);
             navigate('/');
         } else if (pendingAction === 'giveup') {
             setHasGivenUp(true);
@@ -97,11 +101,12 @@ export default function GameScreen() {
     const confirmRestart = () => {
         if (gameStatus === 'playing') {
             const finalStatus = scorePercentage >= 100 ? 'won' : 'lost';
-            saveGameResult(user, isGuest, song, scorePercentage, finalStatus, timeLeft);
+            const missing = foundWordsCount === totalWords ? [] : getMissingWords();
+            saveGameResult(user, isGuest, song, scorePercentage, finalStatus, timeLeft, hasUsedHint, missing);
         }
         setShowRestartModal(false);
         setHasGivenUp(false);
-        setHasPromptedHundred(false); // NOUVEAU : On réinitialise la modale pour la prochaine partie
+        setHasPromptedHundred(false);
         if (restartGame) {
             restartGame();
         } else {
@@ -129,6 +134,25 @@ export default function GameScreen() {
                         setGameStatus('won');
                     }}
                     onContinue={() => setShowHundredPercentModal(false)}
+                />
+            )}
+            {showHintModal && (
+                <HintConfirmModal
+                    onConfirm={() => {
+                        applyHint();
+                        setShowHintModal(false);
+                    }}
+                    onCancel={() => setShowHintModal(false)}
+                />
+            )}
+
+            {showTimerModal && (
+                <DisableTimerModal
+                    onConfirm={() => {
+                        setIsTimerDisabled(true);
+                        setShowTimerModal(false);
+                    }}
+                    onCancel={() => setShowTimerModal(false)}
                 />
             )}
             <GameHeader song={song} onBack={handleUserBack} onProfileClick={() => setShowProfile(true)} />
@@ -169,8 +193,12 @@ export default function GameScreen() {
                     lastFoundWord={lastFoundWord}
                     onGiveUp={handleGiveUpClick}
                     onRestart={handleRestartClick}
-                    lyricsAlignment={lyricsAlignment} // NOUVEAU
-                    onAlignmentChange={setLyricsAlignment} // NOUVEAU
+                    lyricsAlignment={lyricsAlignment}
+                    onAlignmentChange={setLyricsAlignment}
+                    onHint={() => setShowHintModal(true)}
+                    hasUsedHint={hasUsedHint}
+                    onDisableTimer={() => setShowTimerModal(true)}
+                    isTimerDisabled={isTimerDisabled}
                 />
 
                 <div className="fixed top-0 inset-x-0 h-24 backdrop-blur-[12px] z-20 pointer-events-none [mask-image:linear-gradient(to_bottom,black_20%,transparent_100%)]" aria-hidden="true" />

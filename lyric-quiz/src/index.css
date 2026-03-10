@@ -56,7 +56,7 @@
     }
 
     :root {
-        --background: #070009;
+        --background: #050007;
 
         /* DÉGRADÉ MOBILE : Forme elliptique étirée vers le bas (100%) pour couvrir tout le téléphone */
         --bg-gradient: radial-gradient(
@@ -112,6 +112,12 @@
         background-color: var(--background);
         background-image: var(--bg-gradient);
         background-attachment: fixed;
+    }
+
+    button,
+    [role="button"],
+    a {
+        @apply cursor-pointer;
     }
 }
 
