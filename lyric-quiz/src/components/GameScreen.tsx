@@ -32,6 +32,8 @@ export default function GameScreen() {
     const [showHundredPercentModal, setShowHundredPercentModal] = useState<boolean>(false);
     const [hasPromptedHundred, setHasPromptedHundred] = useState<boolean>(false);
 
+    const [hasSaved, setHasSaved] = useState<boolean>(false);
+
     const [lyricsAlignment, setLyricsAlignment] = useState<'left' | 'center' | 'right'>('center');
     const [showHintModal, setShowHintModal] = useState<boolean>(false);
     const [showTimerModal, setShowTimerModal] = useState<boolean>(false);
@@ -50,7 +52,8 @@ export default function GameScreen() {
     const {
         lyricsData, totalWords, isFetchingLyrics, currentInput, foundWordsCount,
         timeLeft, gameStatus, scorePercentage, formattedTime, handleInputChange, setGameStatus,
-        lastFoundWord, restartGame, hasUsedHint, applyHint, getMissingWords, isTimerDisabled, setIsTimerDisabled
+        lastFoundWord, restartGame, hasUsedHint, applyHint, getMissingWords,
+        isTimerDisabled, disableTimer
     } = useGame(song, handleError);
 
     // NOUVEAU : On écoute le score. S'il touche 100% et qu'il reste des mots, on affiche la modale UNE seule fois.
@@ -60,6 +63,16 @@ export default function GameScreen() {
             setHasPromptedHundred(true);
         }
     }, [scorePercentage, foundWordsCount, totalWords, hasPromptedHundred, gameStatus]);
+
+    useEffect(() => {
+        if ((gameStatus === 'won' || gameStatus === 'lost') && !hasSaved) {
+            const finalStatus = scorePercentage >= 100 ? 'won' : 'lost';
+            const missing = foundWordsCount === totalWords ? [] : getMissingWords();
+
+            saveGameResult(user, isGuest, song, scorePercentage, finalStatus, timeLeft, hasUsedHint, missing);
+            setHasSaved(true); // On verrouille la sauvegarde pour cette partie
+        }
+    }, [gameStatus, hasSaved, scorePercentage, timeLeft, hasUsedHint, user, isGuest, song, foundWordsCount, totalWords, getMissingWords]);
 
     const handleUserBack = () => {
         if (gameStatus === 'playing') {
@@ -107,6 +120,8 @@ export default function GameScreen() {
         setShowRestartModal(false);
         setHasGivenUp(false);
         setHasPromptedHundred(false);
+        setHasSaved(false);
+
         if (restartGame) {
             restartGame();
         } else {
@@ -149,7 +164,7 @@ export default function GameScreen() {
             {showTimerModal && (
                 <DisableTimerModal
                     onConfirm={() => {
-                        setIsTimerDisabled(true);
+                        disableTimer();
                         setShowTimerModal(false);
                     }}
                     onCancel={() => setShowTimerModal(false)}

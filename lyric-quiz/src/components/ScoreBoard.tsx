@@ -78,8 +78,8 @@ export default function ScoreBoard({
             {/* 2. CHRONO & BOUTONS */}
             <div className="flex items-center gap-1.5 md:gap-4 shrink-0 transition-all duration-500 order-2 md:order-3">
                 <div className="text-center mr-0 md:mr-2 transition-all duration-500 w-16 md:w-auto">
-                    <p className={`text-[10px] md:text-xs uppercase tracking-wider font-semibold mb-0 md:mb-1 ${timeLeft <= 30 && gameStatus === 'playing' ? '!text-destructive animate-pulse' : 'text-muted-foreground'}`}>Temps</p>
-                    <p className={`titre-neon-primary font-titre text-lg md:text-3xl leading-none md:leading-tight ${timeLeft <= 30 && gameStatus === 'playing' ? 'titre-neon-destructive' : 'text-foreground'}`}>
+                    <p className={`text-[10px] md:text-xs uppercase tracking-wider font-semibold mb-0 md:mb-1 ${timeLeft <= 30 && timeLeft >= 0 && gameStatus === 'playing' ? '!text-destructive animate-pulse' : 'text-muted-foreground'}`}>Temps</p>
+                    <p className={`titre-neon-primary font-titre text-lg md:text-3xl leading-none md:leading-tight ${timeLeft <= 30 && timeLeft >= 0 && gameStatus === 'playing' ? 'titre-neon-destructive' : 'text-foreground'}`}>
                         {formattedTime}
                     </p>
                 </div>
