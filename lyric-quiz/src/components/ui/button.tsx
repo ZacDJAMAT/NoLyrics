@@ -30,6 +30,18 @@ const buttonVariants = cva(
 
           "glass-icon-red":
               "bg-white/5 text-muted-foreground border border-white/10 hover:bg-destructive/20 hover:border-destructive/30 hover:text-destructive transition-all shadow-sm",
+
+          "neon-primary":
+              "bg-primary/10 border border-primary/40 text-primary shadow-[0_0_10px_rgba(232,28,255,0.3)] hover:bg-primary hover:text-primary-foreground hover:shadow-[0_0_20px_rgba(232,28,255,0.6)]",
+
+          "neon-secondary":
+              "bg-secondary/10 border border-secondary/40 text-secondary shadow-[0_0_10px_rgba(64,201,255,0.3)] hover:bg-secondary hover:text-secondary-foreground hover:shadow-[0_0_20px_rgba(64,201,255,0.6)]",
+
+          "neon-destructive":
+              "bg-destructive/10 border border-destructive/40 text-destructive shadow-[0_0_10px_rgba(255,42,95,0.3)] hover:bg-destructive hover:text-destructive-foreground hover:shadow-[0_0_20px_rgba(255,42,95,0.6)]",
+
+          "neon-glass":
+              "bg-white/5 border border-white/20 text-foreground shadow-[0_0_10px_rgba(255,255,255,0.1)] hover:bg-foreground hover:text-background hover:shadow-[0_0_20px_rgba(255,255,255,0.5)]",
         },
         size: {
           default: "h-9 px-4 py-2 has-[>svg]:px-3",
