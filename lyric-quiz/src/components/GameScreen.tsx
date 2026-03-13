@@ -5,7 +5,8 @@ import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { saveGameResult } from '../lib/history';
 import { Alert, AlertDescription } from "./ui/alert";
-import { Trophy, AlertTriangle } from "lucide-react";
+// NOUVEAU : Import de BarChart3 pour l'icône du bouton
+import { Trophy, AlertTriangle, BarChart3 } from "lucide-react";
 import HintConfirmModal from './HintConfirmModal';
 import HundredPercentModal from './HundredPercentModal';
 import GiveUpConfirmModal from './GiveUpConfirmModal';
@@ -16,6 +17,11 @@ import LyricsGrid from './LyricsGrid';
 import SaveScoreModal from './SaveScoreModal';
 import ProfileScreen from './ProfileScreen';
 import DisableTimerModal from './DisableTimerModal';
+import { Button } from './ui/button'; // Assure-toi que l'import est correct
+
+// NOUVEAU : Imports des composants de statistiques
+import StatsDashboard from './StatsDashboard';
+import { useSongStats } from '../hooks/useSongStats';
 
 export default function GameScreen() {
     const location = useLocation();
@@ -31,6 +37,10 @@ export default function GameScreen() {
     const [showProfile, setShowProfile] = useState<boolean>(false);
     const [showHundredPercentModal, setShowHundredPercentModal] = useState<boolean>(false);
     const [hasPromptedHundred, setHasPromptedHundred] = useState<boolean>(false);
+    const [hasSaved, setHasSaved] = useState<boolean>(false);
+
+    // NOUVEAU : L'état pour afficher ou cacher le dashboard des statistiques
+    const [showStatsDashboard, setShowStatsDashboard] = useState<boolean>(false);
 
     const [lyricsAlignment, setLyricsAlignment] = useState<'left' | 'center' | 'right'>('center');
     const [showHintModal, setShowHintModal] = useState<boolean>(false);
@@ -43,23 +53,38 @@ export default function GameScreen() {
     }
 
     const handleError = useCallback((message: string) => {
-        alert(message); // Ici, plus tard, on pourra remplacer par un beau Toast ou une Modale !
+        alert(message);
         navigate('/');
     }, [navigate]);
 
     const {
         lyricsData, totalWords, isFetchingLyrics, currentInput, foundWordsCount,
         timeLeft, gameStatus, scorePercentage, formattedTime, handleInputChange, setGameStatus,
-        lastFoundWord, restartGame, hasUsedHint, applyHint, getMissingWords, isTimerDisabled, setIsTimerDisabled
+        lastFoundWord, restartGame, hasUsedHint, applyHint, getMissingWords,
+        isTimerDisabled, disableTimer
     } = useGame(song, handleError);
 
-    // NOUVEAU : On écoute le score. S'il touche 100% et qu'il reste des mots, on affiche la modale UNE seule fois.
+    // NOUVEAU : Appel du hook pour récupérer les stats globales de cette chanson depuis Supabase
+    const { stats: globalStats } = useSongStats(song.id.toString());
+
+    // Modale de récompense des 100%
     useEffect(() => {
         if (scorePercentage >= 100 && foundWordsCount < totalWords && !hasPromptedHundred && gameStatus === 'playing') {
             setShowHundredPercentModal(true);
             setHasPromptedHundred(true);
         }
     }, [scorePercentage, foundWordsCount, totalWords, hasPromptedHundred, gameStatus]);
+
+    // L'écouteur global de fin de partie
+    useEffect(() => {
+        if ((gameStatus === 'won' || gameStatus === 'lost') && !hasSaved) {
+            const finalStatus = scorePercentage >= 100 ? 'won' : 'lost';
+            const missing = foundWordsCount === totalWords ? [] : getMissingWords();
+
+            saveGameResult(user, isGuest, song, scorePercentage, finalStatus, timeLeft, hasUsedHint, missing);
+            setHasSaved(true);
+        }
+    }, [gameStatus, hasSaved, scorePercentage, timeLeft, hasUsedHint, user, isGuest, song, foundWordsCount, totalWords, getMissingWords]);
 
     const handleUserBack = () => {
         if (gameStatus === 'playing') {
@@ -107,6 +132,11 @@ export default function GameScreen() {
         setShowRestartModal(false);
         setHasGivenUp(false);
         setHasPromptedHundred(false);
+        setHasSaved(false);
+
+        // NOUVEAU : On cache les stats quand on recommence !
+        setShowStatsDashboard(false);
+
         if (restartGame) {
             restartGame();
         } else {
@@ -145,19 +175,18 @@ export default function GameScreen() {
                     onCancel={() => setShowHintModal(false)}
                 />
             )}
-
             {showTimerModal && (
                 <DisableTimerModal
                     onConfirm={() => {
-                        setIsTimerDisabled(true);
+                        disableTimer();
                         setShowTimerModal(false);
                     }}
                     onCancel={() => setShowTimerModal(false)}
                 />
             )}
+
             <GameHeader song={song} onBack={handleUserBack} onProfileClick={() => setShowProfile(true)} />
 
-            {/* On passe en pb-28 sur mobile pour laisser l'espace à la barre d'input fixe, et on revient en pb-6 sur PC */}
             <main className="flex-1 p-4 md:p-6 max-w-4xl mx-auto w-full flex flex-col gap-4 md:gap-8 relative z-10 pt-4 md:pt-6">
 
                 {gameStatus === 'won' && (
@@ -201,16 +230,38 @@ export default function GameScreen() {
                     isTimerDisabled={isTimerDisabled}
                 />
 
+                {/* NOUVEAU : Le bouton pour basculer vers les statistiques (Uniquement en fin de partie) */}
+                {(gameStatus === 'won' || gameStatus === 'lost') && !showStatsDashboard && (
+                    <div className="flex justify-center mt-2 animate-in fade-in zoom-in duration-500">
+                        <Button
+                            onClick={() => setShowStatsDashboard(true)}
+                            className="h-12 px-6 rounded-xl bg-secondary/20 hover:bg-secondary/40 text-secondary border border-secondary/30 shadow-[0_0_15px_rgba(64,201,255,0.3)] hover:shadow-[0_0_25px_rgba(64,201,255,0.5)] transition-all flex items-center gap-3 text-lg font-semibold"
+                        >
+                            <BarChart3 className="w-5 h-5" />
+                            Voir les statistiques détaillées
+                        </Button>
+                    </div>
+                )}
+
                 <div className="fixed top-0 inset-x-0 h-24 backdrop-blur-[12px] z-20 pointer-events-none [mask-image:linear-gradient(to_bottom,black_20%,transparent_100%)]" aria-hidden="true" />
 
-                <div className="relative">
-                    <LyricsGrid
-                        lyricsData={lyricsData}
-                        isFetchingLyrics={isFetchingLyrics}
-                        gameStatus={gameStatus}
-                        lastFoundWord={lastFoundWord}
-                        alignment={lyricsAlignment}
-                    />
+                {/* NOUVEAU : La transition fluide entre LyricsGrid et StatsDashboard */}
+                <div className="relative mt-2">
+                    {showStatsDashboard ? (
+                        <StatsDashboard
+                            lyricsData={lyricsData}
+                            globalStats={globalStats}
+                            onClose={() => setShowStatsDashboard(false)}
+                        />
+                    ) : (
+                        <LyricsGrid
+                            lyricsData={lyricsData}
+                            isFetchingLyrics={isFetchingLyrics}
+                            gameStatus={gameStatus}
+                            lastFoundWord={lastFoundWord}
+                            alignment={lyricsAlignment}
+                        />
+                    )}
                 </div>
             </main>
         </div>

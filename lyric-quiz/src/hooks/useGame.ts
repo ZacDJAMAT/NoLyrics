@@ -79,7 +79,7 @@ export const useGame = (song: Song, onError: (message: string) => void) => {
 
 
     const formattedTime = useMemo(() => {
-        if (isTimerDisabled) return "∞"; // NOUVEAU : Affiche l'infini si désactivé
+        if (isTimerDisabled || timeLeft === -1) return "∞";
         const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
         const s = (timeLeft % 60).toString().padStart(2, '0');
         return `${m}:${s}`;
@@ -234,6 +234,11 @@ export const useGame = (song: Song, onError: (message: string) => void) => {
         setGameStatus('ready');
     }, [lyricsData, song, totalWords]);
 
+    const disableTimer = useCallback(() => {
+        setIsTimerDisabled(true);
+        setTimeLeft(-1); // La fameuse valeur magique pour tes futures statistiques !
+    }, []);
+
     return {
         lyricsData,
         totalWords,
@@ -253,6 +258,7 @@ export const useGame = (song: Song, onError: (message: string) => void) => {
         applyHint,
         getMissingWords,
         isTimerDisabled,
-        setIsTimerDisabled
+        setIsTimerDisabled,
+        disableTimer,
     };
 };
