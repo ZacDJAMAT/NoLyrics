@@ -3,8 +3,14 @@ import { searchSongs } from '../utils/api';
 import { Song } from '../types';
 
 export const useSearch = (limit: number = 12) => {
-    // 1. On initialise les états en lisant le sessionStorage (s'il y a déjà des données)
-    const [query, setQuery] = useState<string>(() => sessionStorage.getItem('search_query') || '');
+    const [query, setQuery] = useState<string>(
+        () => sessionStorage.getItem('search_query_input') || ''
+    );
+
+    const [activeQuery, setActiveQuery] = useState<string>(
+        () => sessionStorage.getItem('search_query_active') || ''
+    );
+
     const [results, setResults] = useState<Song[]>(() => {
         const saved = sessionStorage.getItem('search_results');
         return saved ? JSON.parse(saved) : [];
@@ -19,13 +25,13 @@ export const useSearch = (limit: number = 12) => {
         return saved ? Number(saved) : 0;
     });
 
-    // 2. À chaque fois qu'une de ces données change, on met à jour le sessionStorage
     useEffect(() => {
-        sessionStorage.setItem('search_query', query);
+        sessionStorage.setItem('search_query_input', query);
+        sessionStorage.setItem('search_query_active', activeQuery);
         sessionStorage.setItem('search_results', JSON.stringify(results));
         sessionStorage.setItem('search_page', currentPage.toString());
         sessionStorage.setItem('search_total', totalResults.toString());
-    }, [query, results, currentPage, totalResults]);
+    }, [query, activeQuery, results, currentPage, totalResults]);
 
     const fetchResults = async (searchQuery: string, pageNumber: number) => {
         if (!searchQuery) return;
@@ -36,7 +42,7 @@ export const useSearch = (limit: number = 12) => {
             setTotalResults(data.total);
         } catch (error) {
             console.error(error);
-            alert("Une erreur est survenue lors de la recherche.");
+            alert('Une erreur est survenue lors de la recherche.');
         } finally {
             setIsLoading(false);
         }
@@ -44,19 +50,26 @@ export const useSearch = (limit: number = 12) => {
 
     const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setActiveQuery(query);
         setCurrentPage(1);
+
+        // NOUVEAU : Si la recherche est vide, on vide les résultats pour revenir à l'accueil
+        if (!query.trim()) {
+            setResults([]);
+            setTotalResults(0);
+            return;
+        }
+
         fetchResults(query, 1);
     };
 
     const handlePageChange = (newPage: number) => {
         setCurrentPage(newPage);
-        fetchResults(query, newPage);
+        fetchResults(activeQuery, newPage);
 
-        // On attend 50ms pour laisser à React le temps de dessiner la nouvelle grille de chansons
         setTimeout(() => {
             const resultsContainer = document.getElementById('results-top');
             if (resultsContainer) {
-                // scrollIntoView est plus robuste sur mobile pour ce genre d'effet
                 resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
             } else {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -67,6 +80,15 @@ export const useSearch = (limit: number = 12) => {
     const totalPages = Math.ceil(totalResults / limit);
 
     return {
-        query, setQuery, results, isLoading, currentPage, totalResults, totalPages, handleSearch, handlePageChange
+        query,
+        setQuery,
+        activeQuery, // NOUVEAU : On l'exporte !
+        results,
+        isLoading,
+        currentPage,
+        totalResults,
+        totalPages,
+        handleSearch,
+        handlePageChange,
     };
 };
