@@ -1,45 +1,33 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom'; // NOUVEAU : Pour lire/écrire dans l'URL
 import { searchSongs } from '../utils/api';
 import { Song } from '../types';
 
 export const useSearch = (limit: number = 12) => {
-    const [query, setQuery] = useState<string>(
-        () => sessionStorage.getItem('search_query_input') || ''
-    );
+    // 1. La source de vérité devient l'URL
+    const [searchParams, setSearchParams] = useSearchParams();
+    const urlQuery = searchParams.get('q') || '';
+    const urlPage = parseInt(searchParams.get('page') || '1', 10);
 
-    const [activeQuery, setActiveQuery] = useState<string>(
-        () => sessionStorage.getItem('search_query_active') || ''
-    );
+    // 2. L'état local pour la barre de recherche (en direct)
+    const [query, setQuery] = useState<string>(urlQuery);
 
-    const [results, setResults] = useState<Song[]>(() => {
-        const saved = sessionStorage.getItem('search_results');
-        return saved ? JSON.parse(saved) : [];
-    });
+    const [results, setResults] = useState<Song[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [currentPage, setCurrentPage] = useState<number>(() => {
-        const saved = sessionStorage.getItem('search_page');
-        return saved ? Number(saved) : 1;
-    });
-    const [totalResults, setTotalResults] = useState<number>(() => {
-        const saved = sessionStorage.getItem('search_total');
-        return saved ? Number(saved) : 0;
-    });
+    const [totalResults, setTotalResults] = useState<number>(0);
 
-    useEffect(() => {
-        sessionStorage.setItem('search_query_input', query);
-        sessionStorage.setItem('search_query_active', activeQuery);
-        sessionStorage.setItem('search_results', JSON.stringify(results));
-        sessionStorage.setItem('search_page', currentPage.toString());
-        sessionStorage.setItem('search_total', totalResults.toString());
-    }, [query, activeQuery, results, currentPage, totalResults]);
+    // Pour éviter de faire la requête 2 fois si l'URL ne change pas vraiment
+    const lastFetched = useRef({ query: '', page: 1 });
 
     const fetchResults = async (searchQuery: string, pageNumber: number) => {
-        if (!searchQuery) return;
+        if (!searchQuery.trim()) return;
+
         setIsLoading(true);
         try {
             const data = await searchSongs(searchQuery, pageNumber, limit);
             setResults(data.results);
             setTotalResults(data.total);
+            lastFetched.current = { query: searchQuery, page: pageNumber };
         } catch (error) {
             console.error(error);
             alert('Une erreur est survenue lors de la recherche.');
@@ -48,24 +36,43 @@ export const useSearch = (limit: number = 12) => {
         }
     };
 
-    const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setActiveQuery(query);
-        setCurrentPage(1);
-
-        // NOUVEAU : Si la recherche est vide, on vide les résultats pour revenir à l'accueil
-        if (!query.trim()) {
+    // 3. On écoute l'URL. Si elle change (bouton précédent, ou nouvelle recherche), on met à jour.
+    useEffect(() => {
+        if (!urlQuery) {
+            // Retour à l'accueil (plus de paramètre ?q=)
             setResults([]);
             setTotalResults(0);
+            setQuery(''); // On vide la barre de recherche
+            lastFetched.current = { query: '', page: 1 };
             return;
         }
 
-        fetchResults(query, 1);
+        // Synchronise l'input avec l'URL (très utile si on fait "Précédent" dans le navigateur)
+        setQuery(urlQuery);
+
+        // Fetch uniquement si c'est une nouvelle recherche ou nouvelle page
+        if (lastFetched.current.query !== urlQuery || lastFetched.current.page !== urlPage) {
+            fetchResults(urlQuery, urlPage);
+        }
+    }, [urlQuery, urlPage]);
+
+    // 4. Validation du formulaire
+    const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const trimmedQuery = query.trim();
+
+        if (!trimmedQuery) {
+            setSearchParams({}); // Nettoie l'URL totalement (enlève le ?q=)
+        } else {
+            // Modifie l'URL, ce qui va déclencher le useEffect !
+            setSearchParams({ q: trimmedQuery, page: '1' });
+        }
     };
 
+    // 5. Changement de page
     const handlePageChange = (newPage: number) => {
-        setCurrentPage(newPage);
-        fetchResults(activeQuery, newPage);
+        // Met à jour la page dans l'URL
+        setSearchParams({ q: urlQuery, page: newPage.toString() });
 
         setTimeout(() => {
             const resultsContainer = document.getElementById('results-top');
@@ -82,10 +89,10 @@ export const useSearch = (limit: number = 12) => {
     return {
         query,
         setQuery,
-        activeQuery, // NOUVEAU : On l'exporte !
+        activeQuery: urlQuery, // L'activeQuery est maintenant directement lue depuis l'URL !
         results,
         isLoading,
-        currentPage,
+        currentPage: urlPage,
         totalResults,
         totalPages,
         handleSearch,
