@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Song } from '../types';
-import { useNavigate } from 'react-router-dom';
 import { useSearch } from '../hooks/useSearch';
 import { useTrendingSongs } from '../hooks/useTrendingSongs';
 import UserMenuButton from './UserMenuButton';
@@ -9,6 +8,7 @@ import Pagination from './Pagination';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { supabase } from '../lib/supabase';
+import { useNavigate, useParams } from 'react-router-dom';
 
 export default function SearchScreen() {
     const {
@@ -26,14 +26,15 @@ export default function SearchScreen() {
 
     const { trendingSongs, isLoadingTrending, trendingError } = useTrendingSongs();
     const navigate = useNavigate();
+    const { modeId } = useParams();
     const [bestScores, setBestScores] = useState<Record<string, number>>({});
 
     // NOUVEAU : État pour la pagination des tendances
     const [currentTrendingPage, setCurrentTrendingPage] = useState(1);
-    const itemsPerTrendingPage = 12; // On garde 12 comme pour la recherche
+    const itemsPerTrendingPage = 12;
 
     const handleSelectSong = (song: Song) => {
-        navigate('/game', { state: { song } });
+        navigate(`/mode/${modeId}/solo/play`, { state: { song } });
     };
 
     // CORRECTION : On utilise `activeQuery` au lieu de `query` pour ne pas réagir à la frappe !

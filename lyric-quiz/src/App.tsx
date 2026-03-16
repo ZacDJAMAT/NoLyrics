@@ -1,26 +1,26 @@
 import { useState } from 'react';
 import SearchScreen from './components/SearchScreen';
 import GameScreen from './components/GameScreen';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import LoginScreen from './components/LoginScreen'; // Le nouvel écran
+import { Routes, Route, Navigate, Link, useParams } from 'react-router-dom';
+import LoginScreen from './components/LoginScreen';
 import ProfileScreen from './components/ProfileScreen';
-import { useAuth } from './contexts/AuthContext'; // Le cerveau
+import { useAuth } from './contexts/AuthContext';
 import SyncModal from './components/SyncModal';
+import HubScreen from './components/HubScreen';
+import LobbyScreen from './components/LobbyScreen';
 
 function App() {
     const [showSyncModal, setShowSyncModal] = useState<boolean>(true);
     const { user, isGuest, isLoading } = useAuth();
 
-    // 1. Si Supabase est encore en train de vérifier qui est là, on affiche un loader
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-neutral-900 flex items-center justify-center">
-                <div className="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="flex min-h-screen items-center justify-center bg-neutral-900">
+                <div className="h-12 w-12 animate-spin rounded-full border-4 border-pink-500 border-t-transparent"></div>
             </div>
         );
     }
 
-    // 2. Si on ne connaît pas la personne (ni connectée, ni invitée), on bloque l'entrée
     if (!user && !isGuest) {
         return <LoginScreen />;
     }
@@ -29,23 +29,28 @@ function App() {
         <>
             {showSyncModal && <SyncModal onComplete={() => setShowSyncModal(false)} />}
 
-            {/* LE NOUVEAU SYSTÈME DE ROUTAGE */}
+            {/* LE NOUVEAU SYSTÈME DE ROUTAGE IMBRIQUÉ */}
             <Routes>
-                {/* Page par défaut : La recherche */}
-                <Route path="/" element={<SearchScreen />} />
+                {/* 1. L'accueil est maintenant le vrai Hub */}
+                <Route path="/" element={<HubScreen />} />
 
-                {/* Page du jeu */}
-                <Route path="/game" element={<GameScreen />} />
+                {/* 2. Le vrai Lobby */}
+                <Route path="/mode/:modeId" element={<LobbyScreen />} />
 
-                {/* Page du profil */}
+                {/* 3. L'ancien accueil devient l'écran de recherche spécifique au solo */}
+                <Route path="/mode/:modeId/solo/search" element={<SearchScreen />} />
+
+                {/* 4. L'ancien écran de jeu devient l'écran de jeu spécifique au solo */}
+                <Route path="/mode/:modeId/solo/play" element={<GameScreen />} />
+
+                {/* Page du profil (Inchangée) */}
                 <Route path="/profile" element={<ProfileScreen />} />
 
-                {/* Sécurité : Si l'utilisateur tape une URL qui n'existe pas, on le renvoie à l'accueil */}
+                {/* Sécurité : Redirection vers le Hub si l'URL est inconnue */}
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </>
     );
 }
-
 
 export default App;

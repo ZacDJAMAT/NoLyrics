@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Song } from '../types';
 import { useGame } from '../hooks/useGame';
-import { useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { useLocation, useNavigate, Navigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { saveGameResult } from '../lib/history';
-import { Alert, AlertDescription } from "./ui/alert";
-// NOUVEAU : Import de BarChart3 pour l'icône du bouton
-import { Trophy, AlertTriangle, BarChart3 } from "lucide-react";
+import { Alert, AlertDescription } from './ui/alert';
+import { Trophy, AlertTriangle, BarChart3 } from 'lucide-react';
 import HintConfirmModal from './HintConfirmModal';
 import HundredPercentModal from './HundredPercentModal';
 import GiveUpConfirmModal from './GiveUpConfirmModal';
@@ -26,6 +25,7 @@ import { useSongStats } from '../hooks/useSongStats';
 export default function GameScreen() {
     const location = useLocation();
     const navigate = useNavigate();
+    const { modeId } = useParams();
     const { user, isGuest, loginWithGoogle } = useAuth();
 
     const [showSaveModal, setShowSaveModal] = useState<boolean>(false);
@@ -49,19 +49,36 @@ export default function GameScreen() {
     const song = location.state?.song as Song | undefined;
 
     if (!song) {
-        return <Navigate to="/" replace />;
+        return <Navigate to={`/mode/${modeId}/solo/search`} replace />;
     }
 
-    const handleError = useCallback((message: string) => {
-        alert(message);
-        navigate('/');
-    }, [navigate]);
+    const handleError = useCallback(
+        (message: string) => {
+            alert(message);
+            navigate(`/mode/${modeId}/solo/search`);
+        },
+        [navigate, modeId]
+    );
 
     const {
-        lyricsData, totalWords, isFetchingLyrics, currentInput, foundWordsCount,
-        timeLeft, gameStatus, scorePercentage, formattedTime, handleInputChange, setGameStatus,
-        lastFoundWord, restartGame, hasUsedHint, applyHint, getMissingWords,
-        isTimerDisabled, disableTimer
+        lyricsData,
+        totalWords,
+        isFetchingLyrics,
+        currentInput,
+        foundWordsCount,
+        timeLeft,
+        gameStatus,
+        scorePercentage,
+        formattedTime,
+        handleInputChange,
+        setGameStatus,
+        lastFoundWord,
+        restartGame,
+        hasUsedHint,
+        applyHint,
+        getMissingWords,
+        isTimerDisabled,
+        disableTimer,
     } = useGame(song, handleError);
 
     // NOUVEAU : Appel du hook pour récupérer les stats globales de cette chanson depuis Supabase
@@ -69,7 +86,12 @@ export default function GameScreen() {
 
     // Modale de récompense des 100%
     useEffect(() => {
-        if (scorePercentage >= 100 && foundWordsCount < totalWords && !hasPromptedHundred && gameStatus === 'playing') {
+        if (
+            scorePercentage >= 100 &&
+            foundWordsCount < totalWords &&
+            !hasPromptedHundred &&
+            gameStatus === 'playing'
+        ) {
             setShowHundredPercentModal(true);
             setHasPromptedHundred(true);
         }
@@ -81,17 +103,38 @@ export default function GameScreen() {
             const finalStatus = scorePercentage >= 100 ? 'won' : 'lost';
             const missing = foundWordsCount === totalWords ? [] : getMissingWords();
 
-            saveGameResult(user, isGuest, song, scorePercentage, finalStatus, timeLeft, hasUsedHint, missing);
+            saveGameResult(
+                user,
+                isGuest,
+                song,
+                scorePercentage,
+                finalStatus,
+                timeLeft,
+                hasUsedHint,
+                missing
+            );
             setHasSaved(true);
         }
-    }, [gameStatus, hasSaved, scorePercentage, timeLeft, hasUsedHint, user, isGuest, song, foundWordsCount, totalWords, getMissingWords]);
+    }, [
+        gameStatus,
+        hasSaved,
+        scorePercentage,
+        timeLeft,
+        hasUsedHint,
+        user,
+        isGuest,
+        song,
+        foundWordsCount,
+        totalWords,
+        getMissingWords,
+    ]);
 
     const handleUserBack = () => {
         if (gameStatus === 'playing') {
             setPendingAction('back');
             setShowGiveUpModal(true);
         } else {
-            navigate('/');
+            navigate(`/mode/${modeId}/solo/search`);
         }
     };
 
@@ -105,8 +148,17 @@ export default function GameScreen() {
 
         if (pendingAction === 'back') {
             const missing = foundWordsCount === totalWords ? [] : getMissingWords();
-            saveGameResult(user, isGuest, song, scorePercentage, finalStatus, timeLeft, hasUsedHint, missing);
-            navigate('/');
+            saveGameResult(
+                user,
+                isGuest,
+                song,
+                scorePercentage,
+                finalStatus,
+                timeLeft,
+                hasUsedHint,
+                missing
+            );
+            navigate(`/mode/${modeId}/solo/search`);
         } else if (pendingAction === 'giveup') {
             setHasGivenUp(true);
             setGameStatus(finalStatus);
@@ -127,7 +179,16 @@ export default function GameScreen() {
         if (gameStatus === 'playing') {
             const finalStatus = scorePercentage >= 100 ? 'won' : 'lost';
             const missing = foundWordsCount === totalWords ? [] : getMissingWords();
-            saveGameResult(user, isGuest, song, scorePercentage, finalStatus, timeLeft, hasUsedHint, missing);
+            saveGameResult(
+                user,
+                isGuest,
+                song,
+                scorePercentage,
+                finalStatus,
+                timeLeft,
+                hasUsedHint,
+                missing
+            );
         }
         setShowRestartModal(false);
         setHasGivenUp(false);
@@ -151,12 +212,26 @@ export default function GameScreen() {
     }, [user, showSaveModal]);
 
     return (
-        <div className="min-h-screen font-sans selection:bg-primary selection:text-primary-foreground flex flex-col relative overflow-clip">
-
+        <div className="selection:bg-primary selection:text-primary-foreground relative flex min-h-screen flex-col overflow-clip font-sans">
             {showProfile && <ProfileScreen onClose={() => setShowProfile(false)} />}
-            {showSaveModal && <SaveScoreModal onAccept={loginWithGoogle} onDecline={() => setShowSaveModal(false)} />}
-            {showGiveUpModal && <GiveUpConfirmModal onConfirm={confirmGiveUp} onCancel={() => setShowGiveUpModal(false)} />}
-            {showRestartModal && <RestartConfirmModal onConfirm={confirmRestart} onCancel={() => setShowRestartModal(false)} />}
+            {showSaveModal && (
+                <SaveScoreModal
+                    onAccept={loginWithGoogle}
+                    onDecline={() => setShowSaveModal(false)}
+                />
+            )}
+            {showGiveUpModal && (
+                <GiveUpConfirmModal
+                    onConfirm={confirmGiveUp}
+                    onCancel={() => setShowGiveUpModal(false)}
+                />
+            )}
+            {showRestartModal && (
+                <RestartConfirmModal
+                    onConfirm={confirmRestart}
+                    onCancel={() => setShowRestartModal(false)}
+                />
+            )}
             {showHundredPercentModal && (
                 <HundredPercentModal
                     onFinish={() => {
@@ -185,26 +260,37 @@ export default function GameScreen() {
                 />
             )}
 
-            <GameHeader song={song} onBack={handleUserBack} onProfileClick={() => setShowProfile(true)} />
+            <GameHeader
+                song={song}
+                onBack={handleUserBack}
+                onProfileClick={() => setShowProfile(true)}
+            />
 
-            <main className="flex-1 p-4 md:p-6 max-w-4xl mx-auto w-full flex flex-col gap-4 md:gap-8 relative z-10 pt-4 md:pt-6">
-
+            <main className="relative z-10 mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 p-4 pt-4 md:gap-8 md:p-6 md:pt-6">
                 {gameStatus === 'won' && (
-                    <Alert variant="success" className="text-center flex items-center justify-center gap-2">
+                    <Alert
+                        variant="success"
+                        className="flex items-center justify-center gap-2 text-center"
+                    >
                         <Trophy className="h-5 w-5" />
                         <AlertDescription className="text-xl">
                             {foundWordsCount === totalWords
-                                ? "Incroyable ! Tu as trouvé absolument toutes les paroles !"
-                                : "Félicitations ! Tu as remporté la partie avec 100% !"}
+                                ? 'Incroyable ! Tu as trouvé absolument toutes les paroles !'
+                                : 'Félicitations ! Tu as remporté la partie avec 100% !'}
                         </AlertDescription>
                     </Alert>
                 )}
 
                 {gameStatus === 'lost' && (
-                    <Alert variant="destructive" className="text-center flex items-center justify-center gap-2">
+                    <Alert
+                        variant="destructive"
+                        className="flex items-center justify-center gap-2 text-center"
+                    >
                         <AlertTriangle className="h-5 w-5" />
                         <AlertDescription className="text-xl">
-                            {hasGivenUp ? "Partie abandonnée. Regarde les mots en rouge !" : "Temps écoulé ! Regarde les mots en rouge !"}
+                            {hasGivenUp
+                                ? 'Partie abandonnée. Regarde les mots en rouge !'
+                                : 'Temps écoulé ! Regarde les mots en rouge !'}
                         </AlertDescription>
                     </Alert>
                 )}
@@ -232,18 +318,21 @@ export default function GameScreen() {
 
                 {/* NOUVEAU : Le bouton pour basculer vers les statistiques (Uniquement en fin de partie) */}
                 {(gameStatus === 'won' || gameStatus === 'lost') && !showStatsDashboard && (
-                    <div className="flex justify-center mt-2 animate-in fade-in zoom-in duration-500">
+                    <div className="animate-in fade-in zoom-in mt-2 flex justify-center duration-500">
                         <Button
                             onClick={() => setShowStatsDashboard(true)}
-                            className="h-12 px-6 rounded-xl bg-secondary/20 hover:bg-secondary/40 text-secondary border border-secondary/30 shadow-[0_0_15px_rgba(64,201,255,0.3)] hover:shadow-[0_0_25px_rgba(64,201,255,0.5)] transition-all flex items-center gap-3 text-lg font-semibold"
+                            className="bg-secondary/20 hover:bg-secondary/40 text-secondary border-secondary/30 flex h-12 items-center gap-3 rounded-xl border px-6 text-lg font-semibold shadow-[0_0_15px_rgba(64,201,255,0.3)] transition-all hover:shadow-[0_0_25px_rgba(64,201,255,0.5)]"
                         >
-                            <BarChart3 className="w-5 h-5" />
+                            <BarChart3 className="h-5 w-5" />
                             Voir les statistiques détaillées
                         </Button>
                     </div>
                 )}
 
-                <div className="fixed top-0 inset-x-0 h-24 backdrop-blur-[12px] z-20 pointer-events-none [mask-image:linear-gradient(to_bottom,black_20%,transparent_100%)]" aria-hidden="true" />
+                <div
+                    className="pointer-events-none fixed inset-x-0 top-0 z-20 h-24 [mask-image:linear-gradient(to_bottom,black_20%,transparent_100%)] backdrop-blur-[12px]"
+                    aria-hidden="true"
+                />
 
                 {/* NOUVEAU : La transition fluide entre LyricsGrid et StatsDashboard */}
                 <div className="relative mt-2">
