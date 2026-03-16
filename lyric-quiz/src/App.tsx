@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import SearchScreen from './components/SearchScreen';
-import GameScreen from './components/GameScreen';
+import SearchScreen from './features/nallmusic/SearchScreen.tsx';
+import GameScreen from './features/nallmusic/GameScreen.tsx';
 import { Routes, Route, Navigate, Link, useParams } from 'react-router-dom';
 import LoginScreen from './components/LoginScreen';
 import ProfileScreen from './components/ProfileScreen';
 import { useAuth } from './contexts/AuthContext';
 import SyncModal from './components/SyncModal';
-import HubScreen from './components/HubScreen';
-import LobbyScreen from './components/LobbyScreen';
+import HubScreen from './features/hub/HubScreen.tsx';
+import LobbyScreen from './features/hub/LobbyScreen.tsx';
 
 function App() {
     const [showSyncModal, setShowSyncModal] = useState<boolean>(true);

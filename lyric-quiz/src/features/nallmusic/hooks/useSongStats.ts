@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase'; // Ajuste le chemin vers ton client Supabase si besoin
+import { supabase } from '../../../lib/supabase.ts'; // Ajuste le chemin vers ton client Supabase si besoin
 
 export interface WordStat {
     word: string;
@@ -41,7 +41,7 @@ export function useSongStats(songId: string | undefined) {
                         averageScore: 0,
                         perfectScores: 0,
                         wordStats: {},
-                        hardestWord: null
+                        hardestWord: null,
                     });
                     return;
                 }
@@ -52,7 +52,7 @@ export function useSongStats(songId: string | undefined) {
                 const missCounts: Record<string, number> = {};
 
                 // 2. On parcourt chaque partie jouée
-                data.forEach(game => {
+                data.forEach((game) => {
                     totalScore += game.score_percentage;
                     if (game.score_percentage === 100) perfectScores++;
 
@@ -89,11 +89,10 @@ export function useSongStats(songId: string | undefined) {
                     averageScore: Math.round(totalScore / totalPlays),
                     perfectScores,
                     wordStats,
-                    hardestWord
+                    hardestWord,
                 });
-
             } catch (error) {
-                console.error("Erreur lors de la récupération des statistiques globales :", error);
+                console.error('Erreur lors de la récupération des statistiques globales :', error);
             } finally {
                 setIsLoading(false);
             }

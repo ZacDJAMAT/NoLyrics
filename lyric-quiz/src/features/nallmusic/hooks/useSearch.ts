@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom'; // NOUVEAU : Pour lire/écrire dans l'URL
-import { searchSongs } from '../utils/api';
-import { Song } from '../types';
+import { searchSongs } from '../../../utils/api.ts';
+import { Song } from '../../../types.ts';
 
 export const useSearch = (limit: number = 12) => {
     // 1. La source de vérité devient l'URL

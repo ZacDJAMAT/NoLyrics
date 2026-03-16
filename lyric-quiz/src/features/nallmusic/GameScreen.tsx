@@ -1,26 +1,26 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Song } from '../types';
-import { useGame } from '../hooks/useGame';
+import { Song } from '../../types.ts';
+import { useGame } from './hooks/useGame.ts';
 import { useLocation, useNavigate, Navigate, useParams } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { saveGameResult } from '../lib/history';
-import { Alert, AlertDescription } from './ui/alert';
+import { useAuth } from '../../contexts/AuthContext.tsx';
+import { saveGameResult } from '../../lib/history.ts';
+import { Alert, AlertDescription } from '../../components/ui/alert.tsx';
 import { Trophy, AlertTriangle, BarChart3 } from 'lucide-react';
-import HintConfirmModal from './HintConfirmModal';
-import HundredPercentModal from './HundredPercentModal';
-import GiveUpConfirmModal from './GiveUpConfirmModal';
-import RestartConfirmModal from './RestartConfirmModal';
-import GameHeader from './GameHeader';
-import ScoreBoard from './ScoreBoard';
-import LyricsGrid from './LyricsGrid';
-import SaveScoreModal from './SaveScoreModal';
-import ProfileScreen from './ProfileScreen';
-import DisableTimerModal from './DisableTimerModal';
-import { Button } from './ui/button'; // Assure-toi que l'import est correct
+import HintConfirmModal from './HintConfirmModal.tsx';
+import HundredPercentModal from './HundredPercentModal.tsx';
+import GiveUpConfirmModal from '../../components/GiveUpConfirmModal.tsx';
+import RestartConfirmModal from './RestartConfirmModal.tsx';
+import GameHeader from './GameHeader.tsx';
+import ScoreBoard from './ScoreBoard.tsx';
+import LyricsGrid from './LyricsGrid.tsx';
+import SaveScoreModal from '../../components/SaveScoreModal.tsx';
+import ProfileScreen from '../../components/ProfileScreen.tsx';
+import DisableTimerModal from './DisableTimerModal.tsx';
+import { Button } from '../../components/ui/button.tsx'; // Assure-toi que l'import est correct
 
 // NOUVEAU : Imports des composants de statistiques
-import StatsDashboard from './StatsDashboard';
-import { useSongStats } from '../hooks/useSongStats';
+import StatsDashboard from './StatsDashboard.tsx';
+import { useSongStats } from './hooks/useSongStats.ts';
 
 export default function GameScreen() {
     const location = useLocation();

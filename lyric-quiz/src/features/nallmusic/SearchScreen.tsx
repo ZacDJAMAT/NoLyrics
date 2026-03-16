@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Song } from '../types';
-import { useSearch } from '../hooks/useSearch';
-import { useTrendingSongs } from '../hooks/useTrendingSongs';
-import UserMenuButton from './UserMenuButton';
-import SongCard from './SongCard';
-import Pagination from './Pagination';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { supabase } from '../lib/supabase';
+import { Song } from '../../types.ts';
+import { useSearch } from './hooks/useSearch.ts';
+import { useTrendingSongs } from '../../hooks/useTrendingSongs.ts';
+import UserMenuButton from '../../components/UserMenuButton.tsx';
+import SongCard from '../../components/SongCard.tsx';
+import Pagination from '../../components/Pagination.tsx';
+import { Button } from '../../components/ui/button.tsx';
+import { Input } from '../../components/ui/input.tsx';
+import { supabase } from '../../lib/supabase.ts';
 import { useNavigate, useParams } from 'react-router-dom';
 
 export default function SearchScreen() {

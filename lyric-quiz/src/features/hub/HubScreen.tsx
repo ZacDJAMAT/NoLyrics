@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Music, Mic, Sparkles } from 'lucide-react';
-import UserMenuButton from './UserMenuButton';
+import UserMenuButton from '../../components/UserMenuButton.tsx';
 
 export default function HubScreen() {
     return (

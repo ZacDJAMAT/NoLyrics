@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { fetchLyrics } from '../utils/api';
-import { parseLyrics, normalizeWord } from '../utils/lyricsParser';
-import { Song, Word, GameStatus } from '../types';
-import { useAuth } from '../contexts/AuthContext';
-import { saveGameResult } from '../lib/history';
+import { fetchLyrics } from '../../../utils/api.ts';
+import { parseLyrics, normalizeWord } from '../../../utils/lyricsParser.ts';
+import { Song, Word, GameStatus } from '../../../types.ts';
+import { useAuth } from '../../../contexts/AuthContext.tsx';
+import { saveGameResult } from '../../../lib/history.ts';
 
 // NOUVEAU : On remplace onBack par onError pour que l'interface gère l'affichage des erreurs
 export const useGame = (song: Song, onError: (message: string) => void) => {
@@ -34,7 +34,7 @@ export const useGame = (song: Song, onError: (message: string) => void) => {
 
                 if (!rawLyrics) {
                     // Fini les alert() ! On délègue l'affichage de l'erreur à la vue.
-                    onError("Les paroles de cette musique ne sont pas encore disponibles !");
+                    onError('Les paroles de cette musique ne sont pas encore disponibles !');
                     return;
                 }
 
@@ -44,7 +44,7 @@ export const useGame = (song: Song, onError: (message: string) => void) => {
                 setTotalWords(totalWords);
 
                 const audioDuration = song.duration || 180;
-                const baseTime = audioDuration + (totalWords * 1.65);
+                const baseTime = audioDuration + totalWords * 1.65;
 
                 const MAX_TIME = 3600;
                 const calculatedTime = Math.floor(MAX_TIME * (1 - Math.exp(-baseTime / MAX_TIME)));
@@ -53,9 +53,8 @@ export const useGame = (song: Song, onError: (message: string) => void) => {
                 setFoundWordsCount(0);
                 setCurrentInput('');
                 setGameStatus('ready');
-
             } catch (error) {
-                onError("Erreur lors de la récupération des paroles.");
+                onError('Erreur lors de la récupération des paroles.');
             } finally {
                 setIsFetchingLyrics(false);
             }
@@ -76,11 +75,11 @@ export const useGame = (song: Song, onError: (message: string) => void) => {
         return () => clearInterval(timer);
     }, [gameStatus, timeLeft, isTimerDisabled]);
 
-
-
     const formattedTime = useMemo(() => {
-        if (isTimerDisabled || timeLeft === -1) return "∞";
-        const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+        if (isTimerDisabled || timeLeft === -1) return '∞';
+        const m = Math.floor(timeLeft / 60)
+            .toString()
+            .padStart(2, '0');
         const s = (timeLeft % 60).toString().padStart(2, '0');
         return `${m}:${s}`;
     }, [timeLeft, isTimerDisabled]);
@@ -94,8 +93,8 @@ export const useGame = (song: Song, onError: (message: string) => void) => {
     const getMissingWords = useCallback(() => {
         if (!lyricsData) return [];
         const missing = new Set<string>();
-        lyricsData.forEach(line => {
-            line.forEach(word => {
+        lyricsData.forEach((line) => {
+            line.forEach((word) => {
                 if (!word.isFound) {
                     missing.add(word.normalized);
                 }
@@ -112,11 +111,11 @@ export const useGame = (song: Song, onError: (message: string) => void) => {
         setHasUsedHint(true);
 
         // 1. On liste tous les mots qui n'ont pas encore été trouvés
-        const unfoundIndices: {l: number, w: number}[] = [];
+        const unfoundIndices: { l: number; w: number }[] = [];
         lyricsData.forEach((line, lIndex) => {
             line.forEach((word, wIndex) => {
                 if (!word.isFound) {
-                    unfoundIndices.push({l: lIndex, w: wIndex});
+                    unfoundIndices.push({ l: lIndex, w: wIndex });
                 }
             });
         });
@@ -127,10 +126,10 @@ export const useGame = (song: Song, onError: (message: string) => void) => {
         const indicesToHint = shuffled.slice(0, wordsToHintCount);
 
         // 3. On met à jour la grille de jeu avec la propriété isHinted = true
-        setLyricsData(prevData => {
+        setLyricsData((prevData) => {
             if (!prevData) return prevData;
-            const newData = prevData.map(line => line.map(w => ({...w})));
-            indicesToHint.forEach(({l, w}) => {
+            const newData = prevData.map((line) => line.map((w) => ({ ...w })));
+            indicesToHint.forEach(({ l, w }) => {
                 newData[l][w].isHinted = true;
             });
             return newData;
@@ -150,50 +149,53 @@ export const useGame = (song: Song, onError: (message: string) => void) => {
 
     // 3. Gestion de l'input utilisateur
     // NOUVEAU : On ne demande plus un événement HTML, mais juste le texte tapé !
-    const handleInputChange = useCallback((text: string) => {
-        if (gameStatus === 'ready') {
-            startGame();
-        } else if (gameStatus !== 'playing') {
-            return;
-        }
-
-        const normalizedInput = normalizeWord(text);
-
-        if (!normalizedInput) {
-            setCurrentInput(text);
-            return;
-        }
-
-        let isMatch = false;
-        let newWordsFoundCount = 0;
-
-        if (lyricsData) {
-            const newLyricsData = lyricsData.map(line => {
-                return line.map(word => {
-                    if (!word.isFound && word.normalized === normalizedInput) {
-                        isMatch = true;
-                        newWordsFoundCount++;
-                        return { ...word, isFound: true };
-                    }
-                    return word;
-                });
-            });
-
-            if (isMatch) {
-                setLyricsData(newLyricsData);
-                const updatedFoundCount = foundWordsCount + newWordsFoundCount;
-                setFoundWordsCount(updatedFoundCount);
-                setCurrentInput('');
-                setLastFoundWord(normalizedInput);
-
-                if (updatedFoundCount === totalWords) {
-                    setGameStatus('won');
-                }
-            } else {
-                setCurrentInput(text);
+    const handleInputChange = useCallback(
+        (text: string) => {
+            if (gameStatus === 'ready') {
+                startGame();
+            } else if (gameStatus !== 'playing') {
+                return;
             }
-        }
-    }, [gameStatus, lyricsData, foundWordsCount, totalWords, startGame]);
+
+            const normalizedInput = normalizeWord(text);
+
+            if (!normalizedInput) {
+                setCurrentInput(text);
+                return;
+            }
+
+            let isMatch = false;
+            let newWordsFoundCount = 0;
+
+            if (lyricsData) {
+                const newLyricsData = lyricsData.map((line) => {
+                    return line.map((word) => {
+                        if (!word.isFound && word.normalized === normalizedInput) {
+                            isMatch = true;
+                            newWordsFoundCount++;
+                            return { ...word, isFound: true };
+                        }
+                        return word;
+                    });
+                });
+
+                if (isMatch) {
+                    setLyricsData(newLyricsData);
+                    const updatedFoundCount = foundWordsCount + newWordsFoundCount;
+                    setFoundWordsCount(updatedFoundCount);
+                    setCurrentInput('');
+                    setLastFoundWord(normalizedInput);
+
+                    if (updatedFoundCount === totalWords) {
+                        setGameStatus('won');
+                    }
+                } else {
+                    setCurrentInput(text);
+                }
+            }
+        },
+        [gameStatus, lyricsData, foundWordsCount, totalWords, startGame]
+    );
 
     useEffect(() => {
         if ((gameStatus === 'won' || gameStatus === 'lost') && !hasSaved) {
@@ -201,18 +203,38 @@ export const useGame = (song: Song, onError: (message: string) => void) => {
             const missingWords = foundWordsCount === totalWords ? [] : getMissingWords();
 
             // On envoie les nouvelles données !
-            saveGameResult(user, isGuest, song, scorePercentage, gameStatus, timeLeft, hasUsedHint, missingWords);
+            saveGameResult(
+                user,
+                isGuest,
+                song,
+                scorePercentage,
+                gameStatus,
+                timeLeft,
+                hasUsedHint,
+                missingWords
+            );
             setHasSaved(true);
         }
-    }, [gameStatus, hasSaved, user, isGuest, song, scorePercentage, timeLeft, hasUsedHint, getMissingWords, foundWordsCount, totalWords]);
+    }, [
+        gameStatus,
+        hasSaved,
+        user,
+        isGuest,
+        song,
+        scorePercentage,
+        timeLeft,
+        hasUsedHint,
+        getMissingWords,
+        foundWordsCount,
+        totalWords,
+    ]);
 
     const restartGame = useCallback(() => {
         if (!lyricsData) return;
 
-        const resetLyrics = lyricsData.map(line =>
-            line.map(word => ({ ...word, isFound: false, isHinted: false }))
+        const resetLyrics = lyricsData.map((line) =>
+            line.map((word) => ({ ...word, isFound: false, isHinted: false }))
         );
-
 
         setLyricsData(resetLyrics);
         setFoundWordsCount(0);
@@ -224,7 +246,7 @@ export const useGame = (song: Song, onError: (message: string) => void) => {
 
         // --- LA CORRECTION DU CHRONO EST ICI ---
         const audioDuration = song.duration || 180;
-        const baseTime = audioDuration + (totalWords * 1.65);
+        const baseTime = audioDuration + totalWords * 1.65;
         const MAX_TIME = 3600;
         const calculatedTime = Math.floor(MAX_TIME * (1 - Math.exp(-baseTime / MAX_TIME)));
 

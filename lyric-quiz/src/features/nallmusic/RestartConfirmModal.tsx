@@ -7,7 +7,7 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from "./ui/alert-dialog";
+} from '../../components/ui/alert-dialog.tsx';
 
 interface RestartConfirmModalProps {
     onConfirm: () => void;
@@ -17,21 +17,22 @@ interface RestartConfirmModalProps {
 export default function RestartConfirmModal({ onConfirm, onCancel }: RestartConfirmModalProps) {
     return (
         <AlertDialog open={true} onOpenChange={(isOpen) => !isOpen && onCancel()}>
-            <AlertDialogContent className="glass-modal w-[95vw] max-w-md p-6 sm:p-8 rounded-[2rem]">
+            <AlertDialogContent className="glass-modal w-[95vw] max-w-md rounded-[2rem] p-6 sm:p-8">
                 <AlertDialogHeader>
-                    <AlertDialogTitle className="titre-neon-secondary text-2xl sm:text-3xl text-center">
+                    <AlertDialogTitle className="titre-neon-secondary text-center text-2xl sm:text-3xl">
                         Recommencer ?
                     </AlertDialogTitle>
-                    <AlertDialogDescription className="font-texte text-muted-foreground text-base sm:text-lg text-center mt-2">
-                        Es-tu sûr de vouloir recommencer ? La partie en cours sera comptabilisée comme une défaite.
+                    <AlertDialogDescription className="font-texte text-muted-foreground mt-2 text-center text-base sm:text-lg">
+                        Es-tu sûr de vouloir recommencer ? La partie en cours sera comptabilisée
+                        comme une défaite.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
 
-                <AlertDialogFooter className="flex flex-col gap-3 mt-6 sm:mt-8">
+                <AlertDialogFooter className="mt-6 flex flex-col gap-3 sm:mt-8">
                     <AlertDialogAction
                         onClick={onConfirm}
                         variant="destructive"
-                        className="h-12 sm:h-14 text-base sm:text-lg rounded-xl"
+                        className="h-12 rounded-xl text-base sm:h-14 sm:text-lg"
                     >
                         Oui, recommencer
                     </AlertDialogAction>
@@ -39,7 +40,7 @@ export default function RestartConfirmModal({ onConfirm, onCancel }: RestartConf
                     <AlertDialogCancel
                         onClick={onCancel}
                         variant="secondary"
-                        className="h-12 sm:h-14 text-base sm:text-lg rounded-xl mt-0"
+                        className="mt-0 h-12 rounded-xl text-base sm:h-14 sm:text-lg"
                     >
                         Non, continuer la partie
                     </AlertDialogCancel>
