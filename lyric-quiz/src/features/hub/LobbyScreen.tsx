@@ -8,7 +8,7 @@ export default function LobbyScreen() {
     const navigate = useNavigate();
 
     // Petit formatage du nom pour l'affichage
-    const displayModeName = modeId === 'nallmusic' ? 'NAllMusic' : 'Mode Inconnu';
+    const displayModeName = modeId === 'allyrics' ? 'ALLyrics' : 'Mode Inconnu';
 
     return (
         <div className="bg-background text-foreground selection:bg-secondary selection:text-secondary-foreground relative flex min-h-screen flex-col items-center justify-center overflow-hidden p-4 font-sans md:p-6">
@@ -17,13 +17,9 @@ export default function LobbyScreen() {
             </div>
 
             <div className="absolute top-4 left-4 z-20 md:top-6 md:left-6">
-                <Button
-                    variant="ghost"
-                    onClick={() => navigate('/')}
-                    className="text-muted-foreground font-texte gap-2 text-lg hover:text-white"
-                >
+                <Button variant="back" onClick={() => navigate('/')} className="text-lg">
                     <ArrowLeft className="h-5 w-5" />
-                    Retour au Hub
+                    Retour
                 </Button>
             </div>
 

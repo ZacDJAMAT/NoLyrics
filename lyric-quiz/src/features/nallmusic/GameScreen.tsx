@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Song } from '../../types.ts';
+import { Song } from '@/types.ts';
 import { useGame } from './hooks/useGame.ts';
 import { useLocation, useNavigate, Navigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext.tsx';
-import { saveGameResult } from '../../lib/history.ts';
+import { saveGameResult } from '@/lib/history.ts';
 import { Alert, AlertDescription } from '../../components/ui/alert.tsx';
 import { Trophy, AlertTriangle, BarChart3 } from 'lucide-react';
 import HintConfirmModal from './HintConfirmModal.tsx';
@@ -16,14 +16,15 @@ import LyricsGrid from './LyricsGrid.tsx';
 import SaveScoreModal from '../../components/SaveScoreModal.tsx';
 import ProfileScreen from '../../components/ProfileScreen.tsx';
 import DisableTimerModal from './DisableTimerModal.tsx';
-import { Button } from '../../components/ui/button.tsx'; // Assure-toi que l'import est correct
+import { Button } from '../../components/ui/button.tsx';
+import { getSongById } from '@/utils/api.ts';
 
-// NOUVEAU : Imports des composants de statistiques
+// Imports des composants de statistiques
 import StatsDashboard from './StatsDashboard.tsx';
 import { useSongStats } from './hooks/useSongStats.ts';
 
-export default function GameScreen() {
-    const location = useLocation();
+// 1. LE COMPOSANT DU JEU
+function GameContent({ song }: { song: Song }) {
     const navigate = useNavigate();
     const { modeId } = useParams();
     const { user, isGuest, loginWithGoogle } = useAuth();
@@ -39,18 +40,12 @@ export default function GameScreen() {
     const [hasPromptedHundred, setHasPromptedHundred] = useState<boolean>(false);
     const [hasSaved, setHasSaved] = useState<boolean>(false);
 
-    // NOUVEAU : L'état pour afficher ou cacher le dashboard des statistiques
+    // L'état pour afficher ou cacher le dashboard des statistiques
     const [showStatsDashboard, setShowStatsDashboard] = useState<boolean>(false);
 
     const [lyricsAlignment, setLyricsAlignment] = useState<'left' | 'center' | 'right'>('center');
     const [showHintModal, setShowHintModal] = useState<boolean>(false);
     const [showTimerModal, setShowTimerModal] = useState<boolean>(false);
-
-    const song = location.state?.song as Song | undefined;
-
-    if (!song) {
-        return <Navigate to={`/mode/${modeId}/solo/search`} replace />;
-    }
 
     const handleError = useCallback(
         (message: string) => {
@@ -81,7 +76,7 @@ export default function GameScreen() {
         disableTimer,
     } = useGame(song, handleError);
 
-    // NOUVEAU : Appel du hook pour récupérer les stats globales de cette chanson depuis Supabase
+    // Appel du hook pour récupérer les stats globales de cette chanson depuis Supabase
     const { stats: globalStats } = useSongStats(song.id.toString());
 
     // Modale de récompense des 100%
@@ -195,7 +190,7 @@ export default function GameScreen() {
         setHasPromptedHundred(false);
         setHasSaved(false);
 
-        // NOUVEAU : On cache les stats quand on recommence !
+        // On cache les stats quand on recommence !
         setShowStatsDashboard(false);
 
         if (restartGame) {
@@ -316,7 +311,7 @@ export default function GameScreen() {
                     isTimerDisabled={isTimerDisabled}
                 />
 
-                {/* NOUVEAU : Le bouton pour basculer vers les statistiques (Uniquement en fin de partie) */}
+                {/* Le bouton pour basculer vers les statistiques (Uniquement en fin de partie) */}
                 {(gameStatus === 'won' || gameStatus === 'lost') && !showStatsDashboard && (
                     <div className="animate-in fade-in zoom-in mt-2 flex justify-center duration-500">
                         <Button
@@ -334,7 +329,7 @@ export default function GameScreen() {
                     aria-hidden="true"
                 />
 
-                {/* NOUVEAU : La transition fluide entre LyricsGrid et StatsDashboard */}
+                {/* La transition fluide entre LyricsGrid et StatsDashboard */}
                 <div className="relative mt-2">
                     {showStatsDashboard ? (
                         <StatsDashboard
@@ -355,4 +350,57 @@ export default function GameScreen() {
             </main>
         </div>
     );
+}
+
+// 2. LE NOUVEAU WRAPPER (Qui gère le chargement direct depuis l'URL)
+export default function GameScreen() {
+    const { modeId, songId } = useParams();
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    // On regarde si on a déjà la musique dans le state (arrivée normale via recherche)
+    const [song, setSong] = useState<Song | undefined>(location.state?.song);
+    // On met en chargement uniquement s'il n'y a pas encore de musique
+    const [isLoading, setIsLoading] = useState<boolean>(!song);
+
+    useEffect(() => {
+        // Si on a déjà la musique, pas besoin de la télécharger
+        if (song || !songId) return;
+
+        // Sinon (arrivée via lien direct avec l'ID dans l'URL), on télécharge les infos
+        const fetchSong = async () => {
+            const fetchedSong = await getSongById(songId);
+            if (fetchedSong) {
+                setSong(fetchedSong);
+            } else {
+                alert('Impossible de trouver cette musique !');
+                navigate(`/mode/${modeId}/solo/search`);
+            }
+            setIsLoading(false);
+        };
+
+        fetchSong();
+    }, [songId, song, modeId, navigate]);
+
+    // Écran de chargement
+    if (isLoading) {
+        return (
+            <div className="bg-background flex min-h-screen items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="border-secondary h-12 w-12 animate-spin rounded-full border-4 border-t-transparent"></div>
+                    <p className="text-secondary font-texte animate-pulse">
+                        Chargement de la piste...
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    // Sécurité de secours
+    if (!song) {
+        return <Navigate to={`/mode/${modeId}/solo/search`} replace />;
+    }
+
+    // Une fois la musique prête (soit par le state, soit téléchargée), on lance le vrai jeu !
+    return <GameContent song={song} />;
 }

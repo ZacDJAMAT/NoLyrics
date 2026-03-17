@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Song } from '../../types.ts';
+import { Song } from '@/types.ts';
 import { useSearch } from './hooks/useSearch.ts';
-import { useTrendingSongs } from '../../hooks/useTrendingSongs.ts';
+import { useTrendingSongs } from '@/hooks/useTrendingSongs.ts';
 import UserMenuButton from '../../components/UserMenuButton.tsx';
 import SongCard from '../../components/SongCard.tsx';
 import Pagination from '../../components/Pagination.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Input } from '../../components/ui/input.tsx';
-import { supabase } from '../../lib/supabase.ts';
+import { supabase } from '@/lib/supabase.ts';
+import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 export default function SearchScreen() {
@@ -34,7 +35,7 @@ export default function SearchScreen() {
     const itemsPerTrendingPage = 12;
 
     const handleSelectSong = (song: Song) => {
-        navigate(`/mode/${modeId}/solo/play`, { state: { song } });
+        navigate(`/mode/${modeId}/solo/play/${song.id}`, { state: { song } });
     };
 
     // CORRECTION : On utilise `activeQuery` au lieu de `query` pour ne pas réagir à la frappe !
@@ -106,7 +107,17 @@ export default function SearchScreen() {
     return (
         <div className="bg-background text-foreground selection:bg-primary selection:text-primary-foreground min-h-screen pb-12 font-sans">
             <header className="border-border relative flex flex-col items-center border-b px-4 pt-12 pb-8 md:px-6 md:pt-16">
-                <div className="absolute top-4 right-4 md:top-6 md:right-6">
+                <div className="absolute top-4 left-4 z-20 md:top-6 md:left-6">
+                    <Button
+                        variant="back"
+                        onClick={() => navigate('/')}
+                        className="font-texte px-2 text-base md:px-3 md:text-lg"
+                    >
+                        <ArrowLeft className="h-5 w-5 md:mr-1" />
+                        <span className="hidden sm:inline">Retour</span>
+                    </Button>
+                </div>
+                <div className="absolute top-4 right-4 z-20 md:top-6 md:right-6">
                     <UserMenuButton />
                 </div>
 

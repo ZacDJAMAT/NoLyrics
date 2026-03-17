@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import LogoutConfirmModal from './LogoutConfirmModal';
 import { Button } from './ui/button';
+import { ArrowLeft } from 'lucide-react';
 
 interface ProfileScreenProps {
     onClose?: () => void;
@@ -28,57 +29,59 @@ export default function ProfileScreen({ onClose }: ProfileScreenProps) {
     };
 
     return (
-    <div className={`min-h-screen bg-background text-foreground font-texte p-4 md:p-6 selection:bg-secondary selection:text-secondary-foreground animate-fade-in-up relative ${onClose ? 'fixed inset-0 z-[100] overflow-y-auto' : ''}`}>
+        <div
+            className={`bg-background text-foreground font-texte selection:bg-secondary selection:text-secondary-foreground animate-fade-in-up relative min-h-screen p-4 md:p-6 ${onClose ? 'fixed inset-0 z-[100] overflow-y-auto' : ''}`}
+        >
+            {showLogoutModal && (
+                <LogoutConfirmModal
+                    onConfirm={handleLogout}
+                    onCancel={() => setShowLogoutModal(false)}
+                />
+            )}
 
-        {showLogoutModal && (
-            <LogoutConfirmModal
-                onConfirm={handleLogout}
-                onCancel={() => setShowLogoutModal(false)}
-            />
-        )}
-
-        {/* Marges réduites sur le header mobile */}
-        <header className="max-w-4xl mx-auto flex items-center mb-6 md:mb-8">
-            <Button
-                variant="back"
-                onClick={handleBack}
-                className="font-texte text-base md:text-lg px-2 md:px-3 h-9 md:h-10"
-            >
-                <span className="sm:hidden">←</span>
-                <span className="hidden sm:inline">← Retour</span>
-            </Button>
-        </header>
-
-        {/* p-5 sur mobile, et on garde p-12 sur les grands écrans */}
-        <main className="glass-panel max-w-4xl mx-auto p-5 sm:p-8 md:p-12">
-
-            {/* Taille du titre ajustée */}
-            <h1 className="titre-neon-secondary text-3xl md:text-4xl mb-6 md:mb-8 tracking-widest text-center sm:text-left">
-                Mon Compte
-            </h1>
-
-            <div className="space-y-6">
-                <div className="bg-white/5 p-4 rounded-xl border border-white/10">
-                    <p className="text-muted-foreground text-xs md:text-sm uppercase tracking-wider font-semibold mb-1">Email</p>
-                    {/* break-all permet de couper une adresse e-mail trop longue pour qu'elle passe à la ligne au lieu de sortir de l'écran */}
-                    <p className="text-lg sm:text-xl md:text-2xl font-texte text-foreground break-all">
-                        {user?.email || "Email non disponible"}
-                    </p>
-                </div>
-            </div>
-
-            {/* mt-8 au lieu de mt-12 pour rapprocher le bouton sur mobile */}
-            <div className="pt-6 md:pt-8 border-t border-border mt-8 md:mt-12 flex justify-center sm:justify-end">
+            {/* Marges réduites sur le header mobile */}
+            <header className="mx-auto mb-6 flex max-w-4xl items-center md:mb-8">
                 <Button
-                    variant="destructive"
-                    onClick={() => setShowLogoutModal(true)}
-                    // w-full sur mobile pour qu'il prenne toute la largeur, w-auto sur PC
-                    className="w-full sm:w-auto font-texte text-base md:text-lg px-6 md:px-8 py-5 md:py-6 rounded-xl shadow-[0_0_15px_rgba(255,77,79,0.3)]"
+                    variant="back"
+                    onClick={handleBack}
+                    className="font-texte h-9 px-2 text-base md:h-10 md:px-3 md:text-lg"
                 >
-                    Se déconnecter
+                    <ArrowLeft className="h-5 w-5" />
+                    Retour
                 </Button>
-            </div>
-        </main>
-    </div>
-);
+            </header>
+
+            {/* p-5 sur mobile, et on garde p-12 sur les grands écrans */}
+            <main className="glass-panel mx-auto max-w-4xl p-5 sm:p-8 md:p-12">
+                {/* Taille du titre ajustée */}
+                <h1 className="titre-neon-secondary mb-6 text-center text-3xl tracking-widest sm:text-left md:mb-8 md:text-4xl">
+                    Mon Compte
+                </h1>
+
+                <div className="space-y-6">
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                        <p className="text-muted-foreground mb-1 text-xs font-semibold tracking-wider uppercase md:text-sm">
+                            Email
+                        </p>
+                        {/* break-all permet de couper une adresse e-mail trop longue pour qu'elle passe à la ligne au lieu de sortir de l'écran */}
+                        <p className="font-texte text-foreground text-lg break-all sm:text-xl md:text-2xl">
+                            {user?.email || 'Email non disponible'}
+                        </p>
+                    </div>
+                </div>
+
+                {/* mt-8 au lieu de mt-12 pour rapprocher le bouton sur mobile */}
+                <div className="border-border mt-8 flex justify-center border-t pt-6 sm:justify-end md:mt-12 md:pt-8">
+                    <Button
+                        variant="destructive"
+                        onClick={() => setShowLogoutModal(true)}
+                        // w-full sur mobile pour qu'il prenne toute la largeur, w-auto sur PC
+                        className="font-texte w-full rounded-xl px-6 py-5 text-base shadow-[0_0_15px_rgba(255,77,79,0.3)] sm:w-auto md:px-8 md:py-6 md:text-lg"
+                    >
+                        Se déconnecter
+                    </Button>
+                </div>
+            </main>
+        </div>
+    );
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import SearchScreen from './features/nallmusic/SearchScreen.tsx';
 import GameScreen from './features/nallmusic/GameScreen.tsx';
-import { Routes, Route, Navigate, Link, useParams } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginScreen from './components/LoginScreen';
 import ProfileScreen from './components/ProfileScreen';
 import { useAuth } from './contexts/AuthContext';
@@ -41,7 +41,7 @@ function App() {
                 <Route path="/mode/:modeId/solo/search" element={<SearchScreen />} />
 
                 {/* 4. L'ancien écran de jeu devient l'écran de jeu spécifique au solo */}
-                <Route path="/mode/:modeId/solo/play" element={<GameScreen />} />
+                <Route path="/mode/:modeId/solo/play/:songId" element={<GameScreen />} />
 
                 {/* Page du profil (Inchangée) */}
                 <Route path="/profile" element={<ProfileScreen />} />

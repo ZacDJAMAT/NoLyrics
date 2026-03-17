@@ -24,9 +24,9 @@ export default function HubScreen() {
                 </p>
 
                 <div className="grid w-full max-w-3xl grid-cols-1 gap-6 md:grid-cols-2 md:gap-10">
-                    {/* CARTE 1 : NAllMusic (Active) */}
+                    {/* CARTE 1 : ALLyrics (Active) */}
                     <Link
-                        to="/mode/nallmusic"
+                        to="/mode/allyrics"
                         className="group hover:border-primary/50 relative flex flex-col items-center rounded-3xl border border-white/10 bg-white/5 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-md transition-all duration-500 hover:-translate-y-2 hover:bg-white/10 hover:shadow-[0_0_40px_rgba(232,28,255,0.3)] md:p-12"
                     >
                         <div className="from-primary/10 absolute inset-0 rounded-3xl bg-gradient-to-b to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
@@ -35,7 +35,7 @@ export default function HubScreen() {
                             strokeWidth={1.5}
                         />
                         <h2 className="font-titre mb-3 text-3xl text-white md:text-4xl">
-                            NAllMusic
+                            ALLyrics
                         </h2>
                         <p className="text-muted-foreground font-texte text-lg transition-colors group-hover:text-white/90">
                             Retrouve toutes les paroles le plus vite possible.
