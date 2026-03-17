@@ -7,11 +7,14 @@ import SongCard from '../../components/SongCard.tsx';
 import Pagination from '../../components/Pagination.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Input } from '../../components/ui/input.tsx';
+import { useFavorites } from '@/hooks/useFavorites.ts';
+import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '@/lib/supabase.ts';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 export default function SearchScreen() {
+    const { user, isGuest } = useAuth();
     const {
         query,
         setQuery,
@@ -28,9 +31,9 @@ export default function SearchScreen() {
     const { trendingSongs, isLoadingTrending, trendingError } = useTrendingSongs();
     const navigate = useNavigate();
     const { modeId } = useParams();
+    const { isFavorite, toggleFavorite } = useFavorites();
     const [bestScores, setBestScores] = useState<Record<string, number>>({});
 
-    // NOUVEAU : État pour la pagination des tendances
     const [currentTrendingPage, setCurrentTrendingPage] = useState(1);
     const itemsPerTrendingPage = 12;
 
@@ -102,6 +105,10 @@ export default function SearchScreen() {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }, 50);
+    };
+
+    const handleToggleFavorite = (_e: React.MouseEvent, song: Song) => {
+        toggleFavorite('song', song.id.toString(), song.title, song.album.cover_xl);
     };
 
     return (
@@ -176,6 +183,10 @@ export default function SearchScreen() {
                                             song={song}
                                             onClick={handleSelectSong}
                                             bestScore={bestScores[song.id.toString()]}
+                                            isFavorite={isFavorite('song', song.id.toString())}
+                                            onToggleFavorite={
+                                                user && !isGuest ? handleToggleFavorite : undefined
+                                            }
                                         />
                                     ))}
                                 </div>
@@ -211,6 +222,10 @@ export default function SearchScreen() {
                                 song={song}
                                 onClick={handleSelectSong}
                                 bestScore={bestScores[song.id.toString()]}
+                                isFavorite={isFavorite('song', song.id.toString())}
+                                onToggleFavorite={
+                                    user && !isGuest ? handleToggleFavorite : undefined
+                                }
                             />
                         ))}
                     </div>
