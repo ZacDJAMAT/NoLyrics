@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import SearchScreen from './features/nallmusic/SearchScreen.tsx';
-import GameScreen from './features/nallmusic/GameScreen.tsx';
+import SearchScreen from './pages/allmusic/SearchScreen.tsx';
+import GameScreen from './pages/allmusic/GameScreen.tsx';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import LoginScreen from './components/LoginScreen';
-import ProfileScreen from './components/ProfileScreen';
+import LoginScreen from './pages/auth/LoginScreen.tsx';
+import ProfileScreen from './pages/auth/ProfileScreen.tsx';
 import { useAuth } from './contexts/AuthContext';
-import SyncModal from './components/SyncModal';
-import HubScreen from './features/hub/HubScreen.tsx';
-import LobbyScreen from './features/hub/LobbyScreen.tsx';
+import SyncModal from './components/modals/SyncModal.tsx';
+import HubScreen from './pages/hub/HubScreen.tsx';
+import LobbyScreen from './pages/hub/LobbyScreen.tsx';
+import FillyricsLobbyScreen from './pages/fillyrics/FillyricsLobbyScreen.tsx';
+import GlobalSearchScreen from './pages/GlobalSearchScreen.tsx';
 
 function App() {
     const [showSyncModal, setShowSyncModal] = useState<boolean>(true);
@@ -48,6 +50,14 @@ function App() {
 
                 {/* Sécurité : Redirection vers le Hub si l'URL est inconnue */}
                 <Route path="*" element={<Navigate to="/" replace />} />
+
+                {/* Lobby spécifique au mode FILLyrics */}
+                <Route path="/mode/fillyrics" element={<FillyricsLobbyScreen />} />
+
+                {/* Recherche globale */}
+                <Route path="/search" element={<GlobalSearchScreen />} />
+
+                <Route path="/mode/fillyrics" element={<FillyricsLobbyScreen />} />
             </Routes>
         </>
     );

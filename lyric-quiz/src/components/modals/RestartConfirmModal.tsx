@@ -7,49 +7,42 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from '../../components/ui/alert-dialog.tsx';
-import { TimerOff } from 'lucide-react';
+} from '../ui/alert-dialog.tsx';
 
-interface DisableTimerModalProps {
+interface RestartConfirmModalProps {
     onConfirm: () => void;
     onCancel: () => void;
 }
 
-export default function DisableTimerModal({ onConfirm, onCancel }: DisableTimerModalProps) {
+export default function RestartConfirmModal({ onConfirm, onCancel }: RestartConfirmModalProps) {
     return (
         <AlertDialog open={true} onOpenChange={(isOpen) => !isOpen && onCancel()}>
             <AlertDialogContent className="glass-modal w-[95vw] max-w-md rounded-[2rem] p-6 sm:p-8">
                 <AlertDialogHeader>
-                    <AlertDialogTitle className="titre-neon-primary flex items-center justify-center gap-3 text-2xl sm:text-3xl">
-                        <TimerOff
-                            className="text-foreground h-6 w-6 sm:h-8 sm:w-8"
-                            strokeWidth={2.5}
-                        />
-                        <span>Mode Zen</span>
+                    <AlertDialogTitle className="titre-neon-secondary text-center text-2xl sm:text-3xl">
+                        Recommencer ?
                     </AlertDialogTitle>
                     <AlertDialogDescription className="font-texte text-muted-foreground mt-2 text-center text-base sm:text-lg">
-                        Veux-tu désactiver le chronomètre ? Tu pourras chercher les mots à ton
-                        rythme, sans limite de temps.
+                        Es-tu sûr de vouloir recommencer ? La partie en cours sera comptabilisée
+                        comme une défaite.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
 
                 <AlertDialogFooter className="mt-6 flex flex-col gap-3 sm:mt-8">
-                    {/* Confirmation avec le variant par défaut (Primary) */}
                     <AlertDialogAction
                         onClick={onConfirm}
-                        variant="default"
+                        variant="destructive"
                         className="h-12 rounded-xl text-base sm:h-14 sm:text-lg"
                     >
-                        Oui, désactiver le chrono
+                        Oui, recommencer
                     </AlertDialogAction>
 
-                    {/* Annulation avec le variant Secondary (Verre) */}
                     <AlertDialogCancel
                         onClick={onCancel}
                         variant="secondary"
                         className="mt-0 h-12 rounded-xl text-base sm:h-14 sm:text-lg"
                     >
-                        Non, je garde le temps
+                        Non, continuer la partie
                     </AlertDialogCancel>
                 </AlertDialogFooter>
             </AlertDialogContent>

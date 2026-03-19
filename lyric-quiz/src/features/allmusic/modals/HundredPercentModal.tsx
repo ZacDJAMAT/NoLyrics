@@ -7,7 +7,7 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from '../../components/ui/alert-dialog.tsx';
+} from '../../../components/ui/alert-dialog.tsx';
 
 import { Target, Trophy, Search } from 'lucide-react';
 

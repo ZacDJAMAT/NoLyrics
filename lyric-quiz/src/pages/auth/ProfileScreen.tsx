@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext.tsx';
 import { useNavigate } from 'react-router-dom';
-import LogoutConfirmModal from './LogoutConfirmModal';
-import { Button } from './ui/button';
+import LogoutConfirmModal from '../../components/modals/LogoutConfirmModal.tsx';
+import { Button } from '../../components/ui/button.tsx';
 import { ArrowLeft } from 'lucide-react';
 
 interface ProfileScreenProps {

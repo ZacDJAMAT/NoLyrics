@@ -1,7 +1,7 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { User, Globe, ArrowLeft } from 'lucide-react';
 import { Button } from '../../components/ui/button.tsx';
-import UserMenuButton from '../../components/UserMenuButton.tsx';
+import UserMenuButton from '../../components/layout/UserMenuButton.tsx';
 
 export default function LobbyScreen() {
     const { modeId } = useParams();

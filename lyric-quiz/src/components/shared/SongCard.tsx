@@ -1,14 +1,13 @@
-import { Song } from '../types';
-import { Heart } from 'lucide-react'; // NOUVEAU : L'icône du cœur
+import { Song } from '../../types.ts';
+import { Heart } from 'lucide-react';
 
 interface SongCardProps {
     song: Song;
     onClick: (song: Song) => void;
     bestScore?: number;
-
-    // NOUVELLES PROPS POUR LES FAVORIS
     isFavorite?: boolean;
     onToggleFavorite?: (e: React.MouseEvent, song: Song) => void;
+    isSelected?: boolean; // NOUVEAU
 }
 
 export default function SongCard({
@@ -17,11 +16,16 @@ export default function SongCard({
     bestScore,
     isFavorite,
     onToggleFavorite,
+    isSelected,
 }: SongCardProps) {
     return (
         <div
             onClick={() => onClick(song)}
-            className="group hover:bg-secondary/15 hover:border-secondary/30 relative flex cursor-pointer flex-col gap-3 rounded-2xl border border-transparent p-3 transition-all duration-300"
+            className={`group relative flex cursor-pointer flex-col gap-3 rounded-2xl border p-3 transition-all duration-300 ${
+                isSelected
+                    ? 'border-secondary bg-secondary/20 shadow-[0_0_20px_rgba(64,201,255,0.3)]'
+                    : 'hover:bg-secondary/15 hover:border-secondary/30 border-transparent'
+            }`}
         >
             {/* CONTENEUR DE L'IMAGE */}
             <div className="bg-card border-border/50 relative z-10 aspect-square overflow-hidden rounded-xl border shadow-lg">

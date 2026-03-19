@@ -7,29 +7,29 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from '../../components/ui/alert-dialog.tsx';
-import { Lightbulb } from 'lucide-react';
+} from '../../../components/ui/alert-dialog.tsx';
+import { TimerOff } from 'lucide-react';
 
-interface HintConfirmModalProps {
+interface DisableTimerModalProps {
     onConfirm: () => void;
     onCancel: () => void;
 }
 
-export default function HintConfirmModal({ onConfirm, onCancel }: HintConfirmModalProps) {
+export default function DisableTimerModal({ onConfirm, onCancel }: DisableTimerModalProps) {
     return (
         <AlertDialog open={true} onOpenChange={(isOpen) => !isOpen && onCancel()}>
             <AlertDialogContent className="glass-modal w-[95vw] max-w-md rounded-[2rem] p-6 sm:p-8">
                 <AlertDialogHeader>
                     <AlertDialogTitle className="titre-neon-primary flex items-center justify-center gap-3 text-2xl sm:text-3xl">
-                        <Lightbulb
-                            className="text-primary h-6 w-6 sm:h-8 sm:w-8"
+                        <TimerOff
+                            className="text-foreground h-6 w-6 sm:h-8 sm:w-8"
                             strokeWidth={2.5}
                         />
-                        <span>Coup de pouce</span>
+                        <span>Mode Zen</span>
                     </AlertDialogTitle>
                     <AlertDialogDescription className="font-texte text-muted-foreground mt-2 text-center text-base sm:text-lg">
-                        Veux-tu vraiment révéler la première lettre de 75% des mots restants ? Cette
-                        aide ne peut être utilisée qu'une seule fois par partie.
+                        Veux-tu désactiver le chronomètre ? Tu pourras chercher les mots à ton
+                        rythme, sans limite de temps.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
 
@@ -40,7 +40,7 @@ export default function HintConfirmModal({ onConfirm, onCancel }: HintConfirmMod
                         variant="default"
                         className="h-12 rounded-xl text-base sm:h-14 sm:text-lg"
                     >
-                        Oui, révéler les lettres
+                        Oui, désactiver le chrono
                     </AlertDialogAction>
 
                     {/* Annulation avec le variant Secondary (Verre) */}
@@ -49,7 +49,7 @@ export default function HintConfirmModal({ onConfirm, onCancel }: HintConfirmMod
                         variant="secondary"
                         className="mt-0 h-12 rounded-xl text-base sm:h-14 sm:text-lg"
                     >
-                        Non, je vais chercher
+                        Non, je garde le temps
                     </AlertDialogCancel>
                 </AlertDialogFooter>
             </AlertDialogContent>

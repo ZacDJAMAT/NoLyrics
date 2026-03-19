@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { fetchLyrics } from '../../../utils/api.ts';
-import { parseLyrics, normalizeWord } from '../../../utils/lyricsParser.ts';
-import { Song, Word, GameStatus } from '../../../types.ts';
-import { useAuth } from '../../../contexts/AuthContext.tsx';
-import { saveGameResult } from '../../../lib/history.ts';
+import { fetchLyrics } from '../utils/api.ts';
+import { parseLyrics, normalizeWord } from '../utils/lyricsParser.ts';
+import { Song, Word, GameStatus } from '../types.ts';
+import { useAuth } from '../contexts/AuthContext.tsx';
+import { saveGameResult } from '../lib/history.ts';
 
 // NOUVEAU : On remplace onBack par onError pour que l'interface gère l'affichage des erreurs
 export const useGame = (song: Song, onError: (message: string) => void) => {

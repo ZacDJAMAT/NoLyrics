@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { GameStatus } from '../../types.ts';
+import { GameStatus } from '@/types.ts';
 import { Input } from '../../components/ui/input.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover.tsx';
@@ -92,35 +92,40 @@ export default function ScoreBoard({
             }}
         >
             {/* 1. SCORE */}
+            {/* On s'assure que la largeur est bien fixe (w-16 et w-24) */}
             <div className="order-1 w-16 shrink-0 text-center transition-all duration-500 md:w-24">
                 <p className="text-muted-foreground mb-0 text-[10px] font-semibold tracking-wider uppercase md:mb-1 md:text-xs">
                     Score
                 </p>
-                <p className="titre-neon-primary font-titre text-foreground text-lg leading-none md:text-3xl md:leading-tight">
+                {/* MODIFICATION : Ajout de tabular-nums pour stabiliser les chiffres */}
+                <p className="titre-neon-primary font-titre text-foreground text-lg leading-none tabular-nums md:text-3xl md:leading-tight">
                     {scorePercentage}%
                 </p>
-                <p className="text-muted-foreground font-texte mt-0.5 text-[10px] md:mt-0 md:text-sm">
+                {/* MODIFICATION : Ajout de tabular-nums */}
+                <p className="text-muted-foreground font-texte mt-0.5 text-[10px] tabular-nums md:mt-0 md:text-sm">
                     {foundWordsCount} / {totalWords}
                 </p>
             </div>
 
             {/* 2. CHRONO & BOUTONS */}
             <div className="order-2 flex shrink-0 items-center gap-1.5 transition-all duration-500 md:order-3 md:gap-4">
-                <div className="mr-0 w-16 text-center transition-all duration-500 md:mr-2 md:w-auto">
+                {/* MODIFICATION : On remplace md:w-auto par md:w-24 et on met shrink-0 pour que la boîte du chrono ne bouge JAMAIS */}
+                <div className="mr-0 w-16 shrink-0 text-center transition-all duration-500 md:mr-2 md:w-24">
                     <p
                         className={`mb-0 text-[10px] font-semibold tracking-wider uppercase md:mb-1 md:text-xs ${timeLeft <= 30 && timeLeft >= 0 && gameStatus === 'playing' ? '!text-destructive animate-pulse' : 'text-muted-foreground'}`}
                     >
                         Temps
                     </p>
+                    {/* MODIFICATION : Ajout de tabular-nums */}
                     <p
-                        className={`titre-neon-primary font-titre text-lg leading-none md:text-3xl md:leading-tight ${timeLeft <= 30 && timeLeft >= 0 && gameStatus === 'playing' ? 'titre-neon-destructive' : 'text-foreground'}`}
+                        className={`titre-neon-primary font-titre text-lg leading-none tabular-nums md:text-3xl md:leading-tight ${timeLeft <= 30 && timeLeft >= 0 && gameStatus === 'playing' ? 'titre-neon-destructive' : 'text-foreground'}`}
                     >
                         {formattedTime}
                     </p>
                 </div>
 
                 <div className="flex h-8 items-center gap-1 border-l border-white/10 pl-1.5 transition-all duration-500 ease-out md:h-10 md:gap-2 md:pl-4">
-                    {/* ZONE DROITE : Uniquement le bouton Paramètres */}
+                    {/* ZONE DROITE : Uniquement le bouton Paramètres (Le code reste identique) */}
                     <div className="flex items-center gap-2">
                         <Popover>
                             <PopoverTrigger asChild>
@@ -149,7 +154,6 @@ export default function ScoreBoard({
                                             Actions de jeu
                                         </p>
 
-                                        {/* Indice (Visible si en jeu et non utilisé) */}
                                         {gameStatus === 'playing' && !hasUsedHint && (
                                             <Button
                                                 variant="neon-primary"
@@ -164,7 +168,6 @@ export default function ScoreBoard({
                                             </Button>
                                         )}
 
-                                        {/* Mode Zen (Visible si en jeu et chrono actif) */}
                                         {gameStatus === 'playing' && !isTimerDisabled && (
                                             <Button
                                                 variant="neon-primary"
@@ -179,7 +182,6 @@ export default function ScoreBoard({
                                             </Button>
                                         )}
 
-                                        {/* Recommencer */}
                                         {gameStatus === 'playing' && (
                                             <Button
                                                 variant="neon-secondary"
@@ -194,7 +196,6 @@ export default function ScoreBoard({
                                             </Button>
                                         )}
 
-                                        {/* Abandonner (Visible uniquement en jeu) */}
                                         {gameStatus === 'playing' && (
                                             <Button
                                                 variant="neon-destructive"

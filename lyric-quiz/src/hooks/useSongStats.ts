@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../../../lib/supabase.ts'; // Ajuste le chemin vers ton client Supabase si besoin
+import { supabase } from '../lib/supabase.ts'; // Ajuste le chemin vers ton client Supabase si besoin
 
 export interface WordStat {
     word: string;

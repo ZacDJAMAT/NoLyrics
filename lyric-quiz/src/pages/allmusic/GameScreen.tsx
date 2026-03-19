@@ -1,27 +1,27 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Song } from '@/types.ts';
-import { useGame } from './hooks/useGame.ts';
+import { useGame } from '../../hooks/useGame.ts';
 import { useLocation, useNavigate, Navigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext.tsx';
 import { saveGameResult } from '@/lib/history.ts';
 import { Alert, AlertDescription } from '../../components/ui/alert.tsx';
 import { Trophy, AlertTriangle, BarChart3 } from 'lucide-react';
-import HintConfirmModal from './HintConfirmModal.tsx';
-import HundredPercentModal from './HundredPercentModal.tsx';
-import GiveUpConfirmModal from '../../components/GiveUpConfirmModal.tsx';
-import RestartConfirmModal from './RestartConfirmModal.tsx';
-import GameHeader from './GameHeader.tsx';
-import ScoreBoard from './ScoreBoard.tsx';
-import LyricsGrid from './LyricsGrid.tsx';
-import SaveScoreModal from '../../components/SaveScoreModal.tsx';
-import ProfileScreen from '../../components/ProfileScreen.tsx';
-import DisableTimerModal from './DisableTimerModal.tsx';
+import HintConfirmModal from '../../components/modals/HintConfirmModal.tsx';
+import HundredPercentModal from '@/features/allmusic/modals/HundredPercentModal.tsx';
+import GiveUpConfirmModal from '../../components/modals/GiveUpConfirmModal.tsx';
+import RestartConfirmModal from '../../components/modals/RestartConfirmModal.tsx';
+import GameHeader from '../../features/allmusic/GameHeader.tsx';
+import ScoreBoard from '../../features/allmusic/ScoreBoard.tsx';
+import LyricsGrid from '../../features/allmusic/LyricsGrid.tsx';
+import SaveScoreModal from '../../components/modals/SaveScoreModal.tsx';
+import ProfileScreen from '../auth/ProfileScreen.tsx';
+import DisableTimerModal from '@/features/allmusic/modals/DisableTimerModal.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { getSongById } from '@/utils/api.ts';
 
 // Imports des composants de statistiques
-import StatsDashboard from './StatsDashboard.tsx';
-import { useSongStats } from './hooks/useSongStats.ts';
+import StatsDashboard from '../../features/allmusic/StatsDashboard.tsx';
+import { useSongStats } from '../../hooks/useSongStats.ts';
 
 // 1. LE COMPOSANT DU JEU
 function GameContent({ song }: { song: Song }) {

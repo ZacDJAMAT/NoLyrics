@@ -1,4 +1,4 @@
-import { Button } from './ui/button';
+import { Button } from '../ui/button.tsx';
 
 interface PaginationProps {
     currentPage: number;
@@ -7,7 +7,12 @@ interface PaginationProps {
     onPageChange: (newPage: number) => void;
 }
 
-export default function Pagination({ currentPage, totalPages, isLoading, onPageChange }: PaginationProps) {
+export default function Pagination({
+    currentPage,
+    totalPages,
+    isLoading,
+    onPageChange,
+}: PaginationProps) {
     if (totalPages <= 1) return null;
 
     const getPageNumbers = () => {
@@ -24,25 +29,25 @@ export default function Pagination({ currentPage, totalPages, isLoading, onPageC
     };
 
     return (
-        <div className="flex flex-col items-center mt-12 gap-4">
+        <div className="mt-12 flex flex-col items-center gap-4">
             <div className="flex items-center gap-2">
                 <Button
                     variant="outline"
                     onClick={() => onPageChange(currentPage - 1)}
                     disabled={currentPage === 1 || isLoading}
-                    className="font-texte text-base border-border hover:bg-muted"
+                    className="font-texte border-border hover:bg-muted text-base"
                 >
                     Précédent
                 </Button>
 
-                <div className="flex gap-2 mx-2">
-                    {getPageNumbers().map(num => (
+                <div className="mx-2 flex gap-2">
+                    {getPageNumbers().map((num) => (
                         <Button
                             key={num}
-                            variant={currentPage === num ? "default" : "outline"}
+                            variant={currentPage === num ? 'default' : 'outline'}
                             onClick={() => onPageChange(num)}
                             disabled={isLoading}
-                            className={`w-10 h-10 p-0 font-texte text-lg ${
+                            className={`font-texte h-10 w-10 p-0 text-lg ${
                                 currentPage === num
                                     ? 'bg-secondary text-secondary-foreground shadow-[0_0_10px_rgba(64,201,255,0.4)]'
                                     : 'border-border text-foreground hover:bg-muted'
@@ -57,12 +62,14 @@ export default function Pagination({ currentPage, totalPages, isLoading, onPageC
                     variant="outline"
                     onClick={() => onPageChange(currentPage + 1)}
                     disabled={currentPage === totalPages || isLoading}
-                    className="font-texte text-base border-border hover:bg-muted"
+                    className="font-texte border-border hover:bg-muted text-base"
                 >
                     Suivant
                 </Button>
             </div>
-            <p className="text-muted-foreground font-texte text-base mt-2">Page {currentPage} / {totalPages}</p>
+            <p className="text-muted-foreground font-texte mt-2 text-base">
+                Page {currentPage} / {totalPages}
+            </p>
         </div>
     );
 }

@@ -7,7 +7,7 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from "./ui/alert-dialog";
+} from '../ui/alert-dialog.tsx';
 
 interface SaveScoreModalProps {
     onAccept: () => void;
@@ -18,31 +18,30 @@ export default function SaveScoreModal({ onAccept, onDecline }: SaveScoreModalPr
     return (
         <AlertDialog open={true} onOpenChange={(isOpen) => !isOpen && onDecline()}>
             <AlertDialogContent className="glass-modal shadow-[0_0_50px_rgba(64,201,255,0.15)]">
-
                 <AlertDialogHeader>
-                    <AlertDialogTitle className="font-titre text-2xl text-secondary text-center">
+                    <AlertDialogTitle className="font-titre text-secondary text-center text-2xl">
                         Sauvegarder ton score ?
                     </AlertDialogTitle>
-                    <AlertDialogDescription className="font-texte text-muted-foreground text-lg text-center mt-2">
-                        Connecte-toi avec Google en un clic pour enregistrer tes statistiques et figurer dans le classement !
+                    <AlertDialogDescription className="font-texte text-muted-foreground mt-2 text-center text-lg">
+                        Connecte-toi avec Google en un clic pour enregistrer tes statistiques et
+                        figurer dans le classement !
                     </AlertDialogDescription>
                 </AlertDialogHeader>
 
-                <AlertDialogFooter className="flex-col sm:flex-col gap-3 mt-6">
+                <AlertDialogFooter className="mt-6 flex-col gap-3 sm:flex-col">
                     <AlertDialogAction
                         onClick={onAccept}
-                        className="w-full font-texte text-lg bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-xl"
+                        className="font-texte bg-secondary text-secondary-foreground hover:bg-secondary/90 w-full rounded-xl text-lg"
                     >
                         Se connecter avec Google
                     </AlertDialogAction>
                     <AlertDialogCancel
                         onClick={onDecline}
-                        className="w-full font-texte text-lg bg-muted text-foreground hover:bg-muted/80 border-none rounded-xl mt-0"
+                        className="font-texte bg-muted text-foreground hover:bg-muted/80 mt-0 w-full rounded-xl border-none text-lg"
                     >
                         Continuer en tant qu'invité
                     </AlertDialogCancel>
                 </AlertDialogFooter>
-
             </AlertDialogContent>
         </AlertDialog>
     );

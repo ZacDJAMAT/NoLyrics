@@ -1,7 +1,7 @@
-// src/types.ts
-
 export interface Artist {
+    id: number | string;
     name: string;
+    picture_xl: string;
 }
 
 export interface Album {
@@ -10,7 +10,7 @@ export interface Album {
 }
 
 export interface Song {
-    id: number;
+    id: number | string; // Modifié : On accepte les strings pour les IDs venant des favoris (Supabase)
     title: string;
     artist: Artist;
     album: Album;
@@ -27,6 +27,7 @@ export interface Word {
     normalized: string;
     isFound: boolean;
     isHinted?: boolean;
+    isHidden?: boolean;
 }
 
 export interface ParsedLyricsResult {
@@ -34,10 +35,8 @@ export interface ParsedLyricsResult {
     totalWords: number;
 }
 
-// NOUVEAU : On centralise le statut du jeu ici
 export type GameStatus = 'idle' | 'ready' | 'playing' | 'won' | 'lost';
 
-// NOUVEAU : On type le retour de l'API LRCLIB pour éviter le "any"
 export interface LRCLIBTrack {
     id: number;
     trackName: string;

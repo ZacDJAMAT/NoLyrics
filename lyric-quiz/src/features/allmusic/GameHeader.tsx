@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Song } from '../../types.ts';
-import UserMenuButton from '../../components/UserMenuButton.tsx';
+import UserMenuButton from '../../components/layout/UserMenuButton.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { ArrowLeft } from 'lucide-react';
 
