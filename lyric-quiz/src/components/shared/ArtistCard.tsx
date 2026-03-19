@@ -26,22 +26,25 @@ export default function ArtistCard({
                     : 'hover:bg-secondary/15 hover:border-secondary/30 border-transparent'
             }`}
         >
-            {/* CONTENEUR DE L'IMAGE RONDE */}
-            <div className="bg-card border-border/50 relative z-10 aspect-square w-full max-w-[160px] overflow-hidden rounded-full border shadow-lg">
-                <img
-                    src={artist.picture_xl}
-                    alt={`Photo de ${artist.name}`}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
+            {/* WRAPPER PRINCIPAL : Gère la taille et permet le positionnement absolu du coeur */}
+            <div className="relative z-10 aspect-square w-full max-w-[160px]">
+                {/* CONTENEUR DE L'IMAGE RONDE : C'est lui seul qui coupe ce qui dépasse */}
+                <div className="bg-card border-border/50 h-full w-full overflow-hidden rounded-full border shadow-lg">
+                    <img
+                        src={artist.picture_xl}
+                        alt={`Photo de ${artist.name}`}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                </div>
 
-                {/* LE BOUTON FAVORIS */}
+                {/* LE BOUTON FAVORIS : Placé au même niveau que l'image, il ne se fait plus rogner */}
                 {onToggleFavorite && (
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
                             onToggleFavorite(e, artist);
                         }}
-                        className={`absolute top-2 right-2 z-20 rounded-full border p-2 backdrop-blur-md transition-all duration-300 ${
+                        className={`absolute top-0 right-0 z-20 rounded-full border p-2 backdrop-blur-md transition-all duration-300 ${
                             isFavorite
                                 ? 'bg-primary/20 text-primary border-primary/50 shadow-[0_0_15px_rgba(232,28,255,0.4)]'
                                 : 'border-white/10 bg-black/40 text-white/60 hover:scale-110 hover:bg-black/60 hover:text-white'
