@@ -7,13 +7,7 @@ gsap pour animations
 
 ---------- PENDANT UNE PARTIE
 
-ADAPTER LE SITE POUR QU'IL SOIT JOUABLE PEUT IMPORTE LA TAILLE DE L'ÉCRAN
-
 changer les icons (chadcn/ui)
-
-changer toutes les alertes d'erreur (erreur lors de la recupération des commandes)
-
-ajouter du texte si aucune musique n'est trouvée lors d'une recherche
 
 à la recharge de la page, garder le même état ou prevenir de l'abandon
 
@@ -21,11 +15,13 @@ changer les boutons destructive et secondary (plus smooth)
 
 - phrases personnalisées en fin de parties (mê.. même nous) (plus tard)
 
-- Obtenir indice (lettres ou extrait musical)
 
 
 ----------------------------------------------------------------------------------------------
 
+Mode de jeu QCM terminer les paroles
+
+Pour choisir le mode de jeux, au survol la cover d'un son/album apparait en arrière plan
 
 Texte fuck les méchants comme femtogo
 
