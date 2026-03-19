@@ -118,7 +118,8 @@ export default function FillyricsLobbyScreen() {
                     FILLYRICS
                 </h1>
                 <p className="text-muted-foreground font-texte max-w-lg text-center text-lg md:text-xl">
-                    Recherche et sélectionne 10 éléments pour créer ton mix parfait.
+                    Recherche des artistes et des sons pour créer ton mix. Nous en tirerons 10 au
+                    hasard !
                 </p>
             </header>
 
@@ -176,10 +177,8 @@ export default function FillyricsLobbyScreen() {
                         </h2>
 
                         <div className="flex items-center gap-2 sm:gap-3">
-                            <span
-                                className={`font-titre rounded-full px-3 py-0.5 text-sm sm:text-base ${selection.length === MAX_ITEMS ? 'bg-secondary/20 text-secondary' : 'bg-white/5 text-white/70'}`}
-                            >
-                                {selection.length} / {MAX_ITEMS}
+                            <span className="font-titre rounded-full bg-white/5 px-3 py-0.5 text-sm text-white/70 sm:text-base">
+                                {selection.length} élément(s)
                             </span>
 
                             <button

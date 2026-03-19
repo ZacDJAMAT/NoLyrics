@@ -10,6 +10,7 @@ import HubScreen from './pages/hub/HubScreen.tsx';
 import LobbyScreen from './pages/hub/LobbyScreen.tsx';
 import FillyricsLobbyScreen from './pages/fillyrics/FillyricsLobbyScreen.tsx';
 import GlobalSearchScreen from './pages/GlobalSearchScreen.tsx';
+import FillyricsGameScreen from '@/pages/fillyrics/FillyricsGameScreen.tsx';
 
 function App() {
     const [showSyncModal, setShowSyncModal] = useState<boolean>(true);
@@ -58,6 +59,8 @@ function App() {
                 <Route path="/search" element={<GlobalSearchScreen />} />
 
                 <Route path="/mode/fillyrics" element={<FillyricsLobbyScreen />} />
+
+                <Route path="/mode/fillyrics/play" element={<FillyricsGameScreen />} />
             </Routes>
         </>
     );

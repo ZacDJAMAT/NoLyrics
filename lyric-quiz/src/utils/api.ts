@@ -124,3 +124,36 @@ export const getSongById = async (id: string | number): Promise<Song | null> => 
         return null;
     }
 };
+
+export const getArtistTopTracks = async (
+    artistId: string | number,
+    limit: number = 10
+): Promise<Song[]> => {
+    try {
+        const response = await fetch(`/api/deezer/artist/${artistId}/top?limit=${limit}`);
+        if (!response.ok) throw new Error('Erreur réseau Deezer (Top Artist)');
+
+        const data = await response.json();
+
+        if (data.error || !data.data) return [];
+
+        // On formate pour que ça corresponde à notre type Song
+        return data.data.map((track: any) => ({
+            id: track.id,
+            title: track.title,
+            artist: {
+                name: track.artist.name,
+                id: track.artist.id,
+                picture_xl: '',
+            },
+            album: {
+                cover_small: track.album.cover_small || '',
+                cover_xl: track.album.cover_xl || track.album.cover_medium || '',
+            },
+            duration: track.duration,
+        }));
+    } catch (error) {
+        console.error('Erreur lors de la récupération du top artiste :', error);
+        return [];
+    }
+};

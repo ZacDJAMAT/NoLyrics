@@ -1,11 +1,10 @@
-import { Word, GameStatus } from '../../types.ts';
+import { Word, GameStatus } from '@/types.ts';
 
 interface LyricsGridProps {
     lyricsData: Word[][] | null;
     isFetchingLyrics: boolean;
     gameStatus: GameStatus;
     lastFoundWord?: string | null;
-    // NOUVELLE PROP : L'alignement choisi par le joueur
     alignment?: 'left' | 'center' | 'right';
 }
 
@@ -27,7 +26,6 @@ export default function LyricsGrid({
 
     if (!lyricsData) return null;
 
-    // On convertit le choix en classe Tailwind pour flexbox
     const justificationClass =
         alignment === 'left'
             ? 'justify-start'
@@ -40,7 +38,6 @@ export default function LyricsGrid({
             translate="no"
             className="glass-panel notranslate flex min-h-[300px] flex-col items-center p-4 md:min-h-[400px] md:p-8"
         >
-            {/* Police un peu plus petite et espacement réduit sur mobile */}
             <div className="w-fit max-w-full space-y-4 text-lg leading-relaxed select-none md:space-y-6 md:text-xl">
                 {lyricsData.map((line, lineIndex) => (
                     <div
@@ -48,9 +45,17 @@ export default function LyricsGrid({
                         className={`flex flex-wrap gap-x-1.5 gap-y-1.5 md:gap-x-2 md:gap-y-2 ${justificationClass}`}
                     >
                         {line.map((word, wordIndex) => {
+                            // 👉 NOUVELLE LOGIQUE : On sépare les mots de contexte des mots trouvés par le joueur
+                            const isContextWord = word.isHidden === false;
+                            const isUserFoundWord = word.isFound && word.isHidden !== false;
+
                             let styleClass = 'glass-cell';
 
-                            if (word.isFound) {
+                            if (isContextWord) {
+                                // 1. Mot pré-rempli (FILLyrics) : Affichage neutre
+                                styleClass = 'bg-transparent text-foreground/80 font-texte';
+                            } else if (isUserFoundWord) {
+                                // 2. Mot deviné par le joueur : Animation et néon
                                 const isLastFound =
                                     word.normalized === lastFoundWord && gameStatus === 'playing';
 
@@ -58,19 +63,21 @@ export default function LyricsGrid({
                                     isLastFound ? 'text-neon-secondary shadow' : 'text-foreground'
                                 }`;
                             } else if (gameStatus === 'lost' || gameStatus === 'won') {
+                                // 3. Fin de partie pour les trous non trouvés
                                 styleClass =
                                     'text-destructive bg-transparent font-texte opacity-80';
                             }
 
                             return (
-                                // Padding ajusté sur mobile
                                 <span
                                     key={wordIndex}
                                     className={`inline-block rounded px-1.5 py-0.5 md:px-2 md:py-1 ${styleClass}`}
                                 >
-                                    {/* Affichage du mot */}
-                                    {word.isFound ? (
-                                        // L'épaisseur de police reste standard. Seule la couleur et l'ombre changent pour le dernier mot.
+                                    {isContextWord ? (
+                                        // Affichage simple pour le contexte
+                                        <span>{word.original}</span>
+                                    ) : isUserFoundWord ? (
+                                        // Affichage avec effet pour les mots trouvés
                                         <span
                                             className={`transition-all duration-500 ${
                                                 word.normalized === lastFoundWord
@@ -81,12 +88,10 @@ export default function LyricsGrid({
                                             {word.original}
                                         </span>
                                     ) : gameStatus === 'lost' || gameStatus === 'won' ? (
-                                        // Fin de partie : on révèle les mots ratés en rouge
                                         <span className="text-destructive font-semibold">
                                             {word.original}
                                         </span>
                                     ) : word.isHinted ? (
-                                        // L'indice est activé, on affiche la première lettre
                                         <span className="text-primary/80 font-bold">
                                             {word.original.charAt(0)}
                                             <span className="ml-0.5 text-[0.6em] tracking-widest opacity-60">
@@ -94,7 +99,6 @@ export default function LyricsGrid({
                                             </span>
                                         </span>
                                     ) : (
-                                        // En cours de jeu normal : des tirets
                                         <span className="opacity-30">
                                             {'_'.repeat(word.original.length)}
                                         </span>
