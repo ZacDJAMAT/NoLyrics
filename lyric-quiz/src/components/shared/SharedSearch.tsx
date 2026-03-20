@@ -56,71 +56,89 @@ export default function SharedSearch({
     const [currentTrendingPage, setCurrentTrendingPage] = useState(1);
     const itemsPerTrendingPage = 12;
 
+    // 👉 NOUVEAU : Pagination pour la recherche active
+    const [currentSearchPage, setCurrentSearchPage] = useState(1);
+    const [totalSearchItems, setTotalSearchItems] = useState(0);
+    const itemsPerSearchPage = 12;
+
     const showTrending = activeQuery.trim() === '' && !showFavoritesOnly;
 
-    const handleSearch = async (e?: React.FormEvent) => {
-        if (e) e.preventDefault();
-        setActiveQuery(query);
-        setCurrentTrendingPage(1); // Reset pagination quand on cherche
-
-        if (!query.trim() && !showFavoritesOnly) {
-            setSongResults([]);
-            setArtistResults([]);
-            return;
-        }
-
+    // 👉 NOUVEAU : Fonction dédiée pour fetcher une page précise de la recherche
+    const fetchSearchResults = async (page: number, searchQuery: string) => {
+        if (!searchQuery.trim()) return;
         setIsLoadingSearch(true);
 
         try {
-            if (showFavoritesOnly) {
-                if (activeTab === 'songs') {
-                    const favSongs = favorites
-                        .filter(
-                            (f) =>
-                                f.item_type === 'song' &&
-                                f.item_name.toLowerCase().includes(query.toLowerCase())
-                        )
-                        .map(
-                            (f) =>
-                                ({
-                                    id: f.item_id,
-                                    title: f.item_name,
-                                    artist: { name: '' },
-                                    album: { cover_xl: f.image_url, cover_small: '' },
-                                    duration: 0,
-                                }) as Song
-                        );
-                    setSongResults(favSongs);
-                } else {
-                    const favArtists = favorites
-                        .filter(
-                            (f) =>
-                                f.item_type === 'artist' &&
-                                f.item_name.toLowerCase().includes(query.toLowerCase())
-                        )
-                        .map(
-                            (f) =>
-                                ({
-                                    id: f.item_id,
-                                    name: f.item_name,
-                                    picture_xl: f.image_url,
-                                }) as Artist
-                        );
-                    setArtistResults(favArtists);
-                }
+            if (activeTab === 'songs') {
+                const data = await searchSongs(searchQuery, page, itemsPerSearchPage);
+                setSongResults(data.results);
+                setTotalSearchItems(data.total);
             } else {
-                if (activeTab === 'songs') {
-                    const data = await searchSongs(query, 1, 12);
-                    setSongResults(data.results);
-                } else {
-                    const data = await searchArtists(query, 1, 12);
-                    setArtistResults(data.results);
-                }
+                const data = await searchArtists(searchQuery, page, itemsPerSearchPage);
+                setArtistResults(data.results);
+                setTotalSearchItems(data.total);
             }
+            setCurrentSearchPage(page);
         } catch (error) {
             console.error('Erreur de recherche:', error);
         } finally {
             setIsLoadingSearch(false);
+        }
+    };
+
+    const handleSearch = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        setActiveQuery(query);
+        setCurrentTrendingPage(1);
+        setCurrentSearchPage(1); // Reset de la page de recherche à 1
+
+        if (!query.trim() && !showFavoritesOnly) {
+            setSongResults([]);
+            setArtistResults([]);
+            setTotalSearchItems(0);
+            return;
+        }
+
+        if (showFavoritesOnly) {
+            if (activeTab === 'songs') {
+                const favSongs = favorites
+                    .filter(
+                        (f) =>
+                            f.item_type === 'song' &&
+                            f.item_name.toLowerCase().includes(query.toLowerCase())
+                    )
+                    .map(
+                        (f) =>
+                            ({
+                                id: f.item_id,
+                                title: f.item_name,
+                                artist: { name: '' },
+                                album: { cover_xl: f.image_url, cover_small: '' },
+                                duration: 0,
+                            }) as Song
+                    );
+                setSongResults(favSongs);
+            } else {
+                const favArtists = favorites
+                    .filter(
+                        (f) =>
+                            f.item_type === 'artist' &&
+                            f.item_name.toLowerCase().includes(query.toLowerCase())
+                    )
+                    .map(
+                        (f) =>
+                            ({
+                                id: f.item_id,
+                                name: f.item_name,
+                                picture_xl: f.image_url,
+                            }) as Artist
+                    );
+                setArtistResults(favArtists);
+            }
+            setTotalSearchItems(0); // Pas de pagination API pour les favoris locaux
+        } else {
+            // 👉 Appel à notre nouvelle fonction pour la page 1
+            await fetchSearchResults(1, query);
         }
     };
 
@@ -156,6 +174,8 @@ export default function SharedSearch({
         : currentList;
 
     const totalTrendingPages = Math.ceil(currentList.length / itemsPerTrendingPage);
+    // 👉 NOUVEAU : Calcul du nombre total de pages pour la recherche API
+    const totalSearchPages = Math.ceil(totalSearchItems / itemsPerSearchPage);
 
     useEffect(() => {
         if (onDisplayedItemsChange) {
@@ -173,7 +193,6 @@ export default function SharedSearch({
                     onSubmit={handleSearch}
                     className="flex w-full flex-col gap-3 md:flex-row md:gap-4"
                 >
-                    {/* LIGNE 1 (Mobile) : Input + Bouton Coeur carré */}
                     <div className="flex w-full gap-2">
                         <Input
                             type="text"
@@ -187,7 +206,6 @@ export default function SharedSearch({
                             className="font-texte bg-input border-border focus-visible:ring-primary h-14 flex-1 rounded-2xl text-lg shadow-inner focus-visible:ring-2"
                         />
 
-                        {/* Le bouton Favoris est maintenant juste un carré avec l'icône */}
                         {user && !isGuest && (
                             <Button
                                 type="button"
@@ -208,7 +226,6 @@ export default function SharedSearch({
                         )}
                     </div>
 
-                    {/* LIGNE 2 (Mobile) : Bouton Rechercher large (s'aligne à droite sur PC) */}
                     <Button
                         type="submit"
                         disabled={isLoadingSearch}
@@ -259,14 +276,12 @@ export default function SharedSearch({
                 </div>
             )}
 
-            {/* MESSAGE ET TITRE */}
             {showTrending && (
                 <h2 className="font-titre text-muted-foreground text-l mb-4 text-center">
                     Top 100 Tendances {activeTab === 'songs' ? 'Musiques' : 'Artistes'}
                 </h2>
             )}
 
-            {/* RÉSULTATS */}
             {(isLoadingSongs || isLoadingArtists) && showTrending ? (
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
                     {Array.from({ length: 12 }).map((_, i) => (
@@ -304,6 +319,8 @@ export default function SharedSearch({
                 </>
             )}
 
+            {/* 👉 NOUVEAU : Pagination globale (Gère à la fois le mode Tendances et le mode Recherche API) */}
+
             {showTrending && totalTrendingPages > 1 && (
                 <div className="mt-8">
                     <Pagination
@@ -311,6 +328,17 @@ export default function SharedSearch({
                         totalPages={totalTrendingPages}
                         isLoading={false}
                         onPageChange={setCurrentTrendingPage}
+                    />
+                </div>
+            )}
+
+            {!showTrending && !showFavoritesOnly && totalSearchPages > 1 && (
+                <div className="mt-8">
+                    <Pagination
+                        currentPage={currentSearchPage}
+                        totalPages={totalSearchPages}
+                        isLoading={isLoadingSearch}
+                        onPageChange={(page) => fetchSearchResults(page, activeQuery)}
                     />
                 </div>
             )}
