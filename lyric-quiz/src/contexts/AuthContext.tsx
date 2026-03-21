@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { Storage } from '../lib/storage';
 
 interface AuthContextType {
     user: User | null;
@@ -9,7 +8,7 @@ interface AuthContextType {
     isLoading: boolean;
     loginWithGoogle: () => Promise<void>;
     logout: () => Promise<void>;
-    continueAsGuest: () => void;
+    continueAsGuest: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,79 +18,108 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isGuest, setIsGuest] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(true);
 
+    const handleSessionChange = async (sessionUser: User | null) => {
+        const currentIsGuest = sessionUser?.is_anonymous || false;
+
+        if (sessionUser && !currentIsGuest) {
+            const pendingAnonId = localStorage.getItem('pending_anon_id');
+
+            if (pendingAnonId && pendingAnonId !== sessionUser.id) {
+                const { error } = await supabase.rpc('merge_anon_data', { anon_id: pendingAnonId });
+
+                if (error) {
+                    alert('Erreur de transfert de vos données : ' + error.message);
+                } else {
+                    setTimeout(() => window.location.reload(), 500);
+                }
+
+                localStorage.removeItem('pending_anon_id');
+            } else if (pendingAnonId === sessionUser.id) {
+                localStorage.removeItem('pending_anon_id');
+            }
+        }
+
+        setUser(sessionUser);
+        setIsGuest(currentIsGuest);
+        setIsLoading(false);
+    };
+
     useEffect(() => {
         const checkSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            setUser(session?.user || null);
+            const {
+                data: { session },
+            } = await supabase.auth.getSession();
+            await handleSessionChange(session?.user || null);
 
-            const storedGuest = Storage.getGuestStatus();
-            if (!session?.user && storedGuest) {
-                setIsGuest(true);
-            }
-
-            // NOUVEAU : Si on est dans le nouvel onglet et que la session est bonne, on ferme l'onglet !
             if (session?.user && window.opener) {
                 window.close();
             }
-
-            setIsLoading(false);
         };
 
         checkSession();
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setUser(session?.user || null);
-            if (session?.user) {
-                setIsGuest(false);
-                Storage.setGuestStatus(false);
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            await handleSessionChange(session?.user || null);
 
-                // NOUVEAU : Fermeture automatique de l'onglet juste après la connexion réussie
-                if (window.opener) {
-                    window.close();
-                }
+            if (session?.user && window.opener) {
+                window.close();
             }
-            setIsLoading(false);
         });
 
         return () => subscription.unsubscribe();
     }, []);
 
     const loginWithGoogle = async () => {
-        // 1. On ouvre un onglet vide TOUT DE SUITE pour contourner les bloqueurs de popups des navigateurs
+        if (isGuest && user) {
+            localStorage.setItem('pending_anon_id', user.id);
+        }
+
         const authWindow = window.open('', '_blank');
 
-        // 2. On demande à Supabase de NE PAS nous rediriger, mais de nous donner l'URL Google
         const { data } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
                 redirectTo: window.location.origin,
-                skipBrowserRedirect: true
-            }
+                skipBrowserRedirect: true,
+            },
         });
 
-        // 3. On envoie notre nouvel onglet vers l'URL de connexion
         if (data?.url && authWindow) {
             authWindow.location.href = data.url;
         } else if (authWindow) {
-            // S'il y a une erreur, on referme l'onglet vide
             authWindow.close();
         }
     };
 
     const logout = async () => {
+        localStorage.removeItem('pending_anon_id');
         await supabase.auth.signOut();
         setUser(null);
         setIsGuest(false);
-        Storage.setGuestStatus(false);
     };
 
-    const continueAsGuest = () => {
-        setIsGuest(true);
-        Storage.setGuestStatus(true);
+    const continueAsGuest = async () => {
+        setIsLoading(true);
+        localStorage.removeItem('pending_anon_id');
+
+        const { data, error } = await supabase.auth.signInAnonymously();
+
+        if (error) {
+            alert('Erreur de connexion invité : ' + error.message);
+        } else if (data.user) {
+            setUser(data.user);
+            setIsGuest(true);
+        }
+
+        setIsLoading(false);
     };
 
     return (
-        <AuthContext.Provider value={{ user, isGuest, isLoading, loginWithGoogle, logout, continueAsGuest }}>
+        <AuthContext.Provider
+            value={{ user, isGuest, isLoading, loginWithGoogle, logout, continueAsGuest }}
+        >
             {children}
         </AuthContext.Provider>
     );
@@ -99,8 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
-    if (context === undefined) {
+    if (context === undefined)
         throw new Error("useAuth doit être utilisé à l'intérieur d'un AuthProvider");
-    }
     return context;
 };

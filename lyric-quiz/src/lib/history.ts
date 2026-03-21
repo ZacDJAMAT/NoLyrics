@@ -4,51 +4,60 @@ import { Song, GameStatus } from '../types';
 
 export const saveGameResult = async (
     user: User | null,
-    isGuest: boolean,
     song: Song,
     scorePercentage: number,
     status: GameStatus,
     timeLeft: number,
-    usedHint: boolean,         // NOUVEAU PARAMÈTRE
-    missingWords: string[]     // NOUVEAU PARAMÈTRE
+    usedHint: boolean,
+    missingWords: string[]
 ) => {
-    // 1. On prépare le "colis" avec les données exactes attendues par la base de données
-    const historyData = {
-        song_id: song.id.toString(),
-        song_title: song.title,
-        artist_name: song.artist.name,
-        score_percentage: scorePercentage,
-        status: status,
-        time_left: timeLeft,
-        used_hint: usedHint,         // NOUVELLE DONNÉE POUR LA BDD
-        missing_words: missingWords, // NOUVELLE DONNÉE POUR LA BDD
-        created_at: new Date().toISOString()
-    };
+    if (!user) return;
 
-    if (user) {
-        // 2. CAS A : Le joueur est connecté -> Envoi vers Supabase
-        try {
-            const { error } = await supabase.from('game_history').insert([{
+    try {
+        await supabase.from('game_history').insert([
+            {
                 user_id: user.id,
-                ...historyData
-            }]);
+                song_id: song.id.toString(),
+                song_title: song.title,
+                artist_name: song.artist.name,
+                score_percentage: scorePercentage,
+                status: status,
+                time_left: timeLeft,
+                used_hint: usedHint,
+                missing_words: missingWords,
+            },
+        ]);
+    } catch {
+        // Échec silencieux
+    }
+};
 
-            if (error) {
-                console.error("Erreur lors de la sauvegarde Supabase :", error);
-            } else {
-                console.log("Score sauvegardé sur le cloud ! ☁️");
-            }
-        } catch (err) {
-            console.error(err);
-        }
-    } else if (isGuest) {
-        // 3. CAS B : Le joueur est invité -> Sauvegarde dans le navigateur
-        const existingHistory = localStorage.getItem('guest_history');
-        const historyArray = existingHistory ? JSON.parse(existingHistory) : [];
+export const saveFillyricsResult = async (
+    user: User | null,
+    song: Song,
+    points: number,
+    threshold: number,
+    targetWords: number,
+    status: GameStatus,
+    sessionId: string
+) => {
+    if (!user) return;
 
-        // On ajoute la nouvelle partie à la fin de la liste
-        historyArray.push(historyData);
-        localStorage.setItem('guest_history', JSON.stringify(historyArray));
-        console.log("Score sauvegardé en local ! 💾");
+    try {
+        await supabase.from('history_fillyrics').insert([
+            {
+                session_id: sessionId,
+                user_id: user.id,
+                song_id: song.id.toString(),
+                song_title: song.title,
+                artist_name: song.artist.name,
+                points: points,
+                contract_threshold: threshold,
+                target_words: targetWords,
+                status: status === 'won' ? 'won' : 'lost',
+            },
+        ]);
+    } catch {
+        // Échec silencieux
     }
 };

@@ -95,7 +95,7 @@ export default function FillyricsSummaryScreen({
                     onClick={onReplay}
                     className="font-titre bg-secondary hover:bg-secondary/80 text-secondary-foreground h-14 flex-1 rounded-2xl text-lg shadow-[0_0_15px_rgba(64,201,255,0.4)]"
                 >
-                    <RefreshCw className="mr-2 h-5 w-5" /> Rejouer
+                    <RefreshCw className="mr-2 h-5 w-5" /> remixer
                 </Button>
                 <Button
                     onClick={onQuit}

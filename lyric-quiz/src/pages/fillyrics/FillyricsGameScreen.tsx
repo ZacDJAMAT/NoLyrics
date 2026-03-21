@@ -23,12 +23,15 @@ export default function FillyricsGameScreen() {
     const [phase, setPhase] = useState<'preparing' | 'choice' | 'playing' | 'summary'>('preparing');
     const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
     const [playedSongIds, setPlayedSongIds] = useState<string[]>([]);
+    const [sessionId] = useState(() => crypto.randomUUID());
 
     const [selectedSong, setSelectedSong] = useState<{
         song: Song;
         difficulty: DifficultyLevel;
         targetWordCount: number;
+        thresholdPercent: number;
     } | null>(null);
+
     const [choiceCountdown, setChoiceCountdown] = useState(12);
 
     const [results, setResults] = useState<{ song: Song; won: boolean; points: number }[]>([]);
@@ -56,14 +59,24 @@ export default function FillyricsGameScreen() {
                 return () => clearTimeout(timer);
             } else if (choiceCountdown === 0 && choices) {
                 // Temps écoulé : Sélection automatique du contrat Facile
-                handleChoice(choices.easy, 'easy', choices.targetWordCount);
+                handleChoice(
+                    choices.easy,
+                    'easy',
+                    choices.targetWordCount,
+                    choices.thresholds.easy
+                );
             }
         }
     }, [choiceCountdown, phase, choices]);
 
     // 3. ACTIONS UTILISATEUR
-    const handleChoice = (song: Song, difficulty: DifficultyLevel, targetWordCount: number) => {
-        setSelectedSong({ song, difficulty, targetWordCount });
+    const handleChoice = (
+        song: Song,
+        difficulty: DifficultyLevel,
+        targetWordCount: number,
+        thresholdPercent: number
+    ) => {
+        setSelectedSong({ song, difficulty, targetWordCount, thresholdPercent });
         setPlayedSongIds((prev) => [...prev, song.id.toString()]);
         setPhase('playing');
     };
@@ -158,93 +171,115 @@ export default function FillyricsGameScreen() {
                 </div>
 
                 <div className="mb-8 flex w-full max-w-4xl flex-col gap-4 md:flex-row">
-                    {/* CARTE FACILE */}
-                    <button
-                        onClick={() => handleChoice(choices.easy, 'easy', nbMots)}
-                        className="glass-panel flex flex-1 flex-col items-center border-t-4 border-t-emerald-400 p-6 transition-transform hover:scale-[1.02] hover:bg-white/10"
-                    >
-                        <div className="mb-4 flex items-center gap-2">
-                            <Star className="h-6 w-6 text-emerald-400" />
-                            <p className="font-titre text-2xl text-emerald-400">Facile</p>
-                        </div>
-                        <img
-                            src={choices.easy.album.cover_xl}
-                            className="mb-3 h-28 w-28 rounded-lg border border-emerald-400/20 object-cover shadow-lg"
-                            alt="Cover"
-                        />
-                        <p className="font-titre mt-2 line-clamp-2 text-xl text-white">
-                            {choices.easy.title}
-                        </p>
-                        <div className="font-texte mt-4 w-full rounded-lg bg-black/20 p-2 text-sm">
-                            <div className="flex justify-between text-white/70">
-                                <span>Contrat:</span> <span className="text-white">Min. 30%</span>
+                    <div className="mb-8 flex w-full max-w-4xl flex-col gap-4 md:flex-row">
+                        {/* FACILE */}
+                        <button
+                            onClick={() =>
+                                handleChoice(choices.easy, 'easy', nbMots, choices.thresholds.easy)
+                            }
+                            className="glass-panel flex flex-1 flex-col items-center border-t-4 border-t-emerald-400 p-6 transition-transform hover:scale-[1.02] hover:bg-white/10"
+                        >
+                            <div className="mb-4 flex items-center gap-2">
+                                <Star className="h-6 w-6 text-emerald-400" />
+                                <p className="font-titre text-2xl text-emerald-400">Facile</p>
                             </div>
-                            <div className="flex justify-between text-white/70">
-                                <span>Potentiel:</span>{' '}
-                                <span className="font-bold text-emerald-400">
-                                    {Math.round(nbMots * 10 * 2.2)} pts
-                                </span>
+                            <img
+                                src={choices.easy.album.cover_xl}
+                                className="mb-3 h-28 w-28 rounded-lg border border-emerald-400/20 object-cover shadow-lg"
+                                alt="Cover"
+                            />
+                            <p className="font-titre mt-2 line-clamp-2 text-xl text-white">
+                                {choices.easy.title}
+                            </p>
+                            <div className="font-texte mt-4 w-full rounded-lg bg-black/20 p-2 text-sm">
+                                <div className="flex justify-between text-white/70">
+                                    <span>Contrat:</span>{' '}
+                                    <span className="text-white">
+                                        Min. {choices.thresholds.easy}%
+                                    </span>
+                                </div>
+                                <div className="flex justify-between text-white/70">
+                                    <span>Potentiel:</span>{' '}
+                                    <span className="font-bold text-emerald-400">
+                                        {Math.round(nbMots * 10 * 2.2)} pts
+                                    </span>
+                                </div>
                             </div>
-                        </div>
-                    </button>
-                    {/* CARTE MOYEN */}
-                    <button
-                        onClick={() => handleChoice(choices.medium, 'medium', nbMots)}
-                        className="glass-panel flex flex-1 flex-col items-center border-t-4 border-t-orange-400 p-6 transition-transform hover:scale-[1.02] hover:bg-white/10"
-                    >
-                        <div className="mb-4 flex items-center gap-2">
-                            <Zap className="h-6 w-6 text-orange-400" />
-                            <p className="font-titre text-2xl text-orange-400">Moyen</p>
-                        </div>
-                        <img
-                            src={choices.medium.album.cover_xl}
-                            className="mb-3 h-28 w-28 rounded-lg border border-orange-400/20 object-cover shadow-lg"
-                            alt="Cover"
-                        />
-                        <p className="font-titre mt-2 line-clamp-2 text-xl text-white">
-                            {choices.medium.title}
-                        </p>
-                        <div className="font-texte mt-4 w-full rounded-lg bg-black/20 p-2 text-sm">
-                            <div className="flex justify-between text-white/70">
-                                <span>Contrat:</span> <span className="text-white">Min. 60%</span>
+                        </button>
+                        {/* MOYEN */}
+                        <button
+                            onClick={() =>
+                                handleChoice(
+                                    choices.medium,
+                                    'medium',
+                                    nbMots,
+                                    choices.thresholds.medium
+                                )
+                            }
+                            className="glass-panel flex flex-1 flex-col items-center border-t-4 border-t-orange-400 p-6 transition-transform hover:scale-[1.02] hover:bg-white/10"
+                        >
+                            <div className="mb-4 flex items-center gap-2">
+                                <Zap className="h-6 w-6 text-orange-400" />
+                                <p className="font-titre text-2xl text-orange-400">Moyen</p>
                             </div>
-                            <div className="flex justify-between text-white/70">
-                                <span>Potentiel:</span>{' '}
-                                <span className="font-bold text-orange-400">
-                                    {Math.round(nbMots * 30 * 2.2)} pts
-                                </span>
+                            <img
+                                src={choices.medium.album.cover_xl}
+                                className="mb-3 h-28 w-28 rounded-lg border border-orange-400/20 object-cover shadow-lg"
+                                alt="Cover"
+                            />
+                            <p className="font-titre mt-2 line-clamp-2 text-xl text-white">
+                                {choices.medium.title}
+                            </p>
+                            <div className="font-texte mt-4 w-full rounded-lg bg-black/20 p-2 text-sm">
+                                <div className="flex justify-between text-white/70">
+                                    <span>Contrat:</span>{' '}
+                                    <span className="text-white">
+                                        Min. {choices.thresholds.medium}%
+                                    </span>
+                                </div>
+                                <div className="flex justify-between text-white/70">
+                                    <span>Potentiel:</span>{' '}
+                                    <span className="font-bold text-orange-400">
+                                        {Math.round(nbMots * 30 * 2.2)} pts
+                                    </span>
+                                </div>
                             </div>
-                        </div>
-                    </button>
-                    {/* CARTE DIFFICILE */}
-                    <button
-                        onClick={() => handleChoice(choices.hard, 'hard', nbMots)}
-                        className="glass-panel border-t-destructive flex flex-1 flex-col items-center border-t-4 p-6 transition-transform hover:scale-[1.02] hover:bg-white/10"
-                    >
-                        <div className="mb-4 flex items-center gap-2">
-                            <Flame className="text-destructive h-6 w-6" />
-                            <p className="font-titre text-destructive text-2xl">Difficile</p>
-                        </div>
-                        <img
-                            src={choices.hard.album.cover_xl}
-                            className="border-destructive/20 mb-3 h-28 w-28 rounded-lg border object-cover shadow-lg"
-                            alt="Cover"
-                        />
-                        <p className="font-titre mt-2 line-clamp-2 text-xl text-white">
-                            {choices.hard.title}
-                        </p>
-                        <div className="font-texte mt-4 w-full rounded-lg bg-black/20 p-2 text-sm">
-                            <div className="flex justify-between text-white/70">
-                                <span>Contrat:</span> <span className="text-white">Min. 90%</span>
+                        </button>
+                        {/* DIFFICILE */}
+                        <button
+                            onClick={() =>
+                                handleChoice(choices.hard, 'hard', nbMots, choices.thresholds.hard)
+                            }
+                            className="glass-panel border-t-destructive flex flex-1 flex-col items-center border-t-4 p-6 transition-transform hover:scale-[1.02] hover:bg-white/10"
+                        >
+                            <div className="mb-4 flex items-center gap-2">
+                                <Flame className="text-destructive h-6 w-6" />
+                                <p className="font-titre text-destructive text-2xl">Difficile</p>
                             </div>
-                            <div className="flex justify-between text-white/70">
-                                <span>Potentiel:</span>{' '}
-                                <span className="text-destructive font-bold">
-                                    {Math.round(nbMots * 80 * 2.2)} pts
-                                </span>
+                            <img
+                                src={choices.hard.album.cover_xl}
+                                className="border-destructive/20 mb-3 h-28 w-28 rounded-lg border object-cover shadow-lg"
+                                alt="Cover"
+                            />
+                            <p className="font-titre mt-2 line-clamp-2 text-xl text-white">
+                                {choices.hard.title}
+                            </p>
+                            <div className="font-texte mt-4 w-full rounded-lg bg-black/20 p-2 text-sm">
+                                <div className="flex justify-between text-white/70">
+                                    <span>Contrat:</span>{' '}
+                                    <span className="text-white">
+                                        Min. {choices.thresholds.hard}%
+                                    </span>
+                                </div>
+                                <div className="flex justify-between text-white/70">
+                                    <span>Potentiel:</span>{' '}
+                                    <span className="text-destructive font-bold">
+                                        {Math.round(nbMots * 80 * 2.2)} pts
+                                    </span>
+                                </div>
                             </div>
-                        </div>
-                    </button>
+                        </button>
+                    </div>
                 </div>
 
                 {/* CHRONO CIRCULAIRE SVG */}
@@ -296,12 +331,14 @@ export default function FillyricsGameScreen() {
         return (
             <FillyricsGameRound
                 key={selectedSong.song.id}
+                sessionId={sessionId}
                 song={selectedSong.song}
                 difficulty={selectedSong.difficulty}
                 targetWordCount={selectedSong.targetWordCount}
+                thresholdPercent={selectedSong.thresholdPercent} // 👈 TRANSMISSION ICI
                 roundIndex={currentRoundIndex}
                 totalRounds={numRounds}
-                onRoundEnd={handleRoundEnd} // 👈 Réception des points ici
+                onRoundEnd={handleRoundEnd}
             />
         );
     }
