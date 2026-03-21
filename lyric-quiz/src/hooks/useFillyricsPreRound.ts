@@ -7,6 +7,11 @@ export type RoundChoices = {
     medium: Song;
     hard: Song;
     targetWordCount: number;
+    thresholds: {
+        easy: number;
+        medium: number;
+        hard: number;
+    };
 };
 
 // Utilitaire : Calcul de la complexité linguistique d'une chanson
@@ -127,18 +132,28 @@ export const useFillyricsPreRound = () => {
                 (await fallbackTrack([finalEasy?.id.toString(), finalMedium?.id.toString()]));
 
             if (!finalEasy || !finalMedium || !finalHard) {
-                throw new Error('Impossible de trouver 3 musiques valides.');
+                throw new Error('Impossible de trouver 3 musiques avec des paroles valides.');
             }
 
-            // 4. On renvoie les choix ET le nombre de mots strict pour ce round !
+            const getRandomThreshold = (min: number, max: number) => {
+                const steps = (max - min) / 5;
+                return min + Math.floor(Math.random() * (steps + 1)) * 5;
+            };
+
             setChoices({
                 easy: finalEasy,
                 medium: finalMedium,
                 hard: finalHard,
                 targetWordCount: roundWordCount,
+                // 👉 NOUVEAU : Génération des contrats dynamiques
+                thresholds: {
+                    easy: getRandomThreshold(20, 40),
+                    medium: getRandomThreshold(50, 70),
+                    hard: getRandomThreshold(80, 100),
+                },
             });
         } catch (err: any) {
-            setError(err.message || 'Erreur lors de la préparation des contrats.');
+            setError(err.message || 'Erreur lors de la préparation des choix.');
         } finally {
             setIsPreparing(false);
         }

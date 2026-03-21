@@ -24,6 +24,17 @@ interface FillyricsGameRoundProps {
     targetWordCount: number;
     roundIndex: number;
     totalRounds: number;
+    thresholdPercent: number;
+    onRoundEnd: (won: boolean, points: number) => void;
+}
+
+interface FillyricsGameRoundProps {
+    song: Song;
+    difficulty: DifficultyLevel;
+    targetWordCount: number;
+    roundIndex: number;
+    totalRounds: number;
+    thresholdPercent: number; // 👈 AJOUT ICI
     onRoundEnd: (won: boolean, points: number) => void;
 }
 
@@ -33,16 +44,17 @@ export default function FillyricsGameRound({
     targetWordCount,
     roundIndex,
     totalRounds,
+    thresholdPercent,
     onRoundEnd,
 }: FillyricsGameRoundProps) {
-    const [nextRoundTimer, setNextRoundTimer] = useState(7);
-    const hasEnded = useRef(false);
     const navigate = useNavigate();
     const [showProfile, setShowProfile] = useState(false);
     const [showGiveUpModal, setShowGiveUpModal] = useState(false);
     const [showHintModal, setShowHintModal] = useState(false);
     const [showTimerModal, setShowTimerModal] = useState(false);
     const [lyricsAlignment, setLyricsAlignment] = useState<'left' | 'center' | 'right'>('center');
+    const [nextRoundTimer, setNextRoundTimer] = useState(7);
+    const hasEnded = useRef(false);
 
     const handleError = useCallback(
         (message: string) => {
@@ -70,11 +82,10 @@ export default function FillyricsGameRound({
         applyHint,
         isTimerDisabled,
         disableTimer,
-        thresholdPercent,
+        skipRound,
         isContractSecured,
         speedBonusMultiplier,
-        skipRound,
-    } = useFillyricsGame(song, handleError, difficulty, targetWordCount);
+    } = useFillyricsGame(song, handleError, difficulty, targetWordCount, thresholdPercent);
 
     useEffect(() => {
         if (gameStatus === 'won' || gameStatus === 'lost') {

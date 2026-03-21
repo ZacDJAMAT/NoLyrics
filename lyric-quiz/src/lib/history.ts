@@ -2,6 +2,9 @@ import { supabase } from './supabase';
 import { User } from '@supabase/supabase-js';
 import { Song, GameStatus } from '../types';
 
+// ============================================================================
+// 1. SAUVEGARDE CLASSIQUE (Pour le mode AllMusic)
+// ============================================================================
 export const saveGameResult = async (
     user: User | null,
     isGuest: boolean,
@@ -9,10 +12,9 @@ export const saveGameResult = async (
     scorePercentage: number,
     status: GameStatus,
     timeLeft: number,
-    usedHint: boolean,         // NOUVEAU PARAMÈTRE
-    missingWords: string[]     // NOUVEAU PARAMÈTRE
+    usedHint: boolean,
+    missingWords: string[]
 ) => {
-    // 1. On prépare le "colis" avec les données exactes attendues par la base de données
     const historyData = {
         song_id: song.id.toString(),
         song_title: song.title,
@@ -20,35 +22,85 @@ export const saveGameResult = async (
         score_percentage: scorePercentage,
         status: status,
         time_left: timeLeft,
-        used_hint: usedHint,         // NOUVELLE DONNÉE POUR LA BDD
-        missing_words: missingWords, // NOUVELLE DONNÉE POUR LA BDD
-        created_at: new Date().toISOString()
+        used_hint: usedHint,
+        missing_words: missingWords,
+        created_at: new Date().toISOString(),
     };
 
     if (user) {
-        // 2. CAS A : Le joueur est connecté -> Envoi vers Supabase
         try {
-            const { error } = await supabase.from('game_history').insert([{
-                user_id: user.id,
-                ...historyData
-            }]);
+            const { error } = await supabase.from('game_history').insert([
+                {
+                    user_id: user.id,
+                    ...historyData,
+                },
+            ]);
 
             if (error) {
-                console.error("Erreur lors de la sauvegarde Supabase :", error);
+                console.error('Erreur lors de la sauvegarde Supabase :', error);
             } else {
-                console.log("Score sauvegardé sur le cloud ! ☁️");
+                console.log('Score AllMusic sauvegardé sur le cloud ! ☁️');
             }
         } catch (err) {
             console.error(err);
         }
     } else if (isGuest) {
-        // 3. CAS B : Le joueur est invité -> Sauvegarde dans le navigateur
         const existingHistory = localStorage.getItem('guest_history');
         const historyArray = existingHistory ? JSON.parse(existingHistory) : [];
-
-        // On ajoute la nouvelle partie à la fin de la liste
         historyArray.push(historyData);
         localStorage.setItem('guest_history', JSON.stringify(historyArray));
-        console.log("Score sauvegardé en local ! 💾");
+        console.log('Score AllMusic sauvegardé en local ! 💾');
+    }
+};
+
+// ============================================================================
+// 2. NOUVELLE SAUVEGARDE SÉPARÉE (Pour le mode Fillyrics / Contrats)
+// ============================================================================
+export const saveFillyricsResult = async (
+    user: User | null,
+    isGuest: boolean,
+    song: Song,
+    points: number,
+    threshold: number,
+    targetWords: number,
+    status: GameStatus
+) => {
+    // Les données spécifiques au format Fillyrics
+    const historyData = {
+        song_id: song.id.toString(),
+        song_title: song.title,
+        artist_name: song.artist.name,
+        points: points,
+        contract_threshold: threshold,
+        target_words: targetWords,
+        status: status === 'won' ? 'won' : 'lost',
+        created_at: new Date().toISOString(),
+    };
+
+    if (user) {
+        try {
+            // 👉 Envoi vers la nouvelle table dédiée
+            const { error } = await supabase.from('history_fillyrics').insert([
+                {
+                    user_id: user.id,
+                    ...historyData,
+                },
+            ]);
+
+            if (error) {
+                console.error('Erreur lors de la sauvegarde Supabase Fillyrics :', error);
+            } else {
+                console.log('Score Fillyrics sauvegardé sur le cloud ! ☁️');
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    } else if (isGuest) {
+        // Sauvegarde locale distincte pour ne pas mélanger les données JSON
+        const existingHistory = localStorage.getItem('guest_fillyrics_history');
+        const historyArray = existingHistory ? JSON.parse(existingHistory) : [];
+        historyArray.push(historyData);
+        localStorage.setItem('guest_fillyrics_history', JSON.stringify(historyArray));
+        console.log('Score Fillyrics sauvegardé en local ! 💾');
     }
 };

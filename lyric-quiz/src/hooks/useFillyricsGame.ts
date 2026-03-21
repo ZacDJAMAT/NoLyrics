@@ -1,16 +1,18 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { fetchLyrics } from '@/utils/api';
-import { parseFillyrics, DifficultyLevel } from '../utils/fillyricsParser';
+import { parseFillyrics, DifficultyLevel } from '@/utils/fillyricsParser';
 import { normalizeWord } from '@/utils/lyricsParser';
 import { Song, Word, GameStatus } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
-import { saveGameResult } from '@/lib/history';
+// 👉 IMPORT DE LA NOUVELLE FONCTION D'HISTORIQUE
+import { saveFillyricsResult } from '@/lib/history';
 
 export const useFillyricsGame = (
     song: Song,
     onError: (message: string) => void,
     difficulty: DifficultyLevel = 'easy',
-    targetWordCount: number = 5 // 👈 NOUVEAU : Le contrat exact
+    targetWordCount: number = 5,
+    thresholdPercent: number = 30 // 👈 Paramètre dynamique pour le contrat
 ) => {
     const [lyricsData, setLyricsData] = useState<Word[][] | null>(null);
     const [totalWords, setTotalWords] = useState<number>(0);
@@ -20,7 +22,7 @@ export const useFillyricsGame = (
     const [foundWordsCount, setFoundWordsCount] = useState<number>(0);
 
     const [timeLeft, setTimeLeft] = useState<number>(0);
-    const [totalTime, setTotalTime] = useState<number>(0); // 👈 Nécessaire pour le Bonus Vitesse
+    const [totalTime, setTotalTime] = useState<number>(0);
     const [gameStatus, setGameStatus] = useState<GameStatus>('idle');
     const [lastFoundWord, setLastFoundWord] = useState<string | null>(null);
 
@@ -29,13 +31,14 @@ export const useFillyricsGame = (
     const [hasUsedHint, setHasUsedHint] = useState<boolean>(false);
     const [isTimerDisabled, setIsTimerDisabled] = useState<boolean>(false);
 
-    // 1. LES VARIABLES DU CONTRAT
-    const { valuePerWord, thresholdPercent } = useMemo(() => {
-        if (difficulty === 'easy') return { valuePerWord: 10, thresholdPercent: 30 };
-        if (difficulty === 'medium') return { valuePerWord: 30, thresholdPercent: 60 };
-        return { valuePerWord: 80, thresholdPercent: 90 };
+    // 1. Valeur de base des mots selon la difficulté
+    const valuePerWord = useMemo(() => {
+        if (difficulty === 'easy') return 10;
+        if (difficulty === 'medium') return 30;
+        return 80;
     }, [difficulty]);
 
+    // 2. Initialisation du Jeu et du Parseur
     useEffect(() => {
         let ignore = false;
         const initGame = async () => {
@@ -50,7 +53,7 @@ export const useFillyricsGame = (
                     return;
                 }
 
-                // On transmet le contrat exact (targetWordCount) au Parseur
+                // Parseur avec la protection Anti-Répétition
                 const { parsedLyrics, totalWords: actualWords } = parseFillyrics(
                     rawLyrics,
                     targetWordCount
@@ -60,7 +63,6 @@ export const useFillyricsGame = (
                 setLyricsData(parsedLyrics);
                 setTotalWords(actualWords);
 
-                // Initialisation du chrono (ex: 30s + 5s par mot)
                 const calculatedTime = 30 + actualWords * 5;
                 setTimeLeft(calculatedTime);
                 setTotalTime(calculatedTime);
@@ -82,6 +84,7 @@ export const useFillyricsGame = (
         };
     }, [song, onError, targetWordCount, difficulty]);
 
+    // 3. Gestion du Chronomètre
     useEffect(() => {
         let timer: ReturnType<typeof setInterval>;
         if (gameStatus === 'playing' && timeLeft > 0 && !isTimerDisabled) {
@@ -89,12 +92,6 @@ export const useFillyricsGame = (
         }
         return () => clearInterval(timer);
     }, [gameStatus, timeLeft, isTimerDisabled]);
-
-    const skipRound = useCallback(() => {
-        if (gameStatus === 'playing' && !isTimerDisabled) {
-            setTimeLeft(0);
-        }
-    }, [gameStatus, isTimerDisabled]);
 
     const formattedTime = useMemo(() => {
         if (isTimerDisabled || timeLeft === -1) return '∞';
@@ -105,7 +102,7 @@ export const useFillyricsGame = (
         return `${m}:${s}`;
     }, [timeLeft, isTimerDisabled]);
 
-    // 2. LE MOTEUR DE POINTS (Binaire + Bonus)
+    // 4. Moteur de Score et de Contrat
     const scorePercentage = useMemo(() => {
         return totalWords > 0 ? Math.round((foundWordsCount / totalWords) * 100) : 0;
     }, [foundWordsCount, totalWords]);
@@ -118,15 +115,15 @@ export const useFillyricsGame = (
     }, [timeLeft, totalTime, isTimerDisabled]);
 
     const scorePoints = useMemo(() => {
-        if (!isContractSecured && gameStatus !== 'won') return 0; // Contrat échoué pour l'instant = 0 pts
+        if (!isContractSecured && gameStatus !== 'won') return 0;
 
         let basePoints = foundWordsCount * valuePerWord;
         let points = basePoints * (1 + speedBonusMultiplier);
 
-        // Bonus Perfect appliqué à la victoire
+        // Bonus Perfect fixe
         if (gameStatus === 'won' && foundWordsCount === totalWords && totalWords > 0) {
             const maxTheoreticalPoints = targetWordCount * valuePerWord;
-            points += maxTheoreticalPoints * 0.2; // 20% du max en bonus fixe
+            points += maxTheoreticalPoints * 0.2;
         }
 
         return Math.round(points);
@@ -140,25 +137,14 @@ export const useFillyricsGame = (
         targetWordCount,
     ]);
 
-    // 3. CONDITIONS DE FIN DE PARTIE
+    // 5. Évaluation de fin de temps
     useEffect(() => {
         if (timeLeft === 0 && gameStatus === 'playing' && !isTimerDisabled) {
-            // Le contrat est validé si le seuil a été atteint avant la fin du temps
             setGameStatus(scorePercentage >= thresholdPercent ? 'won' : 'lost');
         }
     }, [timeLeft, gameStatus, scorePercentage, isTimerDisabled, thresholdPercent]);
 
-    const getMissingWords = useCallback(() => {
-        if (!lyricsData) return [];
-        const missing = new Set<string>();
-        lyricsData.forEach((line) =>
-            line.forEach((word) => {
-                if (word.isHidden && !word.isFound) missing.add(word.normalized);
-            })
-        );
-        return Array.from(missing);
-    }, [lyricsData]);
-
+    // 6. Gameplay (Coup de pouce et Saisie)
     const applyHint = useCallback(() => {
         if (!lyricsData || hasUsedHint || gameStatus !== 'playing') return;
         setHasUsedHint(true);
@@ -219,38 +205,33 @@ export const useFillyricsGame = (
         [gameStatus, lyricsData, foundWordsCount, totalWords]
     );
 
+    // 7. 👉 ENREGISTREMENT BDD DANS LA NOUVELLE TABLE
     useEffect(() => {
         if ((gameStatus === 'won' || gameStatus === 'lost') && !hasSaved) {
-            saveGameResult(
+            saveFillyricsResult(
                 user,
                 isGuest,
                 song,
-                scorePercentage,
-                gameStatus,
-                timeLeft,
-                hasUsedHint,
-                foundWordsCount === totalWords ? [] : getMissingWords()
+                scorePoints,
+                thresholdPercent,
+                targetWordCount,
+                gameStatus
             );
             setHasSaved(true);
         }
-    }, [
-        gameStatus,
-        hasSaved,
-        user,
-        isGuest,
-        song,
-        scorePercentage,
-        timeLeft,
-        hasUsedHint,
-        getMissingWords,
-        foundWordsCount,
-        totalWords,
-    ]);
+    }, [gameStatus, hasSaved, user, isGuest, song, scorePoints, thresholdPercent, targetWordCount]);
 
     const disableTimer = useCallback(() => {
         setIsTimerDisabled(true);
         setTimeLeft(-1);
     }, []);
+
+    // Le fameux bouton "Skip" qui évalue le contrat avant la fin du temps
+    const skipRound = useCallback(() => {
+        if (gameStatus === 'playing' && !isTimerDisabled) {
+            setTimeLeft(0);
+        }
+    }, [gameStatus, isTimerDisabled]);
 
     return {
         lyricsData,
