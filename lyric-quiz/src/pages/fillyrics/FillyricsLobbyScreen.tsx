@@ -1,21 +1,21 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SharedSearch from '@/components/shared/SharedSearch';
-import SongCard from '@/components/shared/SongCard';
 import ArtistCard from '@/components/shared/ArtistCard';
-import { Song, Artist } from '@/types';
+import { Artist } from '@/types';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, X, Mic, ChevronDown, ChevronUp } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { ArrowLeft, Play, X, Mic, ChevronDown, ChevronUp, Settings2 } from 'lucide-react';
 import UserMenuButton from '@/components/layout/UserMenuButton';
 
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 
 export interface SelectionItem {
     id: string;
-    type: 'song' | 'artist';
+    type: 'artist'; // 👈 Restreint uniquement aux artistes
     name: string;
     image: string;
-    data: Song | Artist;
+    data: Artist;
 }
 
 const containerVariants: Variants = {
@@ -50,7 +50,6 @@ const itemVariants: Variants = {
     exit: { opacity: 0, scale: 0.5, transition: { duration: 0.2 } },
 };
 
-// 👉 MODIFICATION : On a rajouté le "exit" et un petit "delay" pour la fluidité
 const buttonVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -60,7 +59,7 @@ const buttonVariants: Variants = {
             type: 'spring',
             stiffness: 300,
             damping: 20,
-            delay: 0.15, // Attend une fraction de seconde que le panier s'ouvre avant d'apparaître
+            delay: 0.15,
         },
     },
     exit: { opacity: 0, y: 10, transition: { duration: 0.2 } },
@@ -70,27 +69,29 @@ export default function FillyricsLobbyScreen() {
     const navigate = useNavigate();
     const [selection, setSelection] = useState<SelectionItem[]>([]);
 
-    const [isExpanded, setIsExpanded] = useState(true);
-    const MAX_ITEMS = 10;
+    // 👉 NOUVEAU : État pour le nombre de rounds (entre 3 et 15)
+    const [numRounds, setNumRounds] = useState<number>(5);
 
-    const toggleSelection = (item: Song | Artist, type: 'song' | 'artist') => {
+    const [isExpanded, setIsExpanded] = useState(true);
+    const MAX_ITEMS = 10; // On peut garder une limite max d'artistes sélectionnés
+
+    const toggleSelection = (item: Artist) => {
         const itemId = item.id.toString();
-        const exists = selection.find((s) => s.id === itemId && s.type === type);
+        const exists = selection.find((s) => s.id === itemId);
 
         if (exists) {
-            setSelection((prev) => prev.filter((s) => !(s.id === itemId && s.type === type)));
+            setSelection((prev) => prev.filter((s) => s.id !== itemId));
         } else {
             if (selection.length >= MAX_ITEMS) {
-                alert(`Ton mix est plein ! (${MAX_ITEMS} éléments max)`);
+                alert(`Tu as sélectionné assez d'artistes ! (${MAX_ITEMS} max)`);
                 return;
             }
 
             const newItem: SelectionItem = {
                 id: itemId,
-                type,
-                name: type === 'song' ? (item as Song).title : (item as Artist).name,
-                image:
-                    type === 'song' ? (item as Song).album.cover_xl : (item as Artist).picture_xl,
+                type: 'artist',
+                name: item.name,
+                image: item.picture_xl,
                 data: item,
             };
             setSelection((prev) => [newItem, ...prev]);
@@ -118,43 +119,29 @@ export default function FillyricsLobbyScreen() {
                     FILLYRICS
                 </h1>
                 <p className="text-muted-foreground font-texte max-w-lg text-center text-lg md:text-xl">
-                    Recherche des artistes et des sons pour créer ton mix. Nous en tirerons 10 au
-                    hasard !
+                    Sélectionne tes artistes préférés et définis le nombre de rounds de ta partie !
                 </p>
             </header>
 
             <main>
+                {/* 👉 MODIFICATION : On bride la recherche aux artistes uniquement */}
                 <SharedSearch
-                    allowedTabs={['artists', 'songs']}
+                    allowedTabs={['artists']}
                     defaultTab="artists"
-                    renderSongCard={(song, isFavorite, onToggleFav) => (
-                        <SongCard
-                            key={`fill-song-${song.id}`}
-                            song={song}
-                            onClick={(s) => toggleSelection(s, 'song')}
-                            isFavorite={isFavorite}
-                            onToggleFavorite={onToggleFav}
-                            isSelected={selection.some(
-                                (s) => s.id === song.id.toString() && s.type === 'song'
-                            )}
-                        />
-                    )}
                     renderArtistCard={(artist, isFavorite, onToggleFav) => (
                         <ArtistCard
                             key={`fill-artist-${artist.id}`}
                             artist={artist}
-                            onClick={(a) => toggleSelection(a, 'artist')}
+                            onClick={(a) => toggleSelection(a)}
                             isFavorite={isFavorite}
                             onToggleFavorite={onToggleFav}
-                            isSelected={selection.some(
-                                (s) => s.id === artist.id.toString() && s.type === 'artist'
-                            )}
+                            isSelected={selection.some((s) => s.id === artist.id.toString())}
                         />
                     )}
                 />
             </main>
 
-            {/* 👉 BÉCHER FLOTTANT RÉDUISIBLE */}
+            {/* 👉 PANIER FLOTTANT */}
             <motion.div
                 layout
                 initial="hidden"
@@ -162,29 +149,27 @@ export default function FillyricsLobbyScreen() {
                 variants={containerVariants}
                 className="fixed right-4 bottom-4 z-50 flex w-[calc(100vw-2rem)] max-w-[420px] min-w-[260px] origin-bottom-right flex-col items-end gap-3 sm:right-6 sm:bottom-6 sm:w-[320px] md:w-[360px] lg:w-[28vw] xl:w-[22vw]"
             >
-                {/* La bulle principale */}
                 <motion.div
                     layout
                     className="w-full overflow-hidden rounded-[30px] border border-white/10 bg-black/40 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl sm:p-5"
                 >
-                    {/* En-tête de la bulle (Toujours visible) */}
                     <motion.div
                         layout
                         className={`flex items-center justify-between transition-colors duration-300 ${isExpanded ? 'mb-4 border-b border-white/10 pb-3' : ''}`}
                     >
                         <h2 className="font-titre flex items-center gap-2 text-base text-white sm:text-lg">
-                            <Mic className="text-secondary h-4 w-4" /> Ton Mix
+                            <Mic className="text-secondary h-4 w-4" /> Ton panier
                         </h2>
 
                         <div className="flex items-center gap-2 sm:gap-3">
                             <span className="font-titre rounded-full bg-white/5 px-3 py-0.5 text-sm text-white/70 sm:text-base">
-                                {selection.length} élément(s)
+                                {selection.length} artiste(s)
                             </span>
 
                             <button
                                 onClick={() => setIsExpanded(!isExpanded)}
                                 className="rounded-full border border-white/10 bg-white/5 p-1.5 text-white/70 transition-colors hover:bg-white/15 hover:text-white"
-                                title={isExpanded ? 'Réduire le panier' : 'Agrandir le panier'}
+                                title={isExpanded ? 'Réduire le panneau' : 'Agrandir le panneau'}
                             >
                                 {isExpanded ? (
                                     <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -195,7 +180,6 @@ export default function FillyricsLobbyScreen() {
                         </div>
                     </motion.div>
 
-                    {/* Zone de contenu rétractable */}
                     <AnimatePresence initial={false}>
                         {isExpanded && (
                             <motion.div
@@ -206,6 +190,7 @@ export default function FillyricsLobbyScreen() {
                                 transition={{ duration: 0.3, ease: 'easeInOut' }}
                                 className="flex w-full flex-col overflow-hidden"
                             >
+                                {/* GRILLE DES ARTISTES SÉLECTIONNÉS */}
                                 <motion.div layout className="w-full flex-grow py-1">
                                     {selection.length === 0 ? (
                                         <motion.div
@@ -214,7 +199,8 @@ export default function FillyricsLobbyScreen() {
                                             animate={{ opacity: 1 }}
                                             className="font-texte flex aspect-[3/1] w-full items-center justify-center rounded-2xl border border-dashed border-white/5 p-4 text-center text-xs text-white/50 sm:text-sm"
                                         >
-                                            Panier vide. <br /> Clique sur un son pour l'ajouter !
+                                            Aucun artiste sélectionné. <br /> Clique sur un artiste
+                                            pour l'ajouter !
                                         </motion.div>
                                     ) : (
                                         <motion.div
@@ -235,15 +221,12 @@ export default function FillyricsLobbyScreen() {
                                                         <img
                                                             src={item.image}
                                                             alt={item.name}
-                                                            className={`border-secondary h-full w-full border object-cover shadow-[0_0_10px_rgba(64,201,255,0.2)] transition-transform group-hover:scale-105 ${item.type === 'artist' ? 'rounded-full' : 'rounded-lg'}`}
+                                                            className="border-secondary h-full w-full rounded-full border object-cover shadow-[0_0_10px_rgba(64,201,255,0.2)] transition-transform group-hover:scale-105"
                                                             title={item.name}
                                                         />
                                                         <button
                                                             onClick={() =>
-                                                                toggleSelection(
-                                                                    item.data,
-                                                                    item.type
-                                                                )
+                                                                toggleSelection(item.data as Artist)
                                                             }
                                                             className="bg-destructive absolute -top-1.5 -right-1.5 rounded-full p-0.5 text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100 hover:scale-110 sm:-top-2 sm:-right-2 sm:p-1"
                                                             title={`Retirer ${item.name}`}
@@ -257,19 +240,46 @@ export default function FillyricsLobbyScreen() {
                                     )}
                                 </motion.div>
 
-                                {/* 👉 MODIFICATION : Le bouton Jouer est ré-invoqué manuellement ici */}
+                                {/* 👉 NOUVEAU : Paramétrage des Rounds avec le Slider Shadcn */}
+                                <motion.div layout className="mt-4 border-t border-white/10 pt-4">
+                                    <div className="mb-3 flex items-center justify-between">
+                                        <span className="font-texte flex items-center gap-2 text-sm text-white/80">
+                                            <Settings2 className="h-4 w-4" /> Nombre de rounds
+                                        </span>
+                                        <span className="text-secondary font-titre bg-secondary/10 border-secondary/20 rounded-full border px-3 py-0.5 text-lg">
+                                            {numRounds}
+                                        </span>
+                                    </div>
+                                    <div className="px-2">
+                                        <Slider
+                                            value={[numRounds]}
+                                            min={3}
+                                            max={15}
+                                            step={1}
+                                            onValueChange={(val) => setNumRounds(val[0])}
+                                            className="cursor-pointer"
+                                        />
+                                    </div>
+                                    <div className="font-texte mt-2 flex justify-between px-1 text-xs text-white/40">
+                                        <span>3</span>
+                                        <span>15</span>
+                                    </div>
+                                </motion.div>
+
+                                {/* 👉 BOUTON LANCER LA PARTIE */}
                                 <motion.div
                                     variants={buttonVariants}
-                                    initial="hidden" // 👈 LA SOLUTION EST LÀ
-                                    animate="visible" // 👈 LA SOLUTION EST LÀ
-                                    exit="exit" // 👈 LA SOLUTION EST LÀ
-                                    className="mt-4 w-full border-t border-white/10 pt-4 sm:mt-5"
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="exit"
+                                    className="mt-4 w-full pt-2 sm:mt-5"
                                 >
                                     <Button
                                         disabled={selection.length === 0}
                                         onClick={() =>
                                             navigate('/mode/fillyrics/play', {
-                                                state: { selection },
+                                                // NOUVEAU : On envoie la configuration complète (Artistes + Nbr de Rounds)
+                                                state: { selection, numRounds },
                                             })
                                         }
                                         className="font-texte bg-secondary text-secondary-foreground hover:bg-secondary/80 flex h-10 w-full items-center justify-center gap-2 rounded-full px-4 text-base shadow-[0_0_15px_rgba(64,201,255,0.3)] transition-all disabled:opacity-30 disabled:shadow-none sm:h-12 sm:px-6 sm:text-lg"
@@ -278,7 +288,7 @@ export default function FillyricsLobbyScreen() {
                                             className="h-4 w-4 sm:h-5 sm:w-5"
                                             fill="currentColor"
                                         />
-                                        <span>Jouer le Mix</span>
+                                        <span>Lancer la Partie</span>
                                     </Button>
                                 </motion.div>
                             </motion.div>
