@@ -6,6 +6,7 @@ interface LyricsGridProps {
     gameStatus: GameStatus;
     lastFoundWord?: string | null;
     alignment?: 'left' | 'center' | 'right';
+    gameMode?: 'allmusic' | 'fillyrics'; // 👈 AJOUT POUR PROTÉGER ALLMUSIC
 }
 
 export default function LyricsGrid({
@@ -14,6 +15,7 @@ export default function LyricsGrid({
     gameStatus,
     lastFoundWord,
     alignment = 'center',
+    gameMode = 'allmusic', // 👈 Par défaut sur AllMusic
 }: LyricsGridProps) {
     if (isFetchingLyrics) {
         return (
@@ -45,25 +47,20 @@ export default function LyricsGrid({
                         className={`flex flex-wrap gap-x-1.5 gap-y-1.5 md:gap-x-2 md:gap-y-2 ${justificationClass}`}
                     >
                         {line.map((word, wordIndex) => {
-                            // 👉 NOUVELLE LOGIQUE : On sépare les mots de contexte des mots trouvés par le joueur
                             const isContextWord = word.isHidden === false;
                             const isUserFoundWord = word.isFound && word.isHidden !== false;
 
                             let styleClass = 'glass-cell';
 
                             if (isContextWord) {
-                                // 1. Mot pré-rempli (FILLyrics) : Affichage neutre
                                 styleClass = 'bg-transparent text-foreground/80 font-texte';
                             } else if (isUserFoundWord) {
-                                // 2. Mot deviné par le joueur : Animation et néon
                                 const isLastFound =
                                     word.normalized === lastFoundWord && gameStatus === 'playing';
-
                                 styleClass = `bg-transparent font-texte animate-pop-word transition-colors duration-500 ${
                                     isLastFound ? 'text-neon-secondary shadow' : 'text-foreground'
                                 }`;
                             } else if (gameStatus === 'lost' || gameStatus === 'won') {
-                                // 3. Fin de partie pour les trous non trouvés
                                 styleClass =
                                     'text-destructive bg-transparent font-texte opacity-80';
                             }
@@ -74,12 +71,11 @@ export default function LyricsGrid({
                                     className={`inline-block rounded px-1.5 py-0.5 md:px-2 md:py-1 ${styleClass}`}
                                 >
                                     {isContextWord ? (
-                                        // Affichage simple pour le contexte
                                         <span>{word.original}</span>
                                     ) : isUserFoundWord ? (
-                                        // Affichage avec effet pour les mots trouvés
                                         <span
                                             className={`transition-all duration-500 ${
+                                                gameMode === 'fillyrics' ||
                                                 word.normalized === lastFoundWord
                                                     ? 'text-secondary [text-shadow:0_0_15px_rgba(64,201,255,0.8)]'
                                                     : 'text-foreground'

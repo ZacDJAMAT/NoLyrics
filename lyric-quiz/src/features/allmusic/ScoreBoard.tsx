@@ -12,6 +12,7 @@ import {
     Flag,
     RotateCcw,
     TimerOff,
+    SkipForward,
 } from 'lucide-react';
 
 interface FloatingWord {
@@ -39,9 +40,8 @@ interface ScoreBoardProps {
     hasUsedHint: boolean;
     onDisableTimer: () => void;
     isTimerDisabled: boolean;
-    // 👉 NOUVELLES PROPS (Optionnelles pour ne pas casser AllMusic)
     gameMode?: 'allmusic' | 'fillyrics';
-    scorePoints?: number;
+    scorePoints?: number; // 👈 AJOUT
 }
 
 export default function ScoreBoard({
@@ -63,7 +63,7 @@ export default function ScoreBoard({
     hasUsedHint,
     isTimerDisabled,
     onDisableTimer,
-    gameMode = 'allmusic', // Par défaut sur AllMusic !
+    gameMode = 'allmusic',
     scorePoints,
 }: ScoreBoardProps) {
     const [floatingWords, setFloatingWords] = useState<FloatingWord[]>([]);
@@ -76,34 +76,23 @@ export default function ScoreBoard({
                 leftPercentage: 10 + Math.random() * 80,
             };
             setFloatingWords((prev) => [...prev, newFloatingWord]);
-            setTimeout(() => {
-                setFloatingWords((prev) => prev.filter((w) => w.id !== newFloatingWord.id));
-            }, 1000);
+            setTimeout(
+                () => setFloatingWords((prev) => prev.filter((w) => w.id !== newFloatingWord.id)),
+                1000
+            );
         }
     }, [foundWordsCount, lastFoundWord]);
 
     return (
         <div
-            className={`glass-panel sticky top-2 z-50 flex flex-wrap items-center justify-between gap-y-3 p-3 transition-[box-shadow,border-color] duration-500 ease-in-out md:top-6 md:flex-nowrap md:gap-y-0 md:p-6 ${
-                gameStatus === 'won'
-                    ? 'border-secondary shadow-[0_0_20px_rgba(64,201,255,0.3)]'
-                    : gameStatus === 'lost'
-                      ? 'border-destructive shadow-[0_0_20px_rgba(255,42,95,0.3)]'
-                      : ''
-            }`}
-            style={{
-                WebkitTransform: 'translate3d(0,0,0)',
-                transform: 'translate3d(0,0,0)',
-            }}
+            className={`glass-panel sticky top-2 z-50 flex flex-wrap items-center justify-between gap-y-3 p-3 transition-[box-shadow,border-color] duration-500 ease-in-out md:top-6 md:flex-nowrap md:gap-y-0 md:p-6 ${gameStatus === 'won' ? 'border-secondary shadow-[0_0_20px_rgba(64,201,255,0.3)]' : gameStatus === 'lost' ? 'border-destructive shadow-[0_0_20px_rgba(255,42,95,0.3)]' : ''}`}
+            style={{ WebkitTransform: 'translate3d(0,0,0)', transform: 'translate3d(0,0,0)' }}
         >
-            {/* 1. SCORE */}
             <div className="order-1 w-16 shrink-0 text-center transition-all duration-500 md:w-24">
                 <p className="text-muted-foreground mb-0 text-[10px] font-semibold tracking-wider uppercase md:mb-1 md:text-xs">
-                    {/* 👉 Changement conditionnel du titre */}
                     {gameMode === 'fillyrics' ? 'Points' : 'Score'}
                 </p>
                 <p className="titre-neon-primary font-titre text-foreground text-lg leading-none tabular-nums md:text-3xl md:leading-tight">
-                    {/* 👉 Changement conditionnel de la valeur */}
                     {gameMode === 'fillyrics' && scorePoints !== undefined
                         ? scorePoints
                         : `${scorePercentage}%`}
@@ -113,7 +102,6 @@ export default function ScoreBoard({
                 </p>
             </div>
 
-            {/* 2. CHRONO & BOUTONS */}
             <div className="order-2 flex shrink-0 items-center gap-1.5 transition-all duration-500 md:order-3 md:gap-4">
                 <div className="mr-0 w-16 shrink-0 text-center transition-all duration-500 md:mr-2 md:w-24">
                     <p
@@ -130,22 +118,23 @@ export default function ScoreBoard({
 
                 <div className="flex h-8 items-center gap-1 border-l border-white/10 pl-1.5 transition-all duration-500 ease-out md:h-10 md:gap-2 md:pl-4">
                     <div className="flex items-center gap-2">
-                        {/* 👉 CONDITION DU BOUTON : Uniquement "Abandonner" pour Fillyrics, Paramètres pour AllMusic */}
                         {gameMode === 'fillyrics' ? (
+                            // 👉 BOUTON SKIP
                             <Button
                                 variant="outline"
                                 size="icon"
                                 onClick={onGiveUp}
                                 disabled={gameStatus !== 'playing'}
-                                className="bg-card/50 border-destructive/30 hover:bg-destructive/20 hover:border-destructive group h-10 w-10 rounded-xl transition-all"
-                                title="Abandonner la partie"
+                                className="bg-card/50 border-secondary/30 text-secondary hover:bg-secondary/20 hover:border-secondary group h-10 w-10 rounded-xl transition-all"
+                                title="Évaluer le contrat (Passer)"
                             >
-                                <Flag
-                                    className="text-destructive h-5 w-5 transition-transform duration-500 group-hover:scale-110"
+                                <SkipForward
+                                    className="h-5 w-5 transition-transform duration-500 group-hover:translate-x-1"
                                     strokeWidth={2.5}
                                 />
                             </Button>
                         ) : (
+                            // 👉 BOUTON REGLAGES (AllMusic)
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button
@@ -160,19 +149,16 @@ export default function ScoreBoard({
                                         />
                                     </Button>
                                 </PopoverTrigger>
-
                                 <PopoverContent
                                     align="end"
                                     sideOffset={16}
                                     className="glass-modal bg-background/40 w-72 rounded-3xl border-white/10 p-6 shadow-[0_10px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl duration-300 ease-out"
                                 >
                                     <div className="flex flex-col gap-5">
-                                        {/* ACTIONS DE JEU (Identiques à avant) */}
                                         <div className="glass-inner flex flex-col gap-3 p-4">
                                             <p className="text-muted-foreground mb-1 text-center text-xs font-semibold tracking-wider uppercase">
                                                 Actions de jeu
                                             </p>
-
                                             {gameStatus === 'playing' && !hasUsedHint && (
                                                 <Button
                                                     variant="neon-primary"
@@ -188,7 +174,6 @@ export default function ScoreBoard({
                                                     </span>
                                                 </Button>
                                             )}
-
                                             {gameStatus === 'playing' && !isTimerDisabled && (
                                                 <Button
                                                     variant="neon-primary"
@@ -202,7 +187,6 @@ export default function ScoreBoard({
                                                     <span className="font-semibold">Mode Zen</span>
                                                 </Button>
                                             )}
-
                                             {gameStatus === 'playing' && (
                                                 <Button
                                                     variant="neon-secondary"
@@ -218,7 +202,6 @@ export default function ScoreBoard({
                                                     </span>
                                                 </Button>
                                             )}
-
                                             {gameStatus === 'playing' && (
                                                 <Button
                                                     variant="neon-destructive"
@@ -234,7 +217,6 @@ export default function ScoreBoard({
                                                     </span>
                                                 </Button>
                                             )}
-
                                             {gameStatus !== 'playing' && (
                                                 <div className="px-1 py-2">
                                                     <p className="text-muted-foreground/80 text-center text-sm italic">
@@ -244,8 +226,6 @@ export default function ScoreBoard({
                                                 </div>
                                             )}
                                         </div>
-
-                                        {/* ALIGNEMENT TEXTE (Identique à avant) */}
                                         <div className="glass-inner flex flex-col gap-3 p-4">
                                             <p className="text-muted-foreground mb-1 text-center text-xs font-semibold tracking-wider uppercase">
                                                 Alignement du texte
@@ -285,7 +265,6 @@ export default function ScoreBoard({
                 </div>
             </div>
 
-            {/* 3. INPUT (CHAMP DE TEXTE) */}
             <div className="relative order-3 mx-0 flex w-full items-center justify-center transition-all duration-500 md:order-2 md:mx-8 md:w-auto md:max-w-sm md:flex-1">
                 <div className="pointer-events-none absolute inset-0 z-50 overflow-visible">
                     {floatingWords.map((fw) => (
@@ -302,7 +281,6 @@ export default function ScoreBoard({
                         </span>
                     ))}
                 </div>
-
                 {isFetchingLyrics ? (
                     <div className="font-titre text-primary flex h-10 animate-pulse items-center gap-2 text-lg drop-shadow-[0_0_8px_rgba(232,28,255,0.4)] md:h-14 md:gap-3 md:text-2xl">
                         <div className="border-primary h-4 w-4 animate-spin rounded-full border-4 border-t-transparent md:h-6 md:w-6"></div>

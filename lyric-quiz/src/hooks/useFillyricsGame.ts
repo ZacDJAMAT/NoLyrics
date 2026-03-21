@@ -90,6 +90,12 @@ export const useFillyricsGame = (
         return () => clearInterval(timer);
     }, [gameStatus, timeLeft, isTimerDisabled]);
 
+    const skipRound = useCallback(() => {
+        if (gameStatus === 'playing' && !isTimerDisabled) {
+            setTimeLeft(0);
+        }
+    }, [gameStatus, isTimerDisabled]);
+
     const formattedTime = useMemo(() => {
         if (isTimerDisabled || timeLeft === -1) return '∞';
         const m = Math.floor(timeLeft / 60)
@@ -264,7 +270,7 @@ export const useFillyricsGame = (
         applyHint,
         isTimerDisabled,
         disableTimer,
-        // Expositions pour les jauges UI :
+        skipRound,
         thresholdPercent,
         isContractSecured,
         speedBonusMultiplier,

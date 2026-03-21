@@ -38,9 +38,14 @@ export const useFillyricsPreRound = () => {
             const roundWordCount = Math.floor(Math.random() * 6) + 5;
 
             const allTracks = await getArtistTopTracks(artist.id, 100);
-            const availableTracks = allTracks.filter(
-                (t) => !playedSongIds.includes(t.id.toString())
-            );
+            const availableTracks = allTracks.filter((t) => {
+                const titleLower = t.title.toLowerCase();
+                const isRemix =
+                    titleLower.includes('remix') ||
+                    titleLower.includes('edit') ||
+                    titleLower.includes('version');
+                return !playedSongIds.includes(t.id.toString()) && !isRemix;
+            });
 
             if (availableTracks.length < 3) {
                 throw new Error('Pas assez de musiques disponibles pour cet artiste.');
