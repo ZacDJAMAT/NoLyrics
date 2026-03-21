@@ -8,7 +8,7 @@ interface AuthContextType {
     isLoading: boolean;
     loginWithGoogle: () => Promise<void>;
     logout: () => Promise<void>;
-    continueAsGuest: () => Promise<void>; // 👈 C'est maintenant une fonction asynchrone
+    continueAsGuest: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,41 +18,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isGuest, setIsGuest] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(true);
 
+    // Fonction centralisée pour gérer la session et la fusion
+    const handleSessionChange = async (sessionUser: User | null) => {
+        const currentIsGuest = sessionUser?.is_anonymous || false;
+
+        // 👉 LOGIQUE DE FUSION (MERGE)
+        if (sessionUser && !currentIsGuest) {
+            const pendingAnonId = localStorage.getItem('pending_anon_id');
+
+            if (pendingAnonId && pendingAnonId !== sessionUser.id) {
+                console.log('Fusion des données anonymes vers le compte principal...');
+                await supabase.rpc('merge_anon_data', { anon_id: pendingAnonId });
+                localStorage.removeItem('pending_anon_id');
+            } else if (pendingAnonId === sessionUser.id) {
+                // Supabase a fait l'upgrade automatiquement (Nouveau compte)
+                localStorage.removeItem('pending_anon_id');
+            }
+        }
+
+        setUser(sessionUser);
+        setIsGuest(currentIsGuest);
+        setIsLoading(false);
+    };
+
     useEffect(() => {
         const checkSession = async () => {
             const {
                 data: { session },
             } = await supabase.auth.getSession();
-
-            setUser(session?.user || null);
-            // 👉 Supabase nous dit directement si c'est un compte anonyme !
-            setIsGuest(session?.user?.is_anonymous || false);
+            await handleSessionChange(session?.user || null);
 
             if (session?.user && window.opener) {
                 window.close();
             }
-
-            setIsLoading(false);
         };
 
         checkSession();
 
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
-            setUser(session?.user || null);
-            setIsGuest(session?.user?.is_anonymous || false);
+        } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            await handleSessionChange(session?.user || null);
 
             if (session?.user && window.opener) {
                 window.close();
             }
-            setIsLoading(false);
         });
 
         return () => subscription.unsubscribe();
     }, []);
 
     const loginWithGoogle = async () => {
+        // 👉 On sauvegarde l'ID anonyme avant de partir sur Google
+        if (isGuest && user) {
+            localStorage.setItem('pending_anon_id', user.id);
+        }
+
         const authWindow = window.open('', '_blank');
 
         const { data } = await supabase.auth.signInWithOAuth({
@@ -71,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const logout = async () => {
+        localStorage.removeItem('pending_anon_id'); // Sécurité
         await supabase.auth.signOut();
         setUser(null);
         setIsGuest(false);
@@ -78,15 +100,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const continueAsGuest = async () => {
         setIsLoading(true);
+        localStorage.removeItem('pending_anon_id'); // Sécurité
 
-        // 1. On demande à Supabase de créer le compte anonyme
         const { data, error } = await supabase.auth.signInAnonymously();
 
         if (error) {
             console.error('Erreur lors de la connexion anonyme :', error.message);
             alert('Erreur Supabase : ' + error.message);
         } else if (data.user) {
-            // 2. Mise à jour de l'interface immédiatement
             setUser(data.user);
             setIsGuest(true);
         }
@@ -105,8 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
-    if (context === undefined) {
+    if (context === undefined)
         throw new Error("useAuth doit être utilisé à l'intérieur d'un AuthProvider");
-    }
     return context;
 };

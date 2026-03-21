@@ -25,13 +25,12 @@ interface FavoriteArtist {
 }
 
 export default function ProfileScreen({ onClose }: ProfileScreenProps) {
-    const { user, isGuest, logout } = useAuth();
+    const { user, isGuest, logout, loginWithGoogle } = useAuth();
     const navigate = useNavigate();
 
     const [showLogoutModal, setShowLogoutModal] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(true);
 
-    // Nouvelles données du profil
     const [username, setUsername] = useState<string>('Joueur Inconnu');
     const [stats, setStats] = useState<UserStats>({
         allMusicPlayed: 0,
@@ -47,7 +46,6 @@ export default function ProfileScreen({ onClose }: ProfileScreenProps) {
             setIsLoading(true);
 
             try {
-                // 1. Récupération du pseudo (profiles)
                 const { data: profileData } = await supabase
                     .from('profiles')
                     .select('username')
@@ -56,26 +54,22 @@ export default function ProfileScreen({ onClose }: ProfileScreenProps) {
 
                 if (profileData?.username) setUsername(profileData.username);
 
-                // 2. Récupération des stats AllMusic
                 const { data: allMusicData } = await supabase
                     .from('game_history')
                     .select('score_percentage')
                     .eq('user_id', user.id);
 
-                // 3. Récupération des stats Fillyrics
                 const { data: fillyricsData } = await supabase
                     .from('history_fillyrics')
-                    .select('points')
+                    .select('points, session_id')
                     .eq('user_id', user.id);
 
-                // 4. Récupération des favoris (Artistes)
                 const { data: favsData } = await supabase
                     .from('user_favorites')
                     .select('*')
                     .eq('user_id', user.id)
                     .eq('item_type', 'artist');
 
-                // Calculs des statistiques
                 let avgScore = 0;
                 if (allMusicData && allMusicData.length > 0) {
                     const totalScore = allMusicData.reduce(
@@ -86,14 +80,18 @@ export default function ProfileScreen({ onClose }: ProfileScreenProps) {
                 }
 
                 let totalPoints = 0;
+                let uniqueSessionsCount = 0;
+
                 if (fillyricsData && fillyricsData.length > 0) {
                     totalPoints = fillyricsData.reduce((acc, curr) => acc + (curr.points || 0), 0);
+                    const uniqueSessions = new Set(fillyricsData.map((row) => row.session_id));
+                    uniqueSessionsCount = uniqueSessions.size;
                 }
 
                 setStats({
                     allMusicPlayed: allMusicData?.length || 0,
                     allMusicAvg: avgScore,
-                    fillyricsPlayed: fillyricsData?.length || 0,
+                    fillyricsPlayed: uniqueSessionsCount,
                     fillyricsPoints: totalPoints,
                 });
 
@@ -140,7 +138,7 @@ export default function ProfileScreen({ onClose }: ProfileScreenProps) {
             </header>
 
             <main className="mx-auto flex max-w-4xl flex-col gap-6">
-                {/* 1. EN-TÊTE DU PROFIL (Pseudo + Avatar) */}
+                {/* 1. EN-TÊTE DU PROFIL (Pseudo + Avatar + Bouton Google) */}
                 <div className="glass-panel relative flex flex-col items-center gap-6 overflow-hidden p-6 sm:flex-row sm:p-8">
                     <div className="absolute -top-10 -right-10 opacity-5">
                         <UserIcon className="h-64 w-64" />
@@ -155,7 +153,7 @@ export default function ProfileScreen({ onClose }: ProfileScreenProps) {
                         )}
                     </div>
 
-                    <div className="z-10 text-center sm:text-left">
+                    <div className="z-10 flex flex-1 flex-col items-center text-center sm:items-start sm:text-left">
                         {isLoading ? (
                             <div className="mb-2 h-8 w-48 animate-pulse rounded-lg bg-white/10" />
                         ) : (
@@ -163,9 +161,20 @@ export default function ProfileScreen({ onClose }: ProfileScreenProps) {
                                 {username}
                             </h1>
                         )}
-                        <p className="font-texte mt-1 text-sm tracking-wider text-white/40 uppercase">
-                            Membre Fillyrics
+                        <p className="font-texte mt-1 mb-4 text-sm tracking-wider text-white/40 uppercase">
+                            Membre NoLyrics
                         </p>
+
+                        {/* 👉 BOUTON GOOGLE DÉPLACÉ ET RÉDUIT */}
+                        {isGuest && (
+                            <Button
+                                variant="outline"
+                                onClick={loginWithGoogle}
+                                className="font-titre border-secondary text-secondary hover:bg-secondary/10 w-auto rounded-lg px-4 py-2 text-sm tracking-widest uppercase transition-all"
+                            >
+                                Associer mon compte Google
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -175,7 +184,6 @@ export default function ProfileScreen({ onClose }: ProfileScreenProps) {
                         <BarChart3 className="text-secondary h-5 w-5" /> Statistiques de jeu
                     </h3>
                     <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                        {/* Stats AllMusic */}
                         <div className="glass-panel border-t-primary/50 flex flex-col items-center justify-center border-t-2 p-4 text-center transition-colors hover:bg-white/5">
                             <Disc3 className="text-primary mb-2 h-6 w-6 opacity-80" />
                             <span className="font-titre text-3xl text-white">
@@ -194,7 +202,6 @@ export default function ProfileScreen({ onClose }: ProfileScreenProps) {
                                 Score Moyen
                             </span>
                         </div>
-                        {/* Stats Fillyrics */}
                         <div className="glass-panel border-t-secondary/50 flex flex-col items-center justify-center border-t-2 p-4 text-center transition-colors hover:bg-white/5">
                             <Mic2 className="text-secondary mb-2 h-6 w-6 opacity-80" />
                             <span className="font-titre text-3xl text-white">
@@ -264,15 +271,18 @@ export default function ProfileScreen({ onClose }: ProfileScreenProps) {
                 </div>
 
                 {/* 4. ACTIONS */}
-                <div className="mt-4 flex justify-center border-t border-white/10 pt-6 sm:justify-end">
-                    <Button
-                        variant="destructive"
-                        onClick={() => setShowLogoutModal(true)}
-                        className="font-titre hover:bg-destructive w-full rounded-xl px-6 py-5 text-base tracking-widest uppercase shadow-[0_0_15px_rgba(255,77,79,0.3)] transition-all hover:scale-105 sm:w-auto"
-                    >
-                        Se déconnecter
-                    </Button>
-                </div>
+                {/* 👉 LE BOUTON DE DÉCONNEXION N'APPARAÎT QUE POUR LES VRAIS COMPTES */}
+                {!isGuest && (
+                    <div className="mt-4 flex justify-center border-t border-white/10 pt-6 sm:justify-end">
+                        <Button
+                            variant="destructive"
+                            onClick={() => setShowLogoutModal(true)}
+                            className="font-titre hover:bg-destructive w-full rounded-xl px-6 py-5 text-base tracking-widest uppercase shadow-[0_0_15px_rgba(255,77,79,0.3)] transition-all hover:scale-105 sm:w-auto"
+                        >
+                            Se déconnecter
+                        </Button>
+                    </div>
+                )}
             </main>
         </div>
     );

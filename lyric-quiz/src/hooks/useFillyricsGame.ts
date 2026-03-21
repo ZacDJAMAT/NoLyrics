@@ -4,7 +4,6 @@ import { parseFillyrics, DifficultyLevel } from '@/utils/fillyricsParser';
 import { normalizeWord } from '@/utils/lyricsParser';
 import { Song, Word, GameStatus } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
-// 👉 IMPORT DE LA NOUVELLE FONCTION D'HISTORIQUE
 import { saveFillyricsResult } from '@/lib/history';
 
 export const useFillyricsGame = (
@@ -26,7 +25,7 @@ export const useFillyricsGame = (
     const [gameStatus, setGameStatus] = useState<GameStatus>('idle');
     const [lastFoundWord, setLastFoundWord] = useState<string | null>(null);
 
-    const { user, isGuest } = useAuth();
+    const { user } = useAuth();
     const [hasSaved, setHasSaved] = useState<boolean>(false);
     const [hasUsedHint, setHasUsedHint] = useState<boolean>(false);
     const [isTimerDisabled, setIsTimerDisabled] = useState<boolean>(false);
@@ -210,7 +209,7 @@ export const useFillyricsGame = (
         if ((gameStatus === 'won' || gameStatus === 'lost') && !hasSaved) {
             saveFillyricsResult(
                 user,
-                isGuest,
+                // isGuest a été supprimé ici !
                 song,
                 scorePoints,
                 thresholdPercent,
@@ -219,7 +218,7 @@ export const useFillyricsGame = (
             );
             setHasSaved(true);
         }
-    }, [gameStatus, hasSaved, user, isGuest, song, scorePoints, thresholdPercent, targetWordCount]);
+    }, [gameStatus, hasSaved, user, song, scorePoints, thresholdPercent, targetWordCount]);
 
     const disableTimer = useCallback(() => {
         setIsTimerDisabled(true);
