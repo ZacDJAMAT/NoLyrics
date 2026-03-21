@@ -39,6 +39,9 @@ interface ScoreBoardProps {
     hasUsedHint: boolean;
     onDisableTimer: () => void;
     isTimerDisabled: boolean;
+    // 👉 NOUVELLES PROPS (Optionnelles pour ne pas casser AllMusic)
+    gameMode?: 'allmusic' | 'fillyrics';
+    scorePoints?: number;
 }
 
 export default function ScoreBoard({
@@ -60,6 +63,8 @@ export default function ScoreBoard({
     hasUsedHint,
     isTimerDisabled,
     onDisableTimer,
+    gameMode = 'allmusic', // Par défaut sur AllMusic !
+    scorePoints,
 }: ScoreBoardProps) {
     const [floatingWords, setFloatingWords] = useState<FloatingWord[]>([]);
 
@@ -92,16 +97,17 @@ export default function ScoreBoard({
             }}
         >
             {/* 1. SCORE */}
-            {/* On s'assure que la largeur est bien fixe (w-16 et w-24) */}
             <div className="order-1 w-16 shrink-0 text-center transition-all duration-500 md:w-24">
                 <p className="text-muted-foreground mb-0 text-[10px] font-semibold tracking-wider uppercase md:mb-1 md:text-xs">
-                    Score
+                    {/* 👉 Changement conditionnel du titre */}
+                    {gameMode === 'fillyrics' ? 'Points' : 'Score'}
                 </p>
-                {/* MODIFICATION : Ajout de tabular-nums pour stabiliser les chiffres */}
                 <p className="titre-neon-primary font-titre text-foreground text-lg leading-none tabular-nums md:text-3xl md:leading-tight">
-                    {scorePercentage}%
+                    {/* 👉 Changement conditionnel de la valeur */}
+                    {gameMode === 'fillyrics' && scorePoints !== undefined
+                        ? scorePoints
+                        : `${scorePercentage}%`}
                 </p>
-                {/* MODIFICATION : Ajout de tabular-nums */}
                 <p className="text-muted-foreground font-texte mt-0.5 text-[10px] tabular-nums md:mt-0 md:text-sm">
                     {foundWordsCount} / {totalWords}
                 </p>
@@ -109,14 +115,12 @@ export default function ScoreBoard({
 
             {/* 2. CHRONO & BOUTONS */}
             <div className="order-2 flex shrink-0 items-center gap-1.5 transition-all duration-500 md:order-3 md:gap-4">
-                {/* MODIFICATION : On remplace md:w-auto par md:w-24 et on met shrink-0 pour que la boîte du chrono ne bouge JAMAIS */}
                 <div className="mr-0 w-16 shrink-0 text-center transition-all duration-500 md:mr-2 md:w-24">
                     <p
                         className={`mb-0 text-[10px] font-semibold tracking-wider uppercase md:mb-1 md:text-xs ${timeLeft <= 30 && timeLeft >= 0 && gameStatus === 'playing' ? '!text-destructive animate-pulse' : 'text-muted-foreground'}`}
                     >
                         Temps
                     </p>
-                    {/* MODIFICATION : Ajout de tabular-nums */}
                     <p
                         className={`titre-neon-primary font-titre text-lg leading-none tabular-nums md:text-3xl md:leading-tight ${timeLeft <= 30 && timeLeft >= 0 && gameStatus === 'playing' ? 'titre-neon-destructive' : 'text-foreground'}`}
                     >
@@ -125,139 +129,158 @@ export default function ScoreBoard({
                 </div>
 
                 <div className="flex h-8 items-center gap-1 border-l border-white/10 pl-1.5 transition-all duration-500 ease-out md:h-10 md:gap-2 md:pl-4">
-                    {/* ZONE DROITE : Uniquement le bouton Paramètres (Le code reste identique) */}
                     <div className="flex items-center gap-2">
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="bg-card/50 group h-10 w-10 rounded-xl border-white/10 transition-all hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]"
-                                    title="Paramètres et Actions"
-                                >
-                                    <Settings
-                                        className="text-foreground/80 h-5 w-5 transition-transform duration-500 group-hover:rotate-90"
-                                        strokeWidth={2.5}
-                                    />
-                                </Button>
-                            </PopoverTrigger>
-
-                            <PopoverContent
-                                align="end"
-                                sideOffset={16}
-                                className="glass-modal bg-background/40 w-72 rounded-3xl border-white/10 p-6 shadow-[0_10px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl duration-300 ease-out"
+                        {/* 👉 CONDITION DU BOUTON : Uniquement "Abandonner" pour Fillyrics, Paramètres pour AllMusic */}
+                        {gameMode === 'fillyrics' ? (
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={onGiveUp}
+                                disabled={gameStatus !== 'playing'}
+                                className="bg-card/50 border-destructive/30 hover:bg-destructive/20 hover:border-destructive group h-10 w-10 rounded-xl transition-all"
+                                title="Abandonner la partie"
                             >
-                                <div className="flex flex-col gap-5">
-                                    {/* SECTION 1 : ACTIONS DE JEU */}
-                                    <div className="glass-inner flex flex-col gap-3 p-4">
-                                        <p className="text-muted-foreground mb-1 text-center text-xs font-semibold tracking-wider uppercase">
-                                            Actions de jeu
-                                        </p>
+                                <Flag
+                                    className="text-destructive h-5 w-5 transition-transform duration-500 group-hover:scale-110"
+                                    strokeWidth={2.5}
+                                />
+                            </Button>
+                        ) : (
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="bg-card/50 group h-10 w-10 rounded-xl border-white/10 transition-all hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]"
+                                        title="Paramètres et Actions"
+                                    >
+                                        <Settings
+                                            className="text-foreground/80 h-5 w-5 transition-transform duration-500 group-hover:rotate-90"
+                                            strokeWidth={2.5}
+                                        />
+                                    </Button>
+                                </PopoverTrigger>
 
-                                        {gameStatus === 'playing' && !hasUsedHint && (
-                                            <Button
-                                                variant="neon-primary"
-                                                onClick={onHint}
-                                                className="group h-10 w-full justify-start gap-3 rounded-lg"
-                                            >
-                                                <Lightbulb
-                                                    className="h-4 w-4 transition-transform group-hover:scale-110"
-                                                    strokeWidth={2.5}
-                                                />
-                                                <span className="font-semibold">Coup de pouce</span>
-                                            </Button>
-                                        )}
+                                <PopoverContent
+                                    align="end"
+                                    sideOffset={16}
+                                    className="glass-modal bg-background/40 w-72 rounded-3xl border-white/10 p-6 shadow-[0_10px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl duration-300 ease-out"
+                                >
+                                    <div className="flex flex-col gap-5">
+                                        {/* ACTIONS DE JEU (Identiques à avant) */}
+                                        <div className="glass-inner flex flex-col gap-3 p-4">
+                                            <p className="text-muted-foreground mb-1 text-center text-xs font-semibold tracking-wider uppercase">
+                                                Actions de jeu
+                                            </p>
 
-                                        {gameStatus === 'playing' && !isTimerDisabled && (
-                                            <Button
-                                                variant="neon-primary"
-                                                onClick={onDisableTimer}
-                                                className="group h-10 w-full justify-start gap-3 rounded-lg"
-                                            >
-                                                <TimerOff
-                                                    className="h-4 w-4 transition-transform group-hover:scale-110"
-                                                    strokeWidth={2.5}
-                                                />
-                                                <span className="font-semibold">Mode Zen</span>
-                                            </Button>
-                                        )}
+                                            {gameStatus === 'playing' && !hasUsedHint && (
+                                                <Button
+                                                    variant="neon-primary"
+                                                    onClick={onHint}
+                                                    className="group h-10 w-full justify-start gap-3 rounded-lg"
+                                                >
+                                                    <Lightbulb
+                                                        className="h-4 w-4 transition-transform group-hover:scale-110"
+                                                        strokeWidth={2.5}
+                                                    />
+                                                    <span className="font-semibold">
+                                                        Coup de pouce
+                                                    </span>
+                                                </Button>
+                                            )}
 
-                                        {gameStatus === 'playing' && (
-                                            <Button
-                                                variant="neon-secondary"
-                                                onClick={onRestart}
-                                                className="group h-10 w-full justify-start gap-3 rounded-lg"
-                                            >
-                                                <RotateCcw
-                                                    className="h-4 w-4 transition-transform duration-300 group-hover:-rotate-90"
-                                                    strokeWidth={2.5}
-                                                />
-                                                <span className="font-semibold">Recommencer</span>
-                                            </Button>
-                                        )}
+                                            {gameStatus === 'playing' && !isTimerDisabled && (
+                                                <Button
+                                                    variant="neon-primary"
+                                                    onClick={onDisableTimer}
+                                                    className="group h-10 w-full justify-start gap-3 rounded-lg"
+                                                >
+                                                    <TimerOff
+                                                        className="h-4 w-4 transition-transform group-hover:scale-110"
+                                                        strokeWidth={2.5}
+                                                    />
+                                                    <span className="font-semibold">Mode Zen</span>
+                                                </Button>
+                                            )}
 
-                                        {gameStatus === 'playing' && (
-                                            <Button
-                                                variant="neon-destructive"
-                                                onClick={onGiveUp}
-                                                className="group h-10 w-full justify-start gap-3 rounded-lg"
-                                            >
-                                                <Flag
-                                                    className="h-4 w-4 transition-transform group-hover:scale-110"
-                                                    strokeWidth={2.5}
-                                                />
-                                                <span className="font-semibold">Abandonner</span>
-                                            </Button>
-                                        )}
+                                            {gameStatus === 'playing' && (
+                                                <Button
+                                                    variant="neon-secondary"
+                                                    onClick={onRestart}
+                                                    className="group h-10 w-full justify-start gap-3 rounded-lg"
+                                                >
+                                                    <RotateCcw
+                                                        className="h-4 w-4 transition-transform duration-300 group-hover:-rotate-90"
+                                                        strokeWidth={2.5}
+                                                    />
+                                                    <span className="font-semibold">
+                                                        Recommencer
+                                                    </span>
+                                                </Button>
+                                            )}
 
-                                        {gameStatus !== 'playing' && (
-                                            <div className="px-1 py-2">
-                                                <p className="text-muted-foreground/80 text-center text-sm italic">
-                                                    Lance la partie pour avoir accès aux actions de
-                                                    jeu.
-                                                </p>
+                                            {gameStatus === 'playing' && (
+                                                <Button
+                                                    variant="neon-destructive"
+                                                    onClick={onGiveUp}
+                                                    className="group h-10 w-full justify-start gap-3 rounded-lg"
+                                                >
+                                                    <Flag
+                                                        className="h-4 w-4 transition-transform group-hover:scale-110"
+                                                        strokeWidth={2.5}
+                                                    />
+                                                    <span className="font-semibold">
+                                                        Abandonner
+                                                    </span>
+                                                </Button>
+                                            )}
+
+                                            {gameStatus !== 'playing' && (
+                                                <div className="px-1 py-2">
+                                                    <p className="text-muted-foreground/80 text-center text-sm italic">
+                                                        Lance la partie pour avoir accès aux actions
+                                                        de jeu.
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* ALIGNEMENT TEXTE (Identique à avant) */}
+                                        <div className="glass-inner flex flex-col gap-3 p-4">
+                                            <p className="text-muted-foreground mb-1 text-center text-xs font-semibold tracking-wider uppercase">
+                                                Alignement du texte
+                                            </p>
+                                            <div className="flex justify-center gap-1 rounded-lg bg-black/40 p-1">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className={`h-8 w-10 rounded-md ${lyricsAlignment === 'left' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-white/10'}`}
+                                                    onClick={() => onAlignmentChange('left')}
+                                                >
+                                                    <AlignLeft size={16} strokeWidth={2.5} />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className={`h-8 w-10 rounded-md ${lyricsAlignment === 'center' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-white/10'}`}
+                                                    onClick={() => onAlignmentChange('center')}
+                                                >
+                                                    <AlignCenter size={16} strokeWidth={2.5} />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className={`h-8 w-10 rounded-md ${lyricsAlignment === 'right' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-white/10'}`}
+                                                    onClick={() => onAlignmentChange('right')}
+                                                >
+                                                    <AlignRight size={16} strokeWidth={2.5} />
+                                                </Button>
                                             </div>
-                                        )}
-                                    </div>
-
-                                    {/* SECTION 2 : AFFICHAGE */}
-                                    <div className="glass-inner flex flex-col gap-3 p-4">
-                                        <p className="text-muted-foreground mb-1 text-center text-xs font-semibold tracking-wider uppercase">
-                                            Alignement du texte
-                                        </p>
-                                        <div className="flex justify-center gap-1 rounded-lg bg-black/40 p-1">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className={`h-8 w-10 rounded-md ${lyricsAlignment === 'left' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-white/10'}`}
-                                                onClick={() => onAlignmentChange('left')}
-                                                title="Aligner à gauche"
-                                            >
-                                                <AlignLeft size={16} strokeWidth={2.5} />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className={`h-8 w-10 rounded-md ${lyricsAlignment === 'center' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-white/10'}`}
-                                                onClick={() => onAlignmentChange('center')}
-                                                title="Centrer"
-                                            >
-                                                <AlignCenter size={16} strokeWidth={2.5} />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className={`h-8 w-10 rounded-md ${lyricsAlignment === 'right' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-white/10'}`}
-                                                onClick={() => onAlignmentChange('right')}
-                                                title="Aligner à droite"
-                                            >
-                                                <AlignRight size={16} strokeWidth={2.5} />
-                                            </Button>
                                         </div>
                                     </div>
-                                </div>
-                            </PopoverContent>
-                        </Popover>
+                                </PopoverContent>
+                            </Popover>
+                        )}
                     </div>
                 </div>
             </div>

@@ -1,7 +1,12 @@
 import { Word, ParsedLyricsResult } from '@/types';
 import { normalizeWord } from '@/utils/lyricsParser';
 
-export const parseFillyrics = (rawLyrics: string): ParsedLyricsResult => {
+export type DifficultyLevel = 'easy' | 'medium' | 'hard';
+
+export const parseFillyrics = (
+    rawLyrics: string,
+    targetWordCount: number = 5
+): ParsedLyricsResult => {
     // 1. Nettoyage et préparation
     const cleanRaw = rawLyrics.replace(/\[.*?\]/g, '').replace(/\(.*?\)/g, '');
     const allLines = cleanRaw
@@ -9,77 +14,70 @@ export const parseFillyrics = (rawLyrics: string): ParsedLyricsResult => {
         .map((l) => l.trim())
         .filter((l) => l.length > 0);
 
-    // 2. Extraction d'un extrait de 4 à 6 lignes
-    const snippetLength = Math.min(allLines.length, Math.floor(Math.random() * 3) + 4);
+    // 2. Extraction d'un grand extrait (On prend jusqu'à 10 lignes pour être sûr d'avoir la place)
+    const snippetLength = Math.min(allLines.length, 10);
     const startIndex = Math.max(0, Math.floor(Math.random() * (allLines.length - snippetLength)));
     const snippetLines = allLines.slice(startIndex, startIndex + snippetLength);
-
-    let totalHiddenWords = 0;
 
     // 3. Découpage en Mots
     const parsedLines: Word[][] = snippetLines
         .map((line) => {
             const spacedLine = line.replace(/(['’])/g, '$1 ');
             const rawWords = spacedLine.split(/\s+/);
-
             return rawWords
-                .map((word) => {
-                    const normalized = normalizeWord(word);
-                    return {
-                        original: word,
-                        normalized: normalized,
-                        isFound: false,
-                        isHidden: false, // Par défaut, rien n'est caché
-                    };
-                })
+                .map((word) => ({
+                    original: word,
+                    normalized: normalizeWord(word),
+                    isFound: true, // Par défaut, tout est trouvé/visible
+                    isHidden: false,
+                }))
                 .filter((w) => w.normalized.length > 0);
         })
         .filter((line) => line.length > 0);
 
-    // 4. 🧠 ALGORITHME DU TROU À REBOURS (Minimum 5 mots)
-    if (parsedLines.length > 0) {
-        const lastIdx = parsedLines.length - 1;
-        // 50% de chance d'avoir la toute dernière phrase visible après le trou
-        const leaveOneLineAfter = lastIdx > 0 && Math.random() > 0.5;
-        const targetLineIdx = leaveOneLineAfter ? lastIdx - 1 : lastIdx;
+    // 4. 🧠 ALGORITHME DU CONTRAT STRICT (Cacher exactement targetWordCount mots consécutifs)
+    let totalHiddenWords = 0;
 
-        // On va remonter les mots à l'envers depuis la fin de targetLineIdx
-        // On veut cacher TOUTE la ligne ciblée OU au moins les 5 derniers mots si la ligne est très longue
-        let wordsToHide = Math.max(5, parsedLines[targetLineIdx].length);
+    if (parsedLines.length > 2) {
+        // A. On isole les mots éligibles (Lignes 2 et +, pour garder les 2 lignes de contexte)
+        const eligibleWords: { lineIndex: number; wordIndex: number }[] = [];
+        for (let i = 2; i < parsedLines.length; i++) {
+            for (let j = 0; j < parsedLines[i].length; j++) {
+                eligibleWords.push({ lineIndex: i, wordIndex: j });
+            }
+        }
 
-        let currentLine = targetLineIdx;
-        let currentWord = parsedLines[currentLine].length - 1;
+        // B. Si on a assez de mots éligibles pour remplir le contrat
+        if (eligibleWords.length >= targetWordCount) {
+            // On choisit un point de départ aléatoire qui laisse assez de place pour la suite de mots
+            const maxStartIndex = eligibleWords.length - targetWordCount;
+            const startIndex = Math.floor(Math.random() * (maxStartIndex + 1));
 
-        while (totalHiddenWords < wordsToHide && currentLine >= 0) {
-            if (currentWord >= 0) {
-                parsedLines[currentLine][currentWord].isHidden = true;
+            // On cache EXACTEMENT le nombre de mots demandé
+            for (let i = 0; i < targetWordCount; i++) {
+                const target = eligibleWords[startIndex + i];
+                parsedLines[target.lineIndex][target.wordIndex].isHidden = true;
+                parsedLines[target.lineIndex][target.wordIndex].isFound = false;
                 totalHiddenWords++;
-                currentWord--;
-            } else {
-                // On passe à la ligne du dessus si on n'a pas encore atteint les 5 mots
-                currentLine--;
-                if (currentLine >= 0) {
-                    currentWord = parsedLines[currentLine].length - 1;
-                }
             }
         }
     }
 
-    // 5. PRÉ-REMPLISSAGE NEUTRE
-    parsedLines.forEach((line) => {
-        line.forEach((w) => {
-            // Dans cette nouvelle version, on ne triche plus en mettant isFound = true
-            // On laisse isFound = false, mais on utilisera isHidden = false dans la grille
-            // pour l'afficher comme du texte normal.
-            if (!w.isHidden) {
-                // On s'assure juste que les mots visibles ne bloquent pas la victoire
-                w.isFound = true;
+    // 5. SÉCURITÉ : Si la chanson est trop courte ou mal formatée, on cache au moins la fin
+    if (totalHiddenWords === 0 && parsedLines.length > 0) {
+        let wordsHidden = 0;
+        for (let i = parsedLines.length - 1; i >= 0 && wordsHidden < targetWordCount; i--) {
+            for (let j = parsedLines[i].length - 1; j >= 0 && wordsHidden < targetWordCount; j--) {
+                parsedLines[i][j].isHidden = true;
+                parsedLines[i][j].isFound = false;
+                wordsHidden++;
             }
-        });
-    });
+        }
+        totalHiddenWords = wordsHidden;
+    }
 
     return {
         parsedLyrics: parsedLines,
-        totalWords: totalHiddenWords, // On ne score que sur les trous !
+        totalWords: totalHiddenWords,
     };
 };
