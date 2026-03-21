@@ -14,7 +14,7 @@ export const parseFillyrics = (
         .map((l) => l.trim())
         .filter((l) => l.length > 0);
 
-    // 2. Extraction d'un grand extrait (On prend jusqu'à 10 lignes pour être sûr d'avoir la place)
+    // 2. Extraction d'un grand extrait (jusqu'à 10 lignes pour avoir de l'espace)
     const snippetLength = Math.min(allLines.length, 10);
     const startIndex = Math.max(0, Math.floor(Math.random() * (allLines.length - snippetLength)));
     const snippetLines = allLines.slice(startIndex, startIndex + snippetLength);
@@ -28,34 +28,75 @@ export const parseFillyrics = (
                 .map((word) => ({
                     original: word,
                     normalized: normalizeWord(word),
-                    isFound: true, // Par défaut, tout est trouvé/visible
+                    isFound: true,
                     isHidden: false,
                 }))
                 .filter((w) => w.normalized.length > 0);
         })
         .filter((line) => line.length > 0);
 
-    // 4. 🧠 ALGORITHME DU CONTRAT STRICT (Cacher exactement targetWordCount mots consécutifs)
+    // 4. 🧠 ALGORITHME ANTI-COPIE (Évite les suites exactes répétées)
     let totalHiddenWords = 0;
 
     if (parsedLines.length > 2) {
-        // A. On isole les mots éligibles (Lignes 2 et +, pour garder les 2 lignes de contexte)
-        const eligibleWords: { lineIndex: number; wordIndex: number }[] = [];
+        // A. On aplatit les mots pour chercher les répétitions facilement
+        const allWordsFlattened = parsedLines.flatMap((line) => line.map((w) => w.normalized));
+
+        // Fonction utilitaire : Compte combien de fois un bloc EXACT de mots apparaît
+        const countSequenceOccurrences = (sequence: string[]) => {
+            let count = 0;
+            for (let i = 0; i <= allWordsFlattened.length - sequence.length; i++) {
+                let match = true;
+                for (let j = 0; j < sequence.length; j++) {
+                    if (allWordsFlattened[i + j] !== sequence[j]) {
+                        match = false;
+                        break;
+                    }
+                }
+                if (match) count++;
+            }
+            return count;
+        };
+
+        // B. On liste les mots qu'on a le droit de cacher (Lignes 2 et +, pour le contexte)
+        const eligibleWords: { lineIndex: number; wordIndex: number; normalized: string }[] = [];
         for (let i = 2; i < parsedLines.length; i++) {
             for (let j = 0; j < parsedLines[i].length; j++) {
-                eligibleWords.push({ lineIndex: i, wordIndex: j });
+                eligibleWords.push({
+                    lineIndex: i,
+                    wordIndex: j,
+                    normalized: parsedLines[i][j].normalized,
+                });
             }
         }
 
-        // B. Si on a assez de mots éligibles pour remplir le contrat
+        // C. On filtre pour trouver un point de départ qui ne se répète pas
         if (eligibleWords.length >= targetWordCount) {
-            // On choisit un point de départ aléatoire qui laisse assez de place pour la suite de mots
             const maxStartIndex = eligibleWords.length - targetWordCount;
-            const startIndex = Math.floor(Math.random() * (maxStartIndex + 1));
+            const validStartIndices: number[] = [];
+            const allStartIndices: number[] = [];
 
-            // On cache EXACTEMENT le nombre de mots demandé
+            for (let i = 0; i <= maxStartIndex; i++) {
+                allStartIndices.push(i);
+
+                // On extrait le bloc de N mots
+                const sequence = eligibleWords
+                    .slice(i, i + targetWordCount)
+                    .map((w) => w.normalized);
+
+                // S'il n'apparaît qu'une seule fois (c'est-à-dire lui-même), c'est un bon candidat !
+                if (countSequenceOccurrences(sequence) === 1) {
+                    validStartIndices.push(i);
+                }
+            }
+
+            // D. On prend un index valide au hasard (ou n'importe lequel si la chanson boucle complètement)
+            const pool = validStartIndices.length > 0 ? validStartIndices : allStartIndices;
+            const chosenStartIndex = pool[Math.floor(Math.random() * pool.length)];
+
+            // E. On cache le bloc sélectionné
             for (let i = 0; i < targetWordCount; i++) {
-                const target = eligibleWords[startIndex + i];
+                const target = eligibleWords[chosenStartIndex + i];
                 parsedLines[target.lineIndex][target.wordIndex].isHidden = true;
                 parsedLines[target.lineIndex][target.wordIndex].isFound = false;
                 totalHiddenWords++;
@@ -63,7 +104,7 @@ export const parseFillyrics = (
         }
     }
 
-    // 5. SÉCURITÉ : Si la chanson est trop courte ou mal formatée, on cache au moins la fin
+    // 5. SÉCURITÉ DE REMPLISSAGE
     if (totalHiddenWords === 0 && parsedLines.length > 0) {
         let wordsHidden = 0;
         for (let i = parsedLines.length - 1; i >= 0 && wordsHidden < targetWordCount; i--) {
