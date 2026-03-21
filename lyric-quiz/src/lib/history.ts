@@ -2,7 +2,6 @@ import { supabase } from './supabase';
 import { User } from '@supabase/supabase-js';
 import { Song, GameStatus } from '../types';
 
-// 1. SAUVEGARDE ALLMUSIC
 export const saveGameResult = async (
     user: User | null,
     song: Song,
@@ -12,12 +11,12 @@ export const saveGameResult = async (
     usedHint: boolean,
     missingWords: string[]
 ) => {
-    if (!user) return; // Sécurité de base
+    if (!user) return;
 
     try {
-        const { error } = await supabase.from('game_history').insert([
+        await supabase.from('game_history').insert([
             {
-                user_id: user.id, // Fonctionne pour les vrais comptes ET les comptes anonymes
+                user_id: user.id,
                 song_id: song.id.toString(),
                 song_title: song.title,
                 artist_name: song.artist.name,
@@ -28,27 +27,26 @@ export const saveGameResult = async (
                 missing_words: missingWords,
             },
         ]);
-
-        if (error) console.error('Erreur BDD :', error);
-    } catch (err) {
-        console.error(err);
+    } catch {
+        // Échec silencieux
     }
 };
 
-// 2. SAUVEGARDE FILLYRICS
 export const saveFillyricsResult = async (
     user: User | null,
     song: Song,
     points: number,
     threshold: number,
     targetWords: number,
-    status: GameStatus
+    status: GameStatus,
+    sessionId: string
 ) => {
     if (!user) return;
 
     try {
-        const { error } = await supabase.from('history_fillyrics').insert([
+        await supabase.from('history_fillyrics').insert([
             {
+                session_id: sessionId,
                 user_id: user.id,
                 song_id: song.id.toString(),
                 song_title: song.title,
@@ -59,9 +57,7 @@ export const saveFillyricsResult = async (
                 status: status === 'won' ? 'won' : 'lost',
             },
         ]);
-
-        if (error) console.error('Erreur BDD :', error);
-    } catch (err) {
-        console.error(err);
+    } catch {
+        // Échec silencieux
     }
 };

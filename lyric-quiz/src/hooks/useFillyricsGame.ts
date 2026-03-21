@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { saveFillyricsResult } from '@/lib/history';
 
 export const useFillyricsGame = (
+    sessionId: string,
     song: Song,
     onError: (message: string) => void,
     difficulty: DifficultyLevel = 'easy',
@@ -204,21 +205,29 @@ export const useFillyricsGame = (
         [gameStatus, lyricsData, foundWordsCount, totalWords]
     );
 
-    // 7. 👉 ENREGISTREMENT BDD DANS LA NOUVELLE TABLE
     useEffect(() => {
         if ((gameStatus === 'won' || gameStatus === 'lost') && !hasSaved) {
             saveFillyricsResult(
                 user,
-                // isGuest a été supprimé ici !
                 song,
                 scorePoints,
                 thresholdPercent,
                 targetWordCount,
-                gameStatus
+                gameStatus,
+                sessionId
             );
             setHasSaved(true);
         }
-    }, [gameStatus, hasSaved, user, song, scorePoints, thresholdPercent, targetWordCount]);
+    }, [
+        gameStatus,
+        hasSaved,
+        user,
+        song,
+        scorePoints,
+        thresholdPercent,
+        targetWordCount,
+        sessionId,
+    ]);
 
     const disableTimer = useCallback(() => {
         setIsTimerDisabled(true);

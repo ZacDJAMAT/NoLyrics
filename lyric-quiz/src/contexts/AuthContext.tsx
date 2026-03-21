@@ -18,20 +18,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isGuest, setIsGuest] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(true);
 
-    // Fonction centralisée pour gérer la session et la fusion
     const handleSessionChange = async (sessionUser: User | null) => {
         const currentIsGuest = sessionUser?.is_anonymous || false;
 
-        // 👉 LOGIQUE DE FUSION (MERGE)
         if (sessionUser && !currentIsGuest) {
             const pendingAnonId = localStorage.getItem('pending_anon_id');
 
             if (pendingAnonId && pendingAnonId !== sessionUser.id) {
-                console.log('Fusion des données anonymes vers le compte principal...');
-                await supabase.rpc('merge_anon_data', { anon_id: pendingAnonId });
+                const { error } = await supabase.rpc('merge_anon_data', { anon_id: pendingAnonId });
+
+                if (error) {
+                    alert('Erreur de transfert de vos données : ' + error.message);
+                } else {
+                    setTimeout(() => window.location.reload(), 500);
+                }
+
                 localStorage.removeItem('pending_anon_id');
             } else if (pendingAnonId === sessionUser.id) {
-                // Supabase a fait l'upgrade automatiquement (Nouveau compte)
                 localStorage.removeItem('pending_anon_id');
             }
         }
@@ -69,7 +72,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const loginWithGoogle = async () => {
-        // 👉 On sauvegarde l'ID anonyme avant de partir sur Google
         if (isGuest && user) {
             localStorage.setItem('pending_anon_id', user.id);
         }
@@ -92,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const logout = async () => {
-        localStorage.removeItem('pending_anon_id'); // Sécurité
+        localStorage.removeItem('pending_anon_id');
         await supabase.auth.signOut();
         setUser(null);
         setIsGuest(false);
@@ -100,13 +102,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const continueAsGuest = async () => {
         setIsLoading(true);
-        localStorage.removeItem('pending_anon_id'); // Sécurité
+        localStorage.removeItem('pending_anon_id');
 
         const { data, error } = await supabase.auth.signInAnonymously();
 
         if (error) {
-            console.error('Erreur lors de la connexion anonyme :', error.message);
-            alert('Erreur Supabase : ' + error.message);
+            alert('Erreur de connexion invité : ' + error.message);
         } else if (data.user) {
             setUser(data.user);
             setIsGuest(true);

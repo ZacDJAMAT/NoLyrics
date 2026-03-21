@@ -84,6 +84,7 @@ export default function ProfileScreen({ onClose }: ProfileScreenProps) {
 
                 if (fillyricsData && fillyricsData.length > 0) {
                     totalPoints = fillyricsData.reduce((acc, curr) => acc + (curr.points || 0), 0);
+
                     const uniqueSessions = new Set(fillyricsData.map((row) => row.session_id));
                     uniqueSessionsCount = uniqueSessions.size;
                 }
@@ -97,7 +98,7 @@ export default function ProfileScreen({ onClose }: ProfileScreenProps) {
 
                 if (favsData) setFavorites(favsData);
             } catch (error) {
-                console.error('Erreur lors de la récupération du profil:', error);
+                // Échec silencieux pour la production
             } finally {
                 setIsLoading(false);
             }

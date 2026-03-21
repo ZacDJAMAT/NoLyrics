@@ -23,6 +23,7 @@ export default function FillyricsGameScreen() {
     const [phase, setPhase] = useState<'preparing' | 'choice' | 'playing' | 'summary'>('preparing');
     const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
     const [playedSongIds, setPlayedSongIds] = useState<string[]>([]);
+    const [sessionId] = useState(() => crypto.randomUUID());
 
     const [selectedSong, setSelectedSong] = useState<{
         song: Song;
@@ -330,6 +331,7 @@ export default function FillyricsGameScreen() {
         return (
             <FillyricsGameRound
                 key={selectedSong.song.id}
+                sessionId={sessionId}
                 song={selectedSong.song}
                 difficulty={selectedSong.difficulty}
                 targetWordCount={selectedSong.targetWordCount}

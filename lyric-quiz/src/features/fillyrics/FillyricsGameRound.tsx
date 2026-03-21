@@ -20,6 +20,7 @@ import SpeedBonusBar from './SpeedBonusBar';
 
 interface FillyricsGameRoundProps {
     song: Song;
+    sessionId: string;
     difficulty: DifficultyLevel;
     targetWordCount: number;
     roundIndex: number;
@@ -28,17 +29,8 @@ interface FillyricsGameRoundProps {
     onRoundEnd: (won: boolean, points: number) => void;
 }
 
-interface FillyricsGameRoundProps {
-    song: Song;
-    difficulty: DifficultyLevel;
-    targetWordCount: number;
-    roundIndex: number;
-    totalRounds: number;
-    thresholdPercent: number; // 👈 AJOUT ICI
-    onRoundEnd: (won: boolean, points: number) => void;
-}
-
 export default function FillyricsGameRound({
+    sessionId,
     song,
     difficulty,
     targetWordCount,
@@ -85,7 +77,14 @@ export default function FillyricsGameRound({
         skipRound,
         isContractSecured,
         speedBonusMultiplier,
-    } = useFillyricsGame(song, handleError, difficulty, targetWordCount, thresholdPercent);
+    } = useFillyricsGame(
+        sessionId,
+        song,
+        handleError,
+        difficulty,
+        targetWordCount,
+        thresholdPercent
+    );
 
     useEffect(() => {
         if (gameStatus === 'won' || gameStatus === 'lost') {
