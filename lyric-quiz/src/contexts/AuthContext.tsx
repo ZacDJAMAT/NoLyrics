@@ -25,15 +25,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const pendingAnonId = localStorage.getItem('pending_anon_id');
 
             if (pendingAnonId && pendingAnonId !== sessionUser.id) {
+                // 👉 1. On supprime l'ID IMMÉDIATEMENT pour éviter les conflits entre la popup et la fenêtre principale
+                localStorage.removeItem('pending_anon_id');
+
                 const { error } = await supabase.rpc('merge_anon_data', { anon_id: pendingAnonId });
 
                 if (error) {
-                    alert('Erreur de transfert de vos données : ' + error.message);
+                    // 👉 2. On ignore la fausse erreur liée à la fermeture de la fenêtre
+                    if (
+                        !error.message.includes('Failed to fetch') &&
+                        !error.message.includes('fetch')
+                    ) {
+                        alert('Erreur de transfert de vos données : ' + error.message);
+                    }
                 } else {
                     setTimeout(() => window.location.reload(), 500);
                 }
-
-                localStorage.removeItem('pending_anon_id');
             } else if (pendingAnonId === sessionUser.id) {
                 localStorage.removeItem('pending_anon_id');
             }
@@ -46,13 +53,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         const checkSession = async () => {
-            const {
-                data: { session },
-            } = await supabase.auth.getSession();
-            await handleSessionChange(session?.user || null);
+            try {
+                const {
+                    data: { session },
+                    error,
+                } = await supabase.auth.getSession();
 
-            if (session?.user && window.opener) {
-                window.close();
+                if (error) {
+                    await supabase.auth.signOut();
+                    setUser(null);
+                    setIsGuest(false);
+                } else {
+                    await handleSessionChange(session?.user || null);
+                }
+
+                if (session?.user && window.opener) {
+                    window.close();
+                }
+            } catch {
+                await supabase.auth.signOut();
+                setUser(null);
+                setIsGuest(false);
+            } finally {
+                setIsLoading(false);
             }
         };
 
@@ -60,8 +83,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            await handleSessionChange(session?.user || null);
+        } = supabase.auth.onAuthStateChange(async (event, session) => {
+            // 👉 3. Correction TS2367 : On utilise uniquement SIGNED_OUT
+            if (event === 'SIGNED_OUT') {
+                setUser(null);
+                setIsGuest(false);
+                setIsLoading(false);
+            } else {
+                await handleSessionChange(session?.user || null);
+            }
 
             if (session?.user && window.opener) {
                 window.close();

@@ -22,8 +22,7 @@ export const searchSongs = async (
             results: data.data || [],
             total: data.total || 0,
         };
-    } catch (error) {
-        console.error('Erreur lors de la recherche Deezer :', error);
+    } catch {
         throw new Error('Impossible de récupérer les résultats de recherche.');
     }
 };
@@ -56,7 +55,6 @@ export const searchArtists = async (
             total: data.total || 0,
         };
     } catch (error) {
-        console.error('Erreur API searchArtists :', error);
         throw error;
     }
 };
@@ -72,7 +70,6 @@ export const fetchLyrics = async (
         );
         if (!response.ok) throw new Error('Erreur réseau LRCLIB');
 
-        // On précise que data est un tableau de LRCLIBTrack
         const data: LRCLIBTrack[] = await response.json();
 
         const trackWithLyrics = data.find(
@@ -84,8 +81,7 @@ export const fetchLyrics = async (
         }
 
         return trackWithLyrics.plainLyrics;
-    } catch (error) {
-        console.error('Erreur lors de la récupération des paroles LRCLIB :', error);
+    } catch {
         throw new Error('Erreur de connexion lors de la récupération des paroles.');
     }
 };
@@ -97,10 +93,8 @@ export const getSongById = async (id: string | number): Promise<Song | null> => 
 
         const track = await response.json();
 
-        // Si Deezer renvoie une erreur (ID introuvable)
         if (track.error) return null;
 
-        // On formate la réponse pour qu'elle corresponde à notre type Song
         return {
             id: track.id,
             title: track.title,
@@ -119,8 +113,7 @@ export const getSongById = async (id: string | number): Promise<Song | null> => 
             },
             duration: track.duration,
         };
-    } catch (error) {
-        console.error('Erreur lors de la récupération de la musique :', error);
+    } catch {
         return null;
     }
 };
@@ -137,7 +130,6 @@ export const getArtistTopTracks = async (
 
         if (data.error || !data.data) return [];
 
-        // On formate pour que ça corresponde à notre type Song
         return data.data.map((track: any) => ({
             id: track.id,
             title: track.title,
@@ -152,8 +144,40 @@ export const getArtistTopTracks = async (
             },
             duration: track.duration,
         }));
-    } catch (error) {
-        console.error('Erreur lors de la récupération du top artiste :', error);
+    } catch {
+        return [];
+    }
+};
+
+export const getTopArtists = async (limit: number = 50): Promise<Artist[]> => {
+    try {
+        // 1. Première tentative : avec une limite sûre (50 passe mieux que 100 sur Deezer)
+        let response = await fetch(`/api/deezer/chart/0/artists?limit=${limit}`);
+        let data = await response.json();
+
+        // 2. Fallback 1 : Si Deezer bug et renvoie vide, on tente sans limite
+        if (!data.error && (!data.data || data.data.length === 0)) {
+            response = await fetch(`/api/deezer/chart/0/artists`);
+            data = await response.json();
+        }
+
+        // 3. Fallback 2 : Le Chart Global qui lui ne plante jamais
+        if (!data.error && (!data.data || data.data.length === 0)) {
+            response = await fetch(`/api/deezer/chart/0`);
+            const globalData = await response.json();
+            if (globalData.artists && globalData.artists.data) {
+                data = globalData.artists; // On cible la section artistes
+            }
+        }
+
+        if (data.error || !data.data) return [];
+
+        return data.data.map((artist: any) => ({
+            id: artist.id,
+            name: artist.name,
+            picture_xl: artist.picture_xl || artist.picture_medium || artist.picture_small || '',
+        }));
+    } catch {
         return [];
     }
 };

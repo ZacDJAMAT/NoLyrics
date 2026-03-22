@@ -295,9 +295,10 @@ export default function SharedSearch({
                 <>
                     {activeTab === 'artists' && renderArtistCard && (
                         <div className="animate-in fade-in grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                            {paginatedList.map((item) =>
+                            {/* 👉 CORRECTION ICI : (paginatedList as Artist[]) */}
+                            {(paginatedList as Artist[]).map((item) =>
                                 renderArtistCard(
-                                    item as Artist,
+                                    item,
                                     isFavorite('artist', item.id.toString()),
                                     user && !isGuest ? handleToggleArtistFavorite : undefined
                                 )
@@ -307,9 +308,10 @@ export default function SharedSearch({
 
                     {activeTab === 'songs' && renderSongCard && (
                         <div className="animate-in fade-in grid grid-cols-1 gap-4 min-[400px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                            {paginatedList.map((item) =>
+                            {/* 👉 CORRECTION ICI : (paginatedList as Song[]) */}
+                            {(paginatedList as Song[]).map((item) =>
                                 renderSongCard(
-                                    item as Song,
+                                    item,
                                     isFavorite('song', item.id.toString()),
                                     user && !isGuest ? handleToggleSongFavorite : undefined
                                 )
