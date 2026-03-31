@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { Word, GameStatus } from '@/types.ts';
 
 interface LyricsGridProps {
@@ -6,7 +7,8 @@ interface LyricsGridProps {
     gameStatus: GameStatus;
     lastFoundWord?: string | null;
     alignment?: 'left' | 'center' | 'right';
-    gameMode?: 'allmusic' | 'fillyrics'; // 👈 AJOUT POUR PROTÉGER ALLMUSIC
+    gameMode?: 'allmusic' | 'fillyrics';
+    topContent?: ReactNode;
 }
 
 export default function LyricsGrid({
@@ -15,13 +17,14 @@ export default function LyricsGrid({
     gameStatus,
     lastFoundWord,
     alignment = 'center',
-    gameMode = 'allmusic', // 👈 Par défaut sur AllMusic
+    gameMode = 'allmusic',
+    topContent,
 }: LyricsGridProps) {
     if (isFetchingLyrics) {
         return (
             <div className="glass-panel text-muted-foreground flex min-h-[400px] flex-col items-center justify-center gap-4 py-20">
                 <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent"></div>
-                <p className="font-texte text-lg">Création du jeu en cours...</p>
+                <p className="font-texte text-lg">Creation du jeu en cours...</p>
             </div>
         );
     }
@@ -40,6 +43,7 @@ export default function LyricsGrid({
             translate="no"
             className="glass-panel notranslate flex min-h-[300px] flex-col items-center p-4 md:min-h-[400px] md:p-8"
         >
+            {topContent}
             <div className="w-fit max-w-full space-y-4 text-lg leading-relaxed select-none md:space-y-6 md:text-xl">
                 {lyricsData.map((line, lineIndex) => (
                     <div
@@ -61,8 +65,7 @@ export default function LyricsGrid({
                                     isLastFound ? 'text-neon-secondary shadow' : 'text-foreground'
                                 }`;
                             } else if (gameStatus === 'lost' || gameStatus === 'won') {
-                                styleClass =
-                                    'text-destructive bg-transparent font-texte opacity-80';
+                                styleClass = 'text-destructive bg-transparent font-texte opacity-80';
                             }
 
                             return (

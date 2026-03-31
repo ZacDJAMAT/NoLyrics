@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { fetchLyrics } from '@/utils/api';
 import { parseFillyrics, DifficultyLevel } from '@/utils/fillyricsParser';
 import { normalizeWord } from '@/utils/lyricsParser';
+import { allowedLevenshteinDistance, levenshteinDistance } from '@/utils/fuzzyMatch';
 import { Song, Word, GameStatus } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { saveFillyricsResult } from '@/lib/history';
@@ -165,6 +166,96 @@ export const useFillyricsGame = (
         });
     }, [lyricsData, hasUsedHint, gameStatus]);
 
+    const submitInlineGuess = useCallback(
+        (rawGuess: string): boolean => {
+            if (gameStatus !== 'playing' || !lyricsData) return false;
+
+            const normalizedInput = normalizeWord(rawGuess);
+            if (!normalizedInput) return false;
+
+            type MatchCandidate = {
+                lineIndex: number;
+                wordIndex: number;
+                normalized: string;
+                distance: number;
+            };
+
+            let bestMatch: MatchCandidate | null = null;
+
+            for (let lineIndex = 0; lineIndex < lyricsData.length; lineIndex += 1) {
+                const line = lyricsData[lineIndex];
+
+                for (let wordIndex = 0; wordIndex < line.length; wordIndex += 1) {
+                    const word = line[wordIndex];
+
+                    if (!word.isHidden || word.isFound) continue;
+
+                    if (word.normalized === normalizedInput) {
+                        bestMatch = {
+                            lineIndex,
+                            wordIndex,
+                            normalized: word.normalized,
+                            distance: 0,
+                        };
+                        break;
+                    }
+
+                    const tolerance = allowedLevenshteinDistance(word.normalized.length);
+                    if (tolerance === 0) continue;
+
+                    const lengthDelta = Math.abs(word.normalized.length - normalizedInput.length);
+                    if (lengthDelta > tolerance) continue;
+
+                    const distance = levenshteinDistance(normalizedInput, word.normalized);
+                    if (distance > tolerance) continue;
+
+                    if (
+                        !bestMatch ||
+                        distance < bestMatch.distance ||
+                        (distance === bestMatch.distance &&
+                            word.normalized.length < bestMatch.normalized.length)
+                    ) {
+                        bestMatch = {
+                            lineIndex,
+                            wordIndex,
+                            normalized: word.normalized,
+                            distance,
+                        };
+                    }
+                }
+
+                if (bestMatch?.distance === 0) break;
+            }
+
+            if (!bestMatch) return false;
+            const matchedWord = bestMatch;
+
+            setLyricsData((prevData) => {
+                if (!prevData) return prevData;
+
+                return prevData.map((line, lIndex) =>
+                    line.map((word, wIndex) => {
+                        if (lIndex === matchedWord.lineIndex && wIndex === matchedWord.wordIndex) {
+                            return { ...word, isFound: true };
+                        }
+                        return word;
+                    })
+                );
+            });
+
+            setFoundWordsCount((previousFoundCount) => {
+                const updatedFoundCount = previousFoundCount + 1;
+                if (updatedFoundCount === totalWords) setGameStatus('won');
+                return updatedFoundCount;
+            });
+            setLastFoundWord(matchedWord.normalized);
+            setCurrentInput('');
+
+            return true;
+        },
+        [gameStatus, lyricsData, totalWords]
+    );
+
     const handleInputChange = useCallback(
         (text: string) => {
             if (gameStatus !== 'playing') return;
@@ -252,6 +343,7 @@ export const useFillyricsGame = (
         scorePercentage,
         formattedTime,
         handleInputChange,
+        submitInlineGuess,
         setGameStatus,
         scorePoints,
         lastFoundWord,

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import UserMenuButton from '../../components/layout/UserMenuButton.tsx';
-import { Music, Mic, Sparkles, Search } from 'lucide-react';
+import { Music, Mic, Sparkles, Search, Flame, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button.tsx';
 
@@ -12,7 +12,7 @@ export default function HubScreen() {
             <div className="absolute top-4 right-4 z-20 flex items-center gap-3 md:top-6 md:right-6 md:gap-4">
                 <Button
                     variant="glass-icon-blue"
-                    onClick={() => navigate('/search')}
+                    onClick={() => navigate('/mode/fillyrics/quick-play')}
                     className="flex h-10 w-10 items-center justify-center rounded-full p-0 md:h-12 md:w-12"
                     title="Recherche globale"
                 >
@@ -70,6 +70,37 @@ export default function HubScreen() {
                             Complète les paroles manquantes.
                         </p>
                     </Link>
+                </div>
+
+                {/* BOUTON MODE SURVIE (RUSH) - Placé sous les modes principaux */}
+                <div className="mt-12 flex w-full justify-center">
+                    <button
+                        onClick={() => navigate('/mode/fillyrics/survival')}
+                        className="group border-primary/40 hover:border-primary relative flex w-full max-w-sm cursor-pointer items-center justify-between overflow-hidden rounded-3xl border bg-black/40 p-1 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(232,28,255,0.5)]"
+                    >
+                        {/* Effet de balayage lumineux au survol (shine) */}
+                        <div className="via-primary/20 absolute inset-0 z-0 -translate-x-full bg-gradient-to-r from-transparent to-transparent transition-transform duration-1000 ease-in-out group-hover:translate-x-full" />
+
+                        <div className="z-10 flex w-full items-center gap-4 rounded-[20px] bg-black/60 px-6 py-4 backdrop-blur-md">
+                            {/* L'icône de Flamme qui pulse */}
+                            <div className="bg-primary/20 flex h-12 w-12 shrink-0 items-center justify-center rounded-full shadow-[0_0_15px_rgba(232,28,255,0.4)]">
+                                <Flame className="text-primary h-7 w-7 animate-pulse drop-shadow-[0_0_8px_rgba(232,28,255,0.8)]" />
+                            </div>
+
+                            {/* Le Texte */}
+                            <div className="flex flex-col text-left">
+                                <span className="font-titre text-neon-primary text-2xl tracking-wide">
+                                    MODE SURVIE
+                                </span>
+                                <span className="font-texte mt-1 text-xs tracking-widest text-white/60 uppercase">
+                                    Flow Infini • Fever Mode
+                                </span>
+                            </div>
+
+                            {/* L'éclair d'action qui apparaît au survol */}
+                            <Zap className="text-primary ml-auto h-6 w-6 opacity-30 transition-all duration-300 group-hover:scale-125 group-hover:opacity-100 group-hover:drop-shadow-[0_0_10px_rgba(232,28,255,0.8)]" />
+                        </div>
+                    </button>
                 </div>
             </div>
         </div>

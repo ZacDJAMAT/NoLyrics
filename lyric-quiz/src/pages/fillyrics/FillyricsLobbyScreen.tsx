@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import SharedSearch from '@/components/shared/SharedSearch';
 import ArtistCard from '@/components/shared/ArtistCard';
 import { Artist } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { ArrowLeft, Play, X, Mic, ChevronDown, ChevronUp, Settings2 } from 'lucide-react';
+import { ArrowLeft, Play, X, Mic, ChevronDown, ChevronUp, Settings2, Zap } from 'lucide-react';
 import UserMenuButton from '@/components/layout/UserMenuButton';
+import { featureFlags } from '@/lib/featureFlags';
 
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 
@@ -67,6 +68,9 @@ const buttonVariants: Variants = {
 
 export default function FillyricsLobbyScreen() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const isClassicOverride = searchParams.get('classic') === '1';
+    const isZeroFrictionEnabled = featureFlags.fillyricsZeroFriction && !isClassicOverride;
     const [selection, setSelection] = useState<SelectionItem[]>([]);
 
     // 👉 NOUVEAU : État pour le nombre de rounds (entre 3 et 15)
@@ -101,6 +105,60 @@ export default function FillyricsLobbyScreen() {
             }
         }
     };
+
+    if (isZeroFrictionEnabled) {
+        return (
+            <div className="bg-background text-foreground min-h-screen overflow-x-hidden p-4 md:p-6">
+                <header className="border-border relative mb-12 flex flex-col items-center border-b pb-8">
+                    <div className="absolute top-0 left-0 z-20">
+                        <Button variant="back" onClick={() => navigate('/')} className="font-texte">
+                            <ArrowLeft className="h-5 w-5 md:mr-1" />
+                            <span className="hidden sm:inline">Retour au Hub</span>
+                        </Button>
+                    </div>
+                    <div className="absolute top-0 right-0 z-20">
+                        <UserMenuButton />
+                    </div>
+
+                    <h1 className="font-titre titre-neon-secondary mt-12 mb-2 text-center text-5xl tracking-widest drop-shadow-[0_0_20px_rgba(64,201,255,0.4)] md:text-6xl">
+                        FILLYRICS
+                    </h1>
+                    <p className="text-muted-foreground font-texte max-w-xl text-center text-lg md:text-xl">
+                        Quick Play actif: un tap pour lancer une piste sans menu.
+                    </p>
+                </header>
+
+                <main className="mx-auto flex w-full max-w-xl flex-col gap-4">
+                    <div className="glass-panel flex flex-col gap-5 p-6 text-center">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary/15">
+                            <Zap className="text-secondary h-7 w-7" />
+                        </div>
+                        <h2 className="font-titre text-2xl tracking-wide text-white">
+                            Zero Friction Mode
+                        </h2>
+                        <p className="font-texte text-white/65">
+                            Playlist auto, aucune selection manuelle, enchainement direct.
+                        </p>
+                        <Button
+                            onClick={() => navigate('/mode/fillyrics/quick-play')}
+                            className="font-texte bg-secondary text-secondary-foreground hover:bg-secondary/80 h-12 rounded-xl text-lg"
+                        >
+                            <Play className="h-5 w-5" fill="currentColor" />
+                            Jouer maintenant
+                        </Button>
+                    </div>
+
+                    <Button
+                        variant="outline"
+                        onClick={() => navigate('/mode/fillyrics?classic=1')}
+                        className="font-texte h-11 rounded-xl text-sm"
+                    >
+                        Ouvrir le lobby classique
+                    </Button>
+                </main>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-background text-foreground selection:bg-secondary selection:text-secondary-foreground min-h-screen overflow-x-hidden p-4 pb-40 font-sans md:p-6">

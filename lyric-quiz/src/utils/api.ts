@@ -112,6 +112,7 @@ export const getSongById = async (id: string | number): Promise<Song | null> => 
                     '',
             },
             duration: track.duration,
+            preview: track.preview || '',
         };
     } catch {
         return null;
@@ -143,6 +144,7 @@ export const getArtistTopTracks = async (
                 cover_xl: track.album.cover_xl || track.album.cover_medium || '',
             },
             duration: track.duration,
+            preview: track.preview || '',
         }));
     } catch {
         return [];
@@ -179,5 +181,29 @@ export const getTopArtists = async (limit: number = 50): Promise<Artist[]> => {
         }));
     } catch {
         return [];
+    }
+};
+
+export const fetchSurvivalLyrics = async (
+    artistName: string,
+    trackTitle: string
+): Promise<LRCLIBTrack | null> => {
+    try {
+        const searchQuery = `${artistName} ${trackTitle}`;
+        const response = await fetch(
+            `https://lrclib.net/api/search?q=${encodeURIComponent(searchQuery)}`
+        );
+        if (!response.ok) throw new Error('Erreur réseau LRCLIB');
+
+        const data: LRCLIBTrack[] = await response.json();
+
+        // On cherche une piste qui possède OBLIGATOIREMENT des paroles synchronisées
+        const trackWithSyncedLyrics = data.find(
+            (track) => track.syncedLyrics && track.syncedLyrics.trim() !== ''
+        );
+
+        return trackWithSyncedLyrics || null;
+    } catch {
+        return null; // Échec silencieux pour le flow continu
     }
 };

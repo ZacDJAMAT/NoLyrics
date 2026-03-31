@@ -5,7 +5,8 @@ import { useFillyricsGame } from '@/hooks/useFillyricsGame';
 import { DifficultyLevel } from '@/utils/fillyricsParser';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Disc3, CheckCircle2, XCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Disc3, CheckCircle2, XCircle, Lightbulb, TimerOff, SkipForward } from 'lucide-react';
 
 import GameHeader from '@/features/allmusic/GameHeader';
 import ScoreBoard from '@/features/allmusic/ScoreBoard';
@@ -17,6 +18,7 @@ import DisableTimerModal from '@/features/allmusic/modals/DisableTimerModal';
 
 import ContractProgressBar from './ContractProgressBar';
 import SpeedBonusBar from './SpeedBonusBar';
+import FillyricsInlineComposer from './FillyricsInlineComposer';
 
 interface FillyricsGameRoundProps {
     song: Song;
@@ -27,6 +29,7 @@ interface FillyricsGameRoundProps {
     totalRounds: number;
     thresholdPercent: number;
     onRoundEnd: (won: boolean, points: number) => void;
+    isInfiniteMode?: boolean;
 }
 
 export default function FillyricsGameRound({
@@ -38,6 +41,7 @@ export default function FillyricsGameRound({
     totalRounds,
     thresholdPercent,
     onRoundEnd,
+    isInfiniteMode = false,
 }: FillyricsGameRoundProps) {
     const navigate = useNavigate();
     const [showProfile, setShowProfile] = useState(false);
@@ -67,6 +71,7 @@ export default function FillyricsGameRound({
         scorePercentage,
         formattedTime,
         handleInputChange,
+        submitInlineGuess,
         setGameStatus,
         scorePoints,
         lastFoundWord,
@@ -85,6 +90,8 @@ export default function FillyricsGameRound({
         targetWordCount,
         thresholdPercent
     );
+
+    const useInlineComposer = isInfiniteMode;
 
     useEffect(() => {
         if (gameStatus === 'won' || gameStatus === 'lost') {
@@ -137,13 +144,16 @@ export default function FillyricsGameRound({
                 song={song}
                 onBack={() => navigate('/mode/fillyrics')}
                 onProfileClick={() => setShowProfile(true)}
+                autoPlayPreview
             />
 
             <main className="relative z-10 mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 p-4 pt-4 md:gap-8 md:p-6 md:pt-6">
                 <div className="-mt-2 mb-0 flex justify-center">
                     <div className="bg-secondary/10 border-secondary/30 text-secondary font-titre flex items-center gap-2 rounded-full border px-6 py-1.5 text-lg shadow-[0_0_10px_rgba(64,201,255,0.2)]">
                         <Disc3 className="animate-spin-slow h-4 w-4" />
-                        Round {roundIndex + 1} / {totalRounds}
+                        {isInfiniteMode
+                            ? `Quick Play - Piste ${roundIndex + 1}`
+                            : `Round ${roundIndex + 1} / ${totalRounds}`}
                         <span className="ml-2 rounded bg-white/10 px-2 py-0.5 text-xs text-white uppercase">
                             {difficulty === 'easy'
                                 ? 'Facile'
@@ -185,28 +195,82 @@ export default function FillyricsGameRound({
                     </Alert>
                 )}
 
-                <ScoreBoard
-                    scorePercentage={scorePercentage}
-                    foundWordsCount={foundWordsCount}
-                    totalWords={totalWords}
-                    currentInput={currentInput}
-                    handleInputChange={handleInputChange}
-                    gameStatus={gameStatus}
-                    isFetchingLyrics={isFetchingLyrics}
-                    timeLeft={timeLeft}
-                    formattedTime={formattedTime}
-                    lastFoundWord={lastFoundWord}
-                    onGiveUp={skipRound}
-                    onRestart={() => {}}
-                    lyricsAlignment={lyricsAlignment}
-                    onAlignmentChange={setLyricsAlignment}
-                    onHint={() => setShowHintModal(true)}
-                    hasUsedHint={hasUsedHint}
-                    onDisableTimer={() => setShowTimerModal(true)}
-                    isTimerDisabled={isTimerDisabled}
-                    gameMode="fillyrics"
-                    scorePoints={scorePoints}
-                />
+                {useInlineComposer ? (
+                    <div className="glass-panel flex flex-wrap items-center justify-between gap-3 px-4 py-3 md:flex-nowrap">
+                        <div className="flex items-center gap-4">
+                            <div className="text-center">
+                                <p className="text-muted-foreground text-[10px] tracking-wider uppercase">
+                                    Points
+                                </p>
+                                <p className="font-titre text-secondary text-2xl">{scorePoints}</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-muted-foreground text-[10px] tracking-wider uppercase">
+                                    Temps
+                                </p>
+                                <p className="font-titre text-foreground text-2xl">
+                                    {formattedTime}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => setShowHintModal(true)}
+                                disabled={hasUsedHint || gameStatus !== 'playing'}
+                                className="h-10 w-10 rounded-xl border-white/15 bg-white/5"
+                                title="Coup de pouce"
+                            >
+                                <Lightbulb className="h-5 w-5" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => setShowTimerModal(true)}
+                                disabled={isTimerDisabled || gameStatus !== 'playing'}
+                                className="h-10 w-10 rounded-xl border-white/15 bg-white/5"
+                                title="Mode Zen"
+                            >
+                                <TimerOff className="h-5 w-5" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={skipRound}
+                                disabled={gameStatus !== 'playing'}
+                                className="border-secondary/30 bg-secondary/10 text-secondary hover:bg-secondary/20 h-10 w-10 rounded-xl"
+                                title="Evaluer le contrat"
+                            >
+                                <SkipForward className="h-5 w-5" />
+                            </Button>
+                        </div>
+                    </div>
+                ) : (
+                    <ScoreBoard
+                        scorePercentage={scorePercentage}
+                        foundWordsCount={foundWordsCount}
+                        totalWords={totalWords}
+                        currentInput={currentInput}
+                        handleInputChange={handleInputChange}
+                        gameStatus={gameStatus}
+                        isFetchingLyrics={isFetchingLyrics}
+                        timeLeft={timeLeft}
+                        formattedTime={formattedTime}
+                        lastFoundWord={lastFoundWord}
+                        onGiveUp={skipRound}
+                        onRestart={() => {}}
+                        lyricsAlignment={lyricsAlignment}
+                        onAlignmentChange={setLyricsAlignment}
+                        onHint={() => setShowHintModal(true)}
+                        hasUsedHint={hasUsedHint}
+                        onDisableTimer={() => setShowTimerModal(true)}
+                        isTimerDisabled={isTimerDisabled}
+                        gameMode="fillyrics"
+                        scorePoints={scorePoints}
+                    />
+                )}
 
                 <div className="relative mt-2">
                     <LyricsGrid
@@ -215,6 +279,16 @@ export default function FillyricsGameRound({
                         gameStatus={gameStatus}
                         lastFoundWord={lastFoundWord}
                         alignment={lyricsAlignment}
+                        gameMode="fillyrics"
+                        topContent={
+                            useInlineComposer ? (
+                                <FillyricsInlineComposer
+                                    gameStatus={gameStatus}
+                                    disabled={isFetchingLyrics}
+                                    onSubmitGuess={submitInlineGuess}
+                                />
+                            ) : undefined
+                        }
                     />
                 </div>
             </main>
@@ -223,7 +297,7 @@ export default function FillyricsGameRound({
                 <div className="animate-in slide-in-from-bottom-8 fade-in fixed bottom-8 left-1/2 z-50 w-full max-w-md -translate-x-1/2 px-4 duration-500">
                     <div className="glass-panel flex flex-col items-center gap-2 border-white/10 bg-black/60 p-4 shadow-[0_0_30px_rgba(0,0,0,0.8)]">
                         <p className="font-titre text-sm tracking-widest text-white/80 uppercase">
-                            Passage au round suivant...
+                            {isInfiniteMode ? 'Chargement de la prochaine piste...' : 'Passage au round suivant...'}
                         </p>
                         <div className="h-2 w-full overflow-hidden rounded-full bg-black/50">
                             <div

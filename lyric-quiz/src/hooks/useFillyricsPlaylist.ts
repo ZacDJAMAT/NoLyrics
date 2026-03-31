@@ -20,12 +20,8 @@ export const useFillyricsPlaylist = (initialSelection: SelectionItem[], reloadKe
 
             try {
                 // 1. Séparer artistes et musiques
-                const explicitSongs = initialSelection
-                    .filter((item) => item.type === 'song')
-                    .map((item) => item.data as Song);
                 const artists = initialSelection.filter((item) => item.type === 'artist');
-
-                let candidates: Song[] = [...explicitSongs.sort(() => 0.5 - Math.random())];
+                const candidates: Song[] = [];
 
                 // 2. Extraire TOUTES les musiques des artistes (jusqu'à 300)
                 if (artists.length > 0) {
@@ -110,3 +106,4 @@ export const useFillyricsPlaylist = (initialSelection: SelectionItem[], reloadKe
         isLastRound: currentRoundIndex === playlist.length - 1,
     };
 };
+
