@@ -9,9 +9,9 @@ interface LyricsGridProps {
     alignment?: 'left' | 'center' | 'right';
     gameMode?: 'allmusic' | 'fillyrics';
     topContent?: ReactNode;
-    // 👉 NOUVEAU : Les sondes pour l'In-line
     activeWordCoords?: { l: number; w: number } | null;
     currentInput?: string;
+    onWordClick?: (l: number, w: number) => void;
 }
 
 export default function LyricsGrid({
@@ -23,6 +23,7 @@ export default function LyricsGrid({
     topContent,
     activeWordCoords,
     currentInput = '',
+    onWordClick,
 }: LyricsGridProps) {
     if (isFetchingLyrics) {
         return (
@@ -61,7 +62,8 @@ export default function LyricsGrid({
                             // 👉 NOUVEAU : Est-ce que c'est le mot qu'on est en train de taper ?
                             const isActiveTarget =
                                 activeWordCoords?.l === lineIndex &&
-                                activeWordCoords?.w === wordIndex;
+                                activeWordCoords?.w === wordIndex &&
+                                gameStatus === 'playing';
 
                             // 1. LE MOT ACTIF (IN-LINE)
                             if (isActiveTarget) {
@@ -118,7 +120,8 @@ export default function LyricsGrid({
                             return (
                                 <span
                                     key={wordIndex}
-                                    className="glass-cell inline-block px-1.5 py-0.5 opacity-30 md:px-2 md:py-1"
+                                    onClick={() => onWordClick && onWordClick(lineIndex, wordIndex)}
+                                    className="glass-cell inline-block cursor-pointer px-1.5 py-0.5 opacity-30 transition-opacity hover:bg-white/20 hover:opacity-80 md:px-2 md:py-1"
                                 >
                                     {'_'.repeat(word.original.length)}
                                 </span>

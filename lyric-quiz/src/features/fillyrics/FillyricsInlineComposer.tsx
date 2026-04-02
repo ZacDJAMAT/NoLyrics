@@ -5,34 +5,33 @@ interface FillyricsInlineComposerProps {
     currentInput: string;
     onInputChange: (val: string) => void;
     gameStatus: GameStatus;
+    onTabPress: () => void; // 👈 NOUVELLE PROP
 }
 
 export default function FillyricsInlineComposer({
     currentInput,
     onInputChange,
     gameStatus,
+    onTabPress,
 }: FillyricsInlineComposerProps) {
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // Maintient le focus forcé sur l'input invisible pour que le clavier mobile reste ouvert
-    // et que le joueur n'ait pas besoin de cliquer quelque part pour taper.
     useEffect(() => {
         const handleFocus = () => {
             if (gameStatus === 'playing' && inputRef.current) {
-                inputRef.current.focus();
+                inputRef.current.focus({ preventScroll: true });
             }
         };
 
         handleFocus();
 
-        // Si le joueur clique ailleurs, on le re-focus instantanément
         window.addEventListener('click', handleFocus);
-        // Si le joueur tape sur le clavier, on sécurise le focus
-        window.addEventListener('keydown', handleFocus);
+        const handleKeyDown = () => handleFocus();
+        window.addEventListener('keydown', handleKeyDown);
 
         return () => {
             window.removeEventListener('click', handleFocus);
-            window.removeEventListener('keydown', handleFocus);
+            window.removeEventListener('keydown', handleKeyDown);
         };
     }, [gameStatus]);
 
@@ -44,9 +43,14 @@ export default function FillyricsInlineComposer({
             type="text"
             value={currentInput}
             onChange={(e) => onInputChange(e.target.value)}
-            // Le secret de l'invisibilité (mais accessible au DOM pour le clavier virtuel)
-            className="pointer-events-none absolute top-0 left-0 h-[1px] w-[1px] opacity-0"
-            autoFocus
+            onKeyDown={(e) => {
+                // 👉 SI LE JOUEUR APPUIE SUR TAB :
+                if (e.key === 'Tab') {
+                    e.preventDefault(); // On empêche la page de descendre / changer le focus
+                    onTabPress(); // On passe au mot suivant !
+                }
+            }}
+            className="pointer-events-none fixed top-1/2 left-1/2 -z-50 h-[1px] w-[1px] opacity-0"
             autoComplete="off"
             autoCorrect="off"
             spellCheck="false"

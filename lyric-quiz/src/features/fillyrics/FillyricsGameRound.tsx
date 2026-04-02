@@ -1,16 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion'; // 👉 IMPORT AJOUTÉ
 import { Song } from '@/types';
 import { useFillyricsGame } from '@/hooks/useFillyricsGame';
 
-import { Disc3, Flag, Star, Timer } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-
-import GameHeader from '@/features/allmusic/GameHeader';
+import { Star, SkipForward, HeartCrack, CheckCircle2 } from 'lucide-react';
 import LyricsGrid from '@/features/allmusic/LyricsGrid';
-import ProfileScreen from '@/pages/auth/ProfileScreen';
-import GiveUpConfirmModal from '@/components/modals/GiveUpConfirmModal';
-
 import ContractProgressBar from './ContractProgressBar';
 import SpeedBonusBar from './SpeedBonusBar';
 import FillyricsInlineComposer from './FillyricsInlineComposer';
@@ -28,19 +22,12 @@ export default function FillyricsGameRound({
     roundIndex,
     onRoundEnd,
 }: FillyricsGameRoundProps) {
-    const navigate = useNavigate();
-    const [showProfile, setShowProfile] = useState(false);
-    const [showGiveUpModal, setShowGiveUpModal] = useState(false);
-    const [nextRoundTimer, setNextRoundTimer] = useState(4);
+    const [nextRoundTimer, setNextRoundTimer] = useState(5);
     const hasEnded = useRef(false);
 
-    const handleError = useCallback(
-        (message: string) => {
-            alert(message);
-            navigate('/mode/fillyrics');
-        },
-        [navigate]
-    );
+    const handleError = useCallback((message: string) => {
+        console.error(message);
+    }, []);
 
     const {
         lyricsData,
@@ -49,16 +36,17 @@ export default function FillyricsGameRound({
         timeLeft,
         gameStatus,
         scorePercentage,
-        formattedTime,
         handleInputChange,
         setGameStatus,
         scorePoints,
         lastFoundWord,
         thresholdPercent,
-        targetWordCount,
         isContractSecured,
         speedBonusMultiplier,
-        activeWordCoords, // 👈 Notre fameux curseur
+        activeWordCoords,
+        setActiveWordCoords,
+        setCurrentInput,
+        cycleNextWord,
     } = useFillyricsGame(sessionId, song, roundIndex, handleError);
 
     useEffect(() => {
@@ -81,81 +69,57 @@ export default function FillyricsGameRound({
     }, [gameStatus, onRoundEnd, scorePoints]);
 
     return (
-        <div className="selection:bg-secondary selection:text-secondary-foreground relative flex min-h-screen flex-col overflow-clip font-sans">
-            {/* L'INTERCEPTEUR CLAVIER */}
+        <div className="bg-background selection:bg-secondary selection:text-secondary-foreground relative flex min-h-screen flex-col overflow-clip font-sans">
             <FillyricsInlineComposer
                 currentInput={currentInput}
                 onInputChange={handleInputChange}
                 gameStatus={gameStatus}
+                onTabPress={cycleNextWord}
             />
 
-            {showProfile && <ProfileScreen onClose={() => setShowProfile(false)} />}
-            {showGiveUpModal && (
-                <GiveUpConfirmModal
-                    onConfirm={() => setGameStatus('lost')}
-                    onCancel={() => setShowGiveUpModal(false)}
-                />
-            )}
-
-            <GameHeader
-                song={song}
-                onBack={() => navigate('/mode/fillyrics')}
-                onProfileClick={() => setShowProfile(true)}
-                autoPlayPreview={false} // Pas de preview en plein jeu
-            />
-
-            <main className="relative z-10 mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 p-4 pt-4 md:gap-6 md:p-6 md:pt-6">
-                {/* HUD Minimaliste (Score / Timer / Objectif) */}
-                <div className="flex flex-col items-center justify-between gap-4 rounded-3xl border border-white/10 bg-black/40 p-4 shadow-xl backdrop-blur-md md:flex-row md:px-8">
-                    {/* Gauche : Infos Piste */}
-                    <div className="flex flex-col items-center md:items-start">
-                        <div className="text-secondary font-titre flex items-center gap-2 text-lg">
-                            <Disc3 className="animate-spin-slow h-5 w-5" />
-                            Piste {roundIndex + 1}
-                        </div>
-                        <span className="mt-1 text-xs tracking-widest text-white/50 uppercase">
-                            Objectif: {thresholdPercent}% de {targetWordCount} mots
-                        </span>
-                    </div>
-
-                    {/* Centre : Timer Géant */}
-                    <div
-                        className={`font-titre flex items-center gap-2 text-5xl md:text-6xl ${timeLeft <= 10 ? 'text-destructive animate-pulse drop-shadow-[0_0_15px_rgba(255,42,95,0.8)]' : 'text-white'}`}
-                    >
-                        <Timer className="h-8 w-8 opacity-50 md:h-10 md:w-10" />
-                        {formattedTime}
-                    </div>
-
-                    {/* Droite : Score & Abandon */}
-                    <div className="flex w-full flex-col items-center gap-2 md:w-auto md:items-end">
-                        <div className="font-titre text-secondary flex items-center gap-2 text-2xl">
-                            <Star className="fill-secondary h-5 w-5" />
-                            {scorePoints} <span className="text-sm text-white/50">pts</span>
-                        </div>
-                        <Button
-                            variant="ghost"
-                            onClick={() => setShowGiveUpModal(true)}
-                            className="hover:text-destructive hover:bg-destructive/10 h-8 px-3 text-xs text-white/40"
-                        >
-                            <Flag className="mr-1.5 h-3 w-3" /> Passer
-                        </Button>
-                    </div>
+            {/* 🎮 HUD FLOTTANT */}
+            <div className="pointer-events-none absolute top-6 right-6 left-6 z-30 flex items-start justify-between">
+                <div className="flex flex-col">
+                    <span className="font-titre text-secondary text-2xl drop-shadow-[0_0_10px_rgba(64,201,255,0.5)]">
+                        Piste {roundIndex + 1}
+                    </span>
+                    <span className="font-texte text-[10px] tracking-[0.2em] text-white/40 uppercase">
+                        Objectif : {thresholdPercent}%
+                    </span>
                 </div>
 
-                {/* Barres de Progression (Contrat & Vitesse) */}
-                <div className="mx-auto w-full max-w-xl px-2">
+                <div className="pointer-events-auto flex flex-col items-end gap-1">
+                    <div className="font-titre flex items-center gap-2 text-3xl text-white drop-shadow-md">
+                        <Star className="fill-secondary text-secondary h-6 w-6 drop-shadow-[0_0_10px_rgba(64,201,255,0.5)]" />
+                        {scorePoints}
+                    </div>
+                    {/* BOUTON SKIP */}
+                    <button
+                        onClick={() => setGameStatus('lost')}
+                        className="group font-texte hover:text-secondary flex items-center gap-2 text-[10px] tracking-widest text-white/30 uppercase transition-all"
+                    >
+                        Skip{' '}
+                        <SkipForward className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </button>
+                </div>
+            </div>
+
+            {/* 📝 ZONE CENTRALE */}
+            <main className="relative z-10 mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center p-4 pt-24 pb-32 md:p-8">
+                {/* ⚡ JAUGES DE TENSION */}
+                <div className="mb-12 flex w-full max-w-xl flex-col gap-8 px-4">
+                    {gameStatus === 'playing' && (
+                        <SpeedBonusBar multiplier={speedBonusMultiplier} seconds={timeLeft} />
+                    )}
+
                     <ContractProgressBar
                         percent={scorePercentage}
                         threshold={thresholdPercent}
                         isSuccess={isContractSecured}
                     />
-                    {gameStatus === 'playing' && (
-                        <SpeedBonusBar multiplier={speedBonusMultiplier} />
-                    )}
                 </div>
 
-                {/* LA GRILLE (Avec l'In-line activé !) */}
-                <div className="relative mt-2">
+                <div className="relative w-full">
                     <LyricsGrid
                         lyricsData={lyricsData}
                         isFetchingLyrics={isFetchingLyrics}
@@ -164,25 +128,75 @@ export default function FillyricsGameRound({
                         alignment="center"
                         activeWordCoords={activeWordCoords}
                         currentInput={currentInput}
+                        onWordClick={(l, w) => {
+                            setActiveWordCoords({ l, w });
+                            setCurrentInput('');
+                        }}
                     />
                 </div>
             </main>
 
-            {(gameStatus === 'won' || gameStatus === 'lost') && (
-                <div className="animate-in slide-in-from-bottom-8 fade-in fixed bottom-8 left-1/2 z-50 w-full max-w-md -translate-x-1/2 px-4 duration-500">
-                    <div className="glass-panel flex flex-col items-center gap-2 border-white/10 bg-black/60 p-4 shadow-[0_0_30px_rgba(0,0,0,0.8)]">
-                        <p className="font-titre text-sm tracking-widest text-white/80 uppercase">
-                            Chargement de la prochaine piste...
-                        </p>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-black/50">
+            {/* ============================================================ */}
+            {/* 🌬️ TRANSITIONS DISCRÈTES (Smooth avec Framer Motion) */}
+            {/* ============================================================ */}
+
+            {/* 👉 NOUVEAU : Wrapper AnimatePresence */}
+            <AnimatePresence mode="wait">
+                {(gameStatus === 'won' || gameStatus === 'lost') && (
+                    <motion.div
+                        key={`${gameStatus}-transition`}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.8, ease: 'easeInOut' }}
+                        className="pointer-events-none fixed inset-0 z-50 flex flex-col justify-end"
+                    >
+                        {/* 1. Halo lumineux subtil sur les bords de l'écran */}
+                        <div
+                            className={`absolute inset-0 opacity-20 transition-all duration-1000 ${
+                                gameStatus === 'won'
+                                    ? 'shadow-[inset_0_0_150px_rgba(64,201,255,1)]'
+                                    : 'shadow-[inset_0_0_150px_rgba(255,42,95,1)]'
+                            }`}
+                        />
+
+                        {/* 2. Pilule flottante élégante (Avec animation douce y/opacity) */}
+                        <motion.div
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.3, duration: 0.8, ease: 'easeOut' }}
+                            className="mb-12 flex w-full justify-center"
+                        >
+                            <div className="flex items-center gap-3 rounded-full border border-white/5 bg-black/40 px-6 py-2.5 shadow-2xl backdrop-blur-md md:gap-4">
+                                {gameStatus === 'won' ? (
+                                    <CheckCircle2 className="text-secondary h-5 w-5" />
+                                ) : (
+                                    <HeartCrack className="text-destructive h-5 w-5" />
+                                )}
+                                <span
+                                    className={`font-titre text-sm tracking-[0.15em] uppercase md:text-lg ${gameStatus === 'won' ? 'text-secondary' : 'text-destructive'}`}
+                                >
+                                    {gameStatus === 'won'
+                                        ? `Contrat Rempli • +${scorePoints} pts`
+                                        : 'Contrat Échoué • Vie Perdue'}
+                                </span>
+                            </div>
+                        </motion.div>
+
+                        {/* 3. Fil du temps (1px d'épaisseur tout en bas) */}
+                        <div className="h-1 w-full bg-transparent">
                             <div
-                                className="bg-secondary h-full transition-all duration-1000 ease-linear"
-                                style={{ width: `${((4 - nextRoundTimer) / 4) * 100}%` }}
+                                className={`h-full transition-all duration-1000 ease-linear ${
+                                    gameStatus === 'won'
+                                        ? 'bg-secondary shadow-[0_0_10px_rgba(64,201,255,1)]'
+                                        : 'bg-destructive shadow-[0_0_10px_rgba(255,42,95,1)]'
+                                }`}
+                                style={{ width: `${((5 - nextRoundTimer) / 5) * 100}%` }}
                             />
                         </div>
-                    </div>
-                </div>
-            )}
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

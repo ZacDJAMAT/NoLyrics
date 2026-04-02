@@ -225,6 +225,39 @@ export const useFillyricsGame = (
         if (gameStatus === 'playing' && !isTimerDisabled) setTimeLeft(0);
     }, [gameStatus, isTimerDisabled]);
 
+    // 8. NAVIGATION AU CLAVIER (Touche TAB)
+    const cycleNextWord = useCallback(() => {
+        if (gameStatus !== 'playing' || !activeWordCoords || !lyricsData) return;
+
+        let found = false;
+
+        // On cherche le prochain mot après notre position actuelle
+        for (let l = activeWordCoords.l; l < lyricsData.length; l++) {
+            const wStart = l === activeWordCoords.l ? activeWordCoords.w + 1 : 0;
+            for (let w = wStart; w < lyricsData[l].length; w++) {
+                if (lyricsData[l][w].isHidden && !lyricsData[l][w].isFound) {
+                    setActiveWordCoords({ l, w });
+                    setCurrentInput('');
+                    found = true;
+                    return;
+                }
+            }
+        }
+
+        // Si on n'a rien trouvé (on est au dernier mot), on recommence au début du texte !
+        if (!found) {
+            for (let l = 0; l <= activeWordCoords.l; l++) {
+                for (let w = 0; w < lyricsData[l].length; w++) {
+                    if (lyricsData[l][w].isHidden && !lyricsData[l][w].isFound) {
+                        setActiveWordCoords({ l, w });
+                        setCurrentInput('');
+                        return;
+                    }
+                }
+            }
+        }
+    }, [gameStatus, activeWordCoords, lyricsData]);
+
     return {
         lyricsData,
         totalWords,
@@ -246,6 +279,9 @@ export const useFillyricsGame = (
         targetWordCount,
         isContractSecured,
         speedBonusMultiplier,
-        activeWordCoords, // Rendu public pour que l'input inline puisse le lire à l'étape 4
+        activeWordCoords,
+        setActiveWordCoords,
+        setCurrentInput,
+        cycleNextWord,
     };
 };

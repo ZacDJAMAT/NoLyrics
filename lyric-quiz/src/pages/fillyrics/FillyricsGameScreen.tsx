@@ -3,7 +3,7 @@ import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { useFillyricsPlaylist } from '@/hooks/useFillyricsPlaylist';
 import { Button } from '@/components/ui/button';
-import { Heart, Mic, Play, ChevronUp, Timer, SkipForward } from 'lucide-react';
+import { Heart, Play, ChevronUp, Timer, ChevronDown } from 'lucide-react';
 import FillyricsGameRound from '@/features/fillyrics/FillyricsGameRound.tsx';
 
 export default function FillyricsGameScreen() {
@@ -45,7 +45,7 @@ export default function FillyricsGameScreen() {
         setPhase('playing');
     }, []);
 
-    // --- GESTION DE LA FIN DU ROUND (Remonté ici pour respecter les Rules of Hooks !) ---
+    // --- GESTION DE LA FIN DU ROUND ---
     const handleRoundEnd = useCallback(
         (won: boolean, points: number) => {
             setGlobalScore((prev) => prev + points);
@@ -123,19 +123,75 @@ export default function FillyricsGameScreen() {
     if (!selection || selection.length === 0) return <Navigate to="/mode/fillyrics" replace />;
 
     // ==========================================
-    // ÉCRAN 1 : MIXAGE (CHARGEMENT)
+    // ÉCRAN 1 : MIXAGE (CHARGEMENT AVEC LE DISQUE D'OR)
     // ==========================================
     if (phase === 'mixing' || isMixing) {
         return (
             <div className="bg-background flex min-h-screen flex-col items-center justify-center gap-6">
-                <div className="relative h-24 w-24">
-                    <div className="border-secondary/20 absolute inset-0 rounded-full border-4"></div>
-                    <div className="border-secondary absolute inset-0 animate-spin rounded-full border-4 border-t-transparent"></div>
-                    <Mic className="text-secondary absolute inset-0 m-auto h-8 w-8 animate-pulse" />
-                </div>
-                <h2 className="font-titre text-2xl tracking-widest text-white">
+                {/* 👉 LE DISQUE D'OR TOURNANT (Mix CSS + SVG Animé) */}
+                <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ repeat: Infinity, duration: 3, ease: 'linear' }}
+                    className="relative flex h-32 w-32 items-center justify-center rounded-full border border-[#8e731b] shadow-[0_0_30px_rgba(212,175,55,0.4)] md:h-40 md:w-40"
+                    style={{
+                        // Le dégradé conique en CSS donne le reflet de l'or
+                        background:
+                            'conic-gradient(from 0deg at 50% 50%, #d4af37 0%, #f8e08e 25%, #d4af37 50%, #fff8dc 75%, #d4af37 100%)',
+                    }}
+                >
+                    {/* Le SVG superposé pour dessiner les sillons et le centre */}
+                    <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full">
+                        {/* Sillons (Cercles Concentriques fins) */}
+                        <circle
+                            cx="50"
+                            cy="50"
+                            r="40"
+                            fill="none"
+                            stroke="#8e731b"
+                            strokeWidth="0.5"
+                            opacity="0.4"
+                        />
+                        <circle
+                            cx="50"
+                            cy="50"
+                            r="32"
+                            fill="none"
+                            stroke="#8e731b"
+                            strokeWidth="0.5"
+                            opacity="0.4"
+                        />
+                        <circle
+                            cx="50"
+                            cy="50"
+                            r="24"
+                            fill="none"
+                            stroke="#8e731b"
+                            strokeWidth="0.5"
+                            opacity="0.4"
+                        />
+
+                        {/* Label Central (On utilise la couleur secondary néon) */}
+                        <circle
+                            cx="50"
+                            cy="50"
+                            r="11"
+                            fill="black"
+                            stroke="#8e731b"
+                            strokeWidth="0.5"
+                        />
+                        <circle cx="50" cy="50" r="2" fill="black" />
+                    </svg>
+
+                    {/* Effet d'ombre portée derrière le vinyle pour donner du relief */}
+                    <div className="absolute inset-0 -z-10 rounded-full bg-black opacity-40 blur-2xl" />
+                </motion.div>
+
+                <h2 className="font-titre mt-4 text-2xl tracking-widest text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]">
                     PRÉPARATION DU MIX
                 </h2>
+                <p className="font-texte text-sm tracking-widest text-white/50 uppercase">
+                    Gravure sur disque d'or...
+                </p>
             </div>
         );
     }
@@ -182,33 +238,48 @@ export default function FillyricsGameScreen() {
                     <audio ref={audioRef} src={currentSong.preview} autoPlay loop />
                 )}
 
-                <div className="z-10 mt-8 flex w-full max-w-sm flex-col items-center px-4">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={currentSong.id}
-                            initial={{ opacity: 0, y: 300, scale: 0.9 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -300, scale: 0.8 }}
-                            transition={{ type: 'spring', stiffness: 250, damping: 25 }}
-                            drag="y"
-                            dragConstraints={{ top: 0, bottom: 0 }}
-                            onDragEnd={handleSwipeSkip}
-                            className="flex w-full cursor-grab flex-col items-center active:cursor-grabbing"
-                        >
-                            <img
-                                src={currentSong.album.cover_xl}
-                                alt={currentSong.title}
-                                className="pointer-events-none mb-6 h-64 w-64 rounded-[2rem] object-cover shadow-[0_20px_50px_rgba(0,0,0,0.6)] md:h-80 md:w-80"
-                            />
+                {/* 4. Contenu Principal Centré */}
+                <div className="z-10 mt-8 flex w-full max-w-md flex-col items-center px-4">
+                    <div className="relative flex w-full justify-center">
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={currentSong.id}
+                                initial={{ opacity: 0, y: 300, scale: 0.9 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: -300, scale: 0.8 }}
+                                transition={{ type: 'spring', stiffness: 250, damping: 25 }}
+                                drag="y"
+                                dragConstraints={{ top: 0, bottom: 0 }}
+                                onDragEnd={handleSwipeSkip}
+                                className="flex w-full cursor-grab flex-col items-center active:cursor-grabbing"
+                            >
+                                <img
+                                    src={currentSong.album.cover_xl}
+                                    alt={currentSong.title}
+                                    className="pointer-events-none mb-6 h-64 w-64 rounded-[2rem] object-cover shadow-[0_20px_50px_rgba(0,0,0,0.6)] md:h-80 md:w-80"
+                                />
 
-                            <h2 className="font-titre line-clamp-2 w-full text-center text-4xl text-white drop-shadow-md">
-                                {currentSong.title}
-                            </h2>
-                            <p className="font-texte text-secondary mb-8 text-xl">
-                                {currentSong.artist.name}
-                            </p>
-                        </motion.div>
-                    </AnimatePresence>
+                                <h2 className="font-titre line-clamp-2 w-full text-center text-4xl text-white drop-shadow-md">
+                                    {currentSong.title}
+                                </h2>
+                                <p className="font-texte text-secondary mb-8 text-xl">
+                                    {currentSong.artist.name}
+                                </p>
+                            </motion.div>
+                        </AnimatePresence>
+
+                        {/* 👉 LA FLÈCHE À DROITE DE LA MUSIQUE */}
+                        <div className="absolute top-32 right-0 z-30 -translate-y-1/2 sm:-right-4 md:top-40">
+                            <Button
+                                onClick={triggerNext}
+                                variant="ghost"
+                                className="group flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-black/40 shadow-xl backdrop-blur-md hover:bg-white/10"
+                                title="Passer à la suivante"
+                            >
+                                <ChevronDown className="h-8 w-8 text-white/70 transition-all group-hover:scale-110 group-hover:text-white" />
+                            </Button>
+                        </div>
+                    </div>
 
                     <motion.div
                         animate={{ y: [0, -10, 0] }}
@@ -221,22 +292,14 @@ export default function FillyricsGameScreen() {
                         </span>
                     </motion.div>
 
+                    {/* 👉 LE NOUVEAU BOUTON GLASSMORPHISME (Pleine Largeur) */}
                     <div className="z-20 flex w-full gap-4">
                         <Button
                             onClick={handlePlay}
-                            className="bg-primary text-primary-foreground hover:bg-primary/80 font-titre h-16 flex-1 rounded-2xl border-0 text-2xl shadow-[0_0_30px_rgba(232,28,255,0.4)] transition-all hover:scale-[1.02]"
+                            className="font-titre border-secondary/20 bg-secondary/10 hover:bg-secondary/20 h-16 w-full rounded-2xl border-2 text-2xl text-white shadow-[0_0_20px_rgba(64,201,255,0.3)] backdrop-blur-xl transition-all hover:scale-[1.02]"
                         >
-                            <Play className="mr-2 h-7 w-7 fill-current" />
+                            <Play className="mr-2 h-7 w-7 fill-current text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
                             JOUER CE SON
-                        </Button>
-
-                        <Button
-                            onClick={triggerNext}
-                            variant="ghost"
-                            className="group flex h-16 w-16 items-center justify-center rounded-2xl border-0 bg-white/5 hover:bg-white/10"
-                            title="Passer à la suivante"
-                        >
-                            <SkipForward className="h-7 w-7 text-white/70 transition-all group-hover:scale-110 group-hover:text-white" />
                         </Button>
                     </div>
                 </div>
