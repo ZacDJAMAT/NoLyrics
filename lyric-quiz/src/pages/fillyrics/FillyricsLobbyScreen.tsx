@@ -4,8 +4,7 @@ import SharedSearch from '@/components/shared/SharedSearch';
 import ArtistCard from '@/components/shared/ArtistCard';
 import { Artist } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
-import { ArrowLeft, Play, X, Mic, ChevronDown, ChevronUp, Settings2, Zap } from 'lucide-react';
+import { ArrowLeft, Play, X, Mic, ChevronDown, ChevronUp, Zap } from 'lucide-react';
 import UserMenuButton from '@/components/layout/UserMenuButton';
 import { featureFlags } from '@/lib/featureFlags';
 
@@ -13,7 +12,7 @@ import { motion, AnimatePresence, Variants } from 'framer-motion';
 
 export interface SelectionItem {
     id: string;
-    type: 'artist'; // 👈 Restreint uniquement aux artistes
+    type: 'artist';
     name: string;
     image: string;
     data: Artist;
@@ -73,11 +72,8 @@ export default function FillyricsLobbyScreen() {
     const isZeroFrictionEnabled = featureFlags.fillyricsZeroFriction && !isClassicOverride;
     const [selection, setSelection] = useState<SelectionItem[]>([]);
 
-    // 👉 NOUVEAU : État pour le nombre de rounds (entre 3 et 15)
-    const [numRounds, setNumRounds] = useState<number>(5);
-
     const [isExpanded, setIsExpanded] = useState(true);
-    const MAX_ITEMS = 10; // On peut garder une limite max d'artistes sélectionnés
+    const MAX_ITEMS = 10;
 
     const toggleSelection = (item: Artist) => {
         const itemId = item.id.toString();
@@ -130,7 +126,7 @@ export default function FillyricsLobbyScreen() {
 
                 <main className="mx-auto flex w-full max-w-xl flex-col gap-4">
                     <div className="glass-panel flex flex-col gap-5 p-6 text-center">
-                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary/15">
+                        <div className="bg-secondary/15 mx-auto flex h-14 w-14 items-center justify-center rounded-2xl">
                             <Zap className="text-secondary h-7 w-7" />
                         </div>
                         <h2 className="font-titre text-2xl tracking-wide text-white">
@@ -177,12 +173,11 @@ export default function FillyricsLobbyScreen() {
                     FILLYRICS
                 </h1>
                 <p className="text-muted-foreground font-texte max-w-lg text-center text-lg md:text-xl">
-                    Sélectionne tes artistes préférés et définis le nombre de rounds de ta partie !
+                    Sélectionne tes artistes préférés pour lancer ta session de survie !
                 </p>
             </header>
 
             <main>
-                {/* 👉 MODIFICATION : On bride la recherche aux artistes uniquement */}
                 <SharedSearch
                     allowedTabs={['artists']}
                     defaultTab="artists"
@@ -199,7 +194,6 @@ export default function FillyricsLobbyScreen() {
                 />
             </main>
 
-            {/* 👉 PANIER FLOTTANT */}
             <motion.div
                 layout
                 initial="hidden"
@@ -248,7 +242,6 @@ export default function FillyricsLobbyScreen() {
                                 transition={{ duration: 0.3, ease: 'easeInOut' }}
                                 className="flex w-full flex-col overflow-hidden"
                             >
-                                {/* GRILLE DES ARTISTES SÉLECTIONNÉS */}
                                 <motion.div layout className="w-full flex-grow py-1">
                                     {selection.length === 0 ? (
                                         <motion.div
@@ -298,33 +291,6 @@ export default function FillyricsLobbyScreen() {
                                     )}
                                 </motion.div>
 
-                                {/* 👉 NOUVEAU : Paramétrage des Rounds avec le Slider Shadcn */}
-                                <motion.div layout className="mt-4 border-t border-white/10 pt-4">
-                                    <div className="mb-3 flex items-center justify-between">
-                                        <span className="font-texte flex items-center gap-2 text-sm text-white/80">
-                                            <Settings2 className="h-4 w-4" /> Nombre de rounds
-                                        </span>
-                                        <span className="text-secondary font-titre bg-secondary/10 border-secondary/20 rounded-full border px-3 py-0.5 text-lg">
-                                            {numRounds}
-                                        </span>
-                                    </div>
-                                    <div className="px-2">
-                                        <Slider
-                                            value={[numRounds]}
-                                            min={3}
-                                            max={15}
-                                            step={1}
-                                            onValueChange={(val) => setNumRounds(val[0])}
-                                            className="cursor-pointer"
-                                        />
-                                    </div>
-                                    <div className="font-texte mt-2 flex justify-between px-1 text-xs text-white/40">
-                                        <span>3</span>
-                                        <span>15</span>
-                                    </div>
-                                </motion.div>
-
-                                {/* 👉 BOUTON LANCER LA PARTIE */}
                                 <motion.div
                                     variants={buttonVariants}
                                     initial="hidden"
@@ -336,8 +302,7 @@ export default function FillyricsLobbyScreen() {
                                         disabled={selection.length === 0}
                                         onClick={() =>
                                             navigate('/mode/fillyrics/play', {
-                                                // NOUVEAU : On envoie la configuration complète (Artistes + Nbr de Rounds)
-                                                state: { selection, numRounds },
+                                                state: { selection }, // 👈 On n'envoie plus numRounds
                                             })
                                         }
                                         className="font-texte bg-secondary text-secondary-foreground hover:bg-secondary/80 flex h-10 w-full items-center justify-center gap-2 rounded-full px-4 text-base shadow-[0_0_15px_rgba(64,201,255,0.3)] transition-all disabled:opacity-30 disabled:shadow-none sm:h-12 sm:px-6 sm:text-lg"

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
 import SyncModal from './components/modals/SyncModal.tsx';
-import FillyricsSurvivalScreen from './pages/fillyrics/FillyricsSurvivalScreen.tsx';
 import { useAuth } from './contexts/AuthContext';
 import GameScreen from './pages/allmusic/GameScreen.tsx';
 import SearchScreen from './pages/allmusic/SearchScreen.tsx';
@@ -45,7 +44,6 @@ function App() {
 
                 <Route path="/mode/fillyrics" element={<FillyricsLobbyScreen />} />
                 <Route path="/mode/fillyrics/play" element={<FillyricsGameScreen />} />
-                <Route path="/mode/fillyrics/survival" element={<FillyricsSurvivalScreen />} />
 
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
