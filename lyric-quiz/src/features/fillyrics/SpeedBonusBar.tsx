@@ -1,10 +1,15 @@
 interface SpeedBonusBarProps {
     multiplier: number;
-    seconds: number; // 👉 On ajoute les secondes pour l'affichage numérique
+    seconds: number;
 }
 
 export default function SpeedBonusBar({ multiplier, seconds }: SpeedBonusBarProps) {
     const isCritical = multiplier < 0.25;
+
+    // 👉 CALCUL DYNAMIQUE DE LA COULEUR : 120 = Vert (Emerald), 0 = Rouge (Destructive)
+    const hue = Math.max(0, multiplier * 120);
+    const colorStyle = `hsl(${hue}, 80%, 50%)`;
+    const shadowStyle = `0 0 15px hsl(${hue}, 80%, 50%, 0.8)`;
 
     return (
         <div className="group flex w-full flex-col gap-2">
@@ -12,26 +17,25 @@ export default function SpeedBonusBar({ multiplier, seconds }: SpeedBonusBarProp
                 <span className="text-[9px] tracking-[0.3em] text-white/30 uppercase">
                     Stabilité du Flux
                 </span>
-                {/* 👉 TIMER NUMÉRIQUE RE-POSITIONNÉ ET LISIBLE */}
                 <span
-                    className={`font-titre text-2xl transition-all duration-300 ${isCritical ? 'text-destructive scale-110 animate-pulse' : 'text-emerald-400'}`}
+                    className={`font-titre text-2xl transition-all duration-300 ${isCritical ? 'scale-110 animate-pulse' : ''}`}
+                    style={{ color: colorStyle }}
                 >
                     {seconds}s
                 </span>
             </div>
 
-            {/* Le Rail Laser */}
+            {/* Le Rail */}
             <div className="relative h-2 w-full rounded-full border border-white/5 bg-white/5 p-[2px]">
-                {/* Le Laser d'Énergie */}
+                {/* Le Laser d'Énergie qui change de couleur */}
                 <div
-                    className={`relative h-full rounded-full transition-all duration-1000 ease-linear ${
-                        isCritical
-                            ? 'bg-destructive shadow-[0_0_15px_rgba(255,42,95,1)]'
-                            : 'bg-emerald-500 shadow-[0_0_15px_rgba(52,211,153,0.8)]'
-                    }`}
-                    style={{ width: `${multiplier * 100}%` }}
+                    className="relative h-full rounded-full transition-all duration-1000 ease-linear"
+                    style={{
+                        width: `${multiplier * 100}%`,
+                        backgroundColor: colorStyle,
+                        boxShadow: shadowStyle,
+                    }}
                 >
-                    {/* Effet de brillance au bout du laser */}
                     <div className="absolute top-0 right-0 bottom-0 w-8 rounded-full bg-white/20 blur-md" />
                     <div className="absolute top-1/2 right-0 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-white shadow-[0_0_10px_white]" />
                 </div>

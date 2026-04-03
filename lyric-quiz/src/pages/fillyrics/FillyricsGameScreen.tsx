@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { useFillyricsPlaylist } from '@/hooks/useFillyricsPlaylist';
@@ -15,6 +15,7 @@ export default function FillyricsGameScreen() {
     const [phase, setPhase] = useState<'mixing' | 'preview' | 'playing' | 'summary'>('mixing');
     const [lives, setLives] = useState(3);
     const [globalScore, setGlobalScore] = useState(0);
+    const [playedRoundsCount, setPlayedRoundsCount] = useState(0);
 
     // Timer global remis à 30 secondes
     const [choiceCountdown, setChoiceCountdown] = useState(30);
@@ -26,6 +27,8 @@ export default function FillyricsGameScreen() {
 
     const audioRef = useRef<HTMLAudioElement>(null);
     const canScrollRef = useRef(true);
+
+    const sessionId = useMemo(() => crypto.randomUUID(), []);
 
     // --- LOGIQUE PARTAGÉE : PASSER À LA SUIVANTE ---
     const triggerNext = useCallback(() => {
@@ -49,6 +52,7 @@ export default function FillyricsGameScreen() {
     const handleRoundEnd = useCallback(
         (won: boolean, points: number) => {
             setGlobalScore((prev) => prev + points);
+            setPlayedRoundsCount((prev) => prev + 1);
 
             if (!won) {
                 setLives((prev) => {
@@ -314,9 +318,9 @@ export default function FillyricsGameScreen() {
         return (
             <FillyricsGameRound
                 key={currentSong.id}
-                sessionId="survival-session"
+                sessionId={sessionId}
                 song={currentSong}
-                roundIndex={currentRoundIndex}
+                roundIndex={playedRoundsCount}
                 onRoundEnd={handleRoundEnd}
             />
         );

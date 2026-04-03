@@ -3,6 +3,18 @@ import { SelectionItem } from '@/pages/fillyrics/FillyricsLobbyScreen';
 import { Song } from '@/types';
 import { getArtistTopTracks, fetchLyrics } from '@/utils/api';
 
+// Liste d'IDs d'artistes populaires par défaut (Tendances : Angèle, Orelsan, Damso, Stromae, The Weeknd, etc.)
+const TRENDING_ARTIST_IDS = ['4050205', '1188', '1063640', '73568', '144227', '6220', '11800'];
+
+const shuffleArray = <T>(array: T[]): T[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+};
+
 export const useFillyricsPlaylist = (initialSelection: SelectionItem[], reloadKey: number) => {
     const [playlist, setPlaylist] = useState<Song[]>([]);
     const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
@@ -10,7 +22,6 @@ export const useFillyricsPlaylist = (initialSelection: SelectionItem[], reloadKe
     const [mixError, setMixError] = useState<string | null>(null);
 
     useEffect(() => {
-        // 👉 ANTI-GLITCH : Le drapeau pour bloquer le double-chargement de React
         let ignore = false;
 
         const generatePlaylist = async () => {
@@ -19,40 +30,33 @@ export const useFillyricsPlaylist = (initialSelection: SelectionItem[], reloadKe
             setCurrentRoundIndex(0);
 
             try {
-                // 1. Séparer artistes et musiques
                 const artists = initialSelection.filter((item) => item.type === 'artist');
-                const candidates: Song[] = [];
+                let artistIdsToFetch: (string | number)[] = [];
 
-                // 2. Extraire TOUTES les musiques des artistes (jusqu'à 300)
+                // 👉 1. GESTION DES TENDANCES (Si aucun artiste n'est sélectionné)
                 if (artists.length > 0) {
-                    const artistsTracks: Record<string, Song[]> = {};
-                    for (const artist of artists) {
-                        // 👉 MODIFICATION : On demande 300 pistes au lieu de 15 pour couvrir la discographie
-                        // Ensuite on les mélange aléatoirement pour avoir des musiques moins connues
-                        const tracks = await getArtistTopTracks(artist.id, 300);
-                        artistsTracks[artist.id] = tracks.sort(() => 0.5 - Math.random());
-                    }
-
-                    // Distribution équitable entre les artistes
-                    let added = true;
-                    while (added) {
-                        added = false;
-                        for (const artist of artists) {
-                            if (artistsTracks[artist.id] && artistsTracks[artist.id].length > 0) {
-                                candidates.push(artistsTracks[artist.id].pop() as Song);
-                                added = true;
-                            }
-                        }
-                    }
+                    artistIdsToFetch = artists.map((a) => a.data.id);
+                } else {
+                    // On prend 4 artistes au hasard dans la liste des tendances
+                    artistIdsToFetch = [...TRENDING_ARTIST_IDS]
+                        .sort(() => 0.5 - Math.random())
+                        .slice(0, 4);
                 }
 
-                if (ignore) return; // 👈 On coupe ici si le composant a été démonté
+                let allTracks: Song[] = [];
+                for (const id of artistIdsToFetch) {
+                    const tracks = await getArtistTopTracks(id, 100);
+                    allTracks = [...allTracks, ...tracks];
+                }
 
-                // 3. LA VÉRIFICATION OBLIGATOIRE DES PAROLES
+                const shuffledCandidates = shuffleArray(allTracks);
+
+                if (ignore) return;
+
+                // 3. LA VÉRIFICATION DES PAROLES
                 const finalPlaylist: Song[] = [];
-                for (const candidate of candidates) {
-                    if (finalPlaylist.length >= 10) break;
-
+                for (const candidate of shuffledCandidates) {
+                    if (finalPlaylist.length >= 10) break; // Buffer de 10 musiques prêtes
                     if (finalPlaylist.some((fs) => fs.id === candidate.id)) continue;
 
                     try {
@@ -61,11 +65,11 @@ export const useFillyricsPlaylist = (initialSelection: SelectionItem[], reloadKe
                             finalPlaylist.push(candidate);
                         }
                     } catch (err) {
-                        console.warn(`Paroles introuvables pour ${candidate.title}, ignorée.`);
+                        // Paroles introuvables, on ignore silencieusement
                     }
                 }
 
-                if (ignore) return; // 👈 Double sécurité avant de valider la playlist finale
+                if (ignore) return;
 
                 if (finalPlaylist.length === 0) {
                     throw new Error(
@@ -81,11 +85,8 @@ export const useFillyricsPlaylist = (initialSelection: SelectionItem[], reloadKe
             }
         };
 
-        if (initialSelection && initialSelection.length > 0) {
-            generatePlaylist();
-        }
+        generatePlaylist();
 
-        // 👈 Nettoyage : Si React relance l'effet, on annule l'ancien mixage !
         return () => {
             ignore = true;
         };
@@ -106,4 +107,3 @@ export const useFillyricsPlaylist = (initialSelection: SelectionItem[], reloadKe
         isLastRound: currentRoundIndex === playlist.length - 1,
     };
 };
-

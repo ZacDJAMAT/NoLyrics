@@ -250,8 +250,9 @@ export default function FillyricsLobbyScreen() {
                                             animate={{ opacity: 1 }}
                                             className="font-texte flex aspect-[3/1] w-full items-center justify-center rounded-2xl border border-dashed border-white/5 p-4 text-center text-xs text-white/50 sm:text-sm"
                                         >
-                                            Aucun artiste sélectionné. <br /> Clique sur un artiste
-                                            pour l'ajouter !
+                                            Aucun artiste sélectionné. <br /> Lance la partie pour
+                                            jouer avec les tendances du moment, ou ajoute tes
+                                            favoris !
                                         </motion.div>
                                     ) : (
                                         <motion.div
@@ -299,19 +300,22 @@ export default function FillyricsLobbyScreen() {
                                     className="mt-4 w-full pt-2 sm:mt-5"
                                 >
                                     <Button
-                                        disabled={selection.length === 0}
                                         onClick={() =>
                                             navigate('/mode/fillyrics/play', {
-                                                state: { selection }, // 👈 On n'envoie plus numRounds
+                                                state: { selection }, // 👈 On envoie uniquement la sélection
                                             })
                                         }
-                                        className="font-texte bg-secondary text-secondary-foreground hover:bg-secondary/80 flex h-10 w-full items-center justify-center gap-2 rounded-full px-4 text-base shadow-[0_0_15px_rgba(64,201,255,0.3)] transition-all disabled:opacity-30 disabled:shadow-none sm:h-12 sm:px-6 sm:text-lg"
+                                        className="font-texte bg-secondary text-secondary-foreground hover:bg-secondary/80 flex h-10 w-full items-center justify-center gap-2 rounded-full px-4 text-base shadow-[0_0_15px_rgba(64,201,255,0.3)] transition-all sm:h-12 sm:px-6 sm:text-lg"
                                     >
                                         <Play
                                             className="h-4 w-4 sm:h-5 sm:w-5"
                                             fill="currentColor"
                                         />
-                                        <span>Lancer la Partie</span>
+                                        <span>
+                                            {selection.length === 0
+                                                ? 'Jouer les Tendances'
+                                                : 'Lancer la Partie'}
+                                        </span>
                                     </Button>
                                 </motion.div>
                             </motion.div>

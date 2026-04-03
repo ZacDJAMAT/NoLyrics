@@ -39,7 +39,9 @@ export const saveFillyricsResult = async (
     threshold: number,
     targetWords: number,
     status: GameStatus,
-    sessionId: string
+    sessionId: string,
+    roundIndex: number, // 👈 Nouveau paramètre
+    speedMultiplier: number // 👈 Nouveau paramètre
 ) => {
     if (!user) return;
 
@@ -54,10 +56,12 @@ export const saveFillyricsResult = async (
                 points: points,
                 contract_threshold: threshold,
                 target_words: targetWords,
+                round_index: roundIndex, // 👈 Nouvelle colonne
+                speed_multiplier: speedMultiplier, // 👈 Nouvelle colonne
                 status: status === 'won' ? 'won' : 'lost',
             },
         ]);
-    } catch {
-        // Échec silencieux
+    } catch (error) {
+        console.error('Erreur de sauvegarde Supabase :', error);
     }
 };

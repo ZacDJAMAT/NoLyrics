@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'; // 👉 IMPORT AJOUTÉ
 import { Song } from '@/types';
 import { useFillyricsGame } from '@/hooks/useFillyricsGame';
 
-import { Star, SkipForward, HeartCrack, CheckCircle2 } from 'lucide-react';
+import { SkipForward, HeartCrack, CheckCircle2, Disc3 } from 'lucide-react';
 import LyricsGrid from '@/features/allmusic/LyricsGrid';
 import ContractProgressBar from './ContractProgressBar';
 import SpeedBonusBar from './SpeedBonusBar';
@@ -47,18 +47,16 @@ export default function FillyricsGameRound({
         setActiveWordCoords,
         setCurrentInput,
         cycleNextWord,
+        skipRound,
     } = useFillyricsGame(sessionId, song, roundIndex, handleError);
 
+    // 1. Le useEffect qui s'occupe JUSTE de baisser le chrono
     useEffect(() => {
         if (gameStatus === 'won' || gameStatus === 'lost') {
             const timer = setInterval(() => {
                 setNextRoundTimer((prev) => {
                     if (prev <= 1) {
                         clearInterval(timer);
-                        if (!hasEnded.current) {
-                            hasEnded.current = true;
-                            onRoundEnd(gameStatus === 'won', scorePoints);
-                        }
                         return 0;
                     }
                     return prev - 1;
@@ -66,7 +64,17 @@ export default function FillyricsGameRound({
             }, 1000);
             return () => clearInterval(timer);
         }
-    }, [gameStatus, onRoundEnd, scorePoints]);
+    }, [gameStatus]);
+
+    // 2. Le useEffect qui s'occupe JUSTE d'alerter le parent quand le chrono est à 0
+    useEffect(() => {
+        if ((gameStatus === 'won' || gameStatus === 'lost') && nextRoundTimer === 0) {
+            if (!hasEnded.current) {
+                hasEnded.current = true;
+                onRoundEnd(gameStatus === 'won', scorePoints);
+            }
+        }
+    }, [nextRoundTimer, gameStatus, onRoundEnd, scorePoints]);
 
     return (
         <div className="bg-background selection:bg-secondary selection:text-secondary-foreground relative flex min-h-screen flex-col overflow-clip font-sans">
@@ -90,12 +98,11 @@ export default function FillyricsGameRound({
 
                 <div className="pointer-events-auto flex flex-col items-end gap-1">
                     <div className="font-titre flex items-center gap-2 text-3xl text-white drop-shadow-md">
-                        <Star className="fill-secondary text-secondary h-6 w-6 drop-shadow-[0_0_10px_rgba(64,201,255,0.5)]" />
+                        <Disc3 className="h-6 w-6 text-[#d4af37] drop-shadow-[0_0_10px_rgba(212,175,55,0.5)]" />
                         {scorePoints}
                     </div>
-                    {/* BOUTON SKIP */}
                     <button
-                        onClick={() => setGameStatus('lost')}
+                        onClick={skipRound} // 👈 NOUVEAU : On utilise la fonction intelligente
                         className="group font-texte hover:text-secondary flex items-center gap-2 text-[10px] tracking-widest text-white/30 uppercase transition-all"
                     >
                         Skip{' '}

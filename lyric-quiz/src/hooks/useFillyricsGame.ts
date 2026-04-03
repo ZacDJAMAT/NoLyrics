@@ -201,7 +201,9 @@ export const useFillyricsGame = (
                 thresholdPercent,
                 targetWordCount,
                 gameStatus,
-                sessionId
+                sessionId,
+                roundIndex, // 👈 On envoie l'index du round
+                speedBonusMultiplier // 👈 On envoie le bonus de vitesse
             );
             setHasSaved(true);
         }
@@ -214,6 +216,8 @@ export const useFillyricsGame = (
         thresholdPercent,
         targetWordCount,
         sessionId,
+        roundIndex, // 👈 Ajouté aux dépendances
+        speedBonusMultiplier, // 👈 Ajouté aux dépendances
     ]);
 
     const disableTimer = useCallback(() => {
