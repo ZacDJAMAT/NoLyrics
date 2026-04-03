@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { useFillyricsPlaylist } from '@/hooks/useFillyricsPlaylist';
 import { Button } from '@/components/ui/button';
@@ -38,12 +38,17 @@ export default function FillyricsGameScreen() {
         nextRound,
         isMixing,
         mixError,
-        loadMore, // 👈 Nouveau
-        isFetchingMore, // 👈 Nouveau
-        isCatalogExhausted, // 👈 Nouveau (servira pour l'étape 3)
+        loadMore,
+        isFetchingMore,
+        isCatalogExhausted,
+        pivotAlgorithm,
+        defibrillatorAlgorithm, // 👈 NOUVEAU
     } = useFillyricsPlaylist(selection || [], reloadKey);
 
     const audioRef = useRef<HTMLAudioElement>(null);
+    const consecutiveZeroWordsRef = useRef(0);
+    const consecutiveLossesRef = useRef(0);
+
     const canScrollRef = useRef(true);
 
     // --- ♾️ MOTEUR DE SWIPE INFINI ---
@@ -93,6 +98,33 @@ export default function FillyricsGameScreen() {
             points: number,
             stats: { foundWords: number; totalWords: number; speedBonus: number }
         ) => {
+            // 🚨 DÉTECTION DU HARD SKIP (Zéro mot trouvé et perdu)
+            if (!won && stats?.foundWords === 0) {
+                consecutiveZeroWordsRef.current += 1;
+            } else {
+                consecutiveZeroWordsRef.current = 0;
+            }
+
+            if (consecutiveZeroWordsRef.current === 2) {
+                pivotAlgorithm(currentRoundIndex);
+                consecutiveZeroWordsRef.current = 0;
+            }
+
+            // ⚡ NOUVEAU : DÉTECTION DE LA FRUSTRATION (Défibrillateur)
+            if (!won) {
+                consecutiveLossesRef.current += 1;
+            } else {
+                consecutiveLossesRef.current = 0; // Une victoire = le joueur est soigné !
+            }
+
+            // Si 3 défaites de suite, on sort les palettes !
+            // Note: Comme on a que 3 vies de base, pour voir l'effet sur la même partie, on le règle à 2 pour le test, ou on le laisse à 3 si tu comptes donner plus de vies.
+            // Mettons-le à 2 échecs consécutifs pour garantir qu'il sauve le joueur avant le Game Over (qui arrive à 0 vie).
+            if (consecutiveLossesRef.current === 2 && lives > 1) {
+                defibrillatorAlgorithm(currentRoundIndex);
+                consecutiveLossesRef.current = 0; // On désarme le défibrillateur
+            }
+
             setPlayedRoundsCount((prev) => prev + 1);
 
             setRoundResults((prev) => [
@@ -178,11 +210,6 @@ export default function FillyricsGameScreen() {
             triggerNext();
         }
     };
-
-    // ==========================================
-    // SÉCURITÉ : Les "return" (sorties anticipées) commencent UNIQUEMENT ICI
-    // ==========================================
-    if (!selection || selection.length === 0) return <Navigate to="/mode/fillyrics" replace />;
 
     // ==========================================
     // ÉCRAN 1 : MIXAGE (CHARGEMENT AVEC LE DISQUE D'OR)

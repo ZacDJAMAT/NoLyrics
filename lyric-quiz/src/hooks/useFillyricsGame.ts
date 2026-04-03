@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { fetchLyrics } from '@/utils/api';
 import { parseFillyrics } from '@/utils/fillyricsParser';
 import { normalizeWord } from '@/utils/lyricsParser';
 import { Song, Word, GameStatus } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
-import { saveFillyricsResult } from '@/lib/history';
+import { saveFillyricsResult, trackUserEvent } from '@/lib/history';
 
 export const useFillyricsGame = (
     sessionId: string,
@@ -27,6 +27,9 @@ export const useFillyricsGame = (
     const [totalTime, setTotalTime] = useState<number>(0);
     const [gameStatus, setGameStatus] = useState<GameStatus>('idle');
     const [lastFoundWord, setLastFoundWord] = useState<string | null>(null);
+
+    const sessionStartTimeRef = useRef<number>(Date.now());
+    const hasCommittedRef = useRef<boolean>(false);
 
     const { user } = useAuth();
     const [hasSaved, setHasSaved] = useState<boolean>(false);
@@ -87,6 +90,9 @@ export const useFillyricsGame = (
                 setBasePoints(0);
                 setCurrentInput('');
 
+                sessionStartTimeRef.current = Date.now();
+                hasCommittedRef.current = false;
+
                 setGameStatus('playing');
                 setHasSaved(false);
             } catch (error) {
@@ -105,11 +111,17 @@ export const useFillyricsGame = (
     // 4. CHRONOMÈTRE
     useEffect(() => {
         let timer: ReturnType<typeof setInterval>;
+
+        // On ralentit le temps si c'est la toute première musique (roundIndex === 0)
+        // ET que l'utilisateur n'a pas encore de bouteille
+        const isColdStartHelp = roundIndex === 0;
+        const tickRate = isColdStartHelp ? 1250 : 1000;
+
         if (gameStatus === 'playing' && timeLeft > 0 && !isTimerDisabled) {
-            timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
+            timer = setInterval(() => setTimeLeft((prev) => prev - 1), tickRate);
         }
         return () => clearInterval(timer);
-    }, [gameStatus, timeLeft, isTimerDisabled]);
+    }, [gameStatus, timeLeft, isTimerDisabled, roundIndex]);
 
     const formattedTime = useMemo(() => {
         if (isTimerDisabled || timeLeft === -1) return '∞';
@@ -159,6 +171,16 @@ export const useFillyricsGame = (
 
             // On ne valide QUE si c'est le mot ciblé actuellement !
             if (targetWord.normalized === normalizedInput) {
+                if (!hasCommittedRef.current) {
+                    trackUserEvent(
+                        user,
+                        song.id.toString(),
+                        song.artist.name,
+                        'commit',
+                        Date.now() - sessionStartTimeRef.current
+                    );
+                    hasCommittedRef.current = true;
+                }
                 // AJOUT DES POINTS (Longueur du mot * 10)
                 const wordPoints = targetWord.original.length * 10;
                 setBasePoints((prev) => prev + wordPoints);
@@ -205,6 +227,14 @@ export const useFillyricsGame = (
                 roundIndex, // 👈 On envoie l'index du round
                 speedBonusMultiplier // 👈 On envoie le bonus de vitesse
             );
+            // 👉 NOUVEAU : Télémétrie de fin de round
+            trackUserEvent(
+                user,
+                song.id.toString(),
+                song.artist.name,
+                gameStatus,
+                Date.now() - sessionStartTimeRef.current
+            );
             setHasSaved(true);
         }
     }, [
@@ -226,8 +256,17 @@ export const useFillyricsGame = (
     }, []);
 
     const skipRound = useCallback(() => {
-        if (gameStatus === 'playing' && !isTimerDisabled) setTimeLeft(0);
-    }, [gameStatus, isTimerDisabled]);
+        if (gameStatus === 'playing' && !isTimerDisabled) {
+            trackUserEvent(
+                user,
+                song.id.toString(),
+                song.artist.name,
+                'skip',
+                Date.now() - sessionStartTimeRef.current
+            );
+            setTimeLeft(0);
+        }
+    }, [gameStatus, isTimerDisabled, user, song.id]);
 
     // 8. NAVIGATION AU CLAVIER (Touche TAB)
     const cycleNextWord = useCallback(() => {
