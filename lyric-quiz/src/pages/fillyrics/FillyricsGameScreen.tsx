@@ -22,24 +22,33 @@ export default function FillyricsGameScreen() {
 
     // --- GESTION DE LA PLAYLIST ---
     const [reloadKey] = useState(0);
-    const { playlist, currentSong, currentRoundIndex, nextRound, isMixing, mixError } =
-        useFillyricsPlaylist(selection || [], reloadKey);
+    const {
+        playlist,
+        currentSong,
+        currentRoundIndex,
+        nextRound,
+        isMixing,
+        mixError,
+        loadMore, // 👈 Nouveau
+        isFetchingMore, // 👈 Nouveau
+        isCatalogExhausted, // 👈 Nouveau (servira pour l'étape 3)
+    } = useFillyricsPlaylist(selection || [], reloadKey);
 
     const audioRef = useRef<HTMLAudioElement>(null);
     const canScrollRef = useRef(true);
 
-    const sessionId = useMemo(() => crypto.randomUUID(), []);
+    // --- ♾️ MOTEUR DE SWIPE INFINI ---
+    useEffect(() => {
+        // On calcule combien de musiques il reste devant nous
+        const remainingTracks = playlist.length - currentRoundIndex;
 
-    // --- LOGIQUE PARTAGÉE : PASSER À LA SUIVANTE ---
-    const triggerNext = useCallback(() => {
-        if (phase !== 'preview') return;
-        if (currentRoundIndex < playlist.length - 1) {
-            nextRound();
-        } else {
-            handlePlay(); // Buffer épuisé, on force le jeu
+        // S'il en reste 4 ou moins, qu'on n'est pas déjà en train de charger, et que le catalogue n'est pas vide
+        if (remainingTracks <= 4 && !isFetchingMore && !isCatalogExhausted) {
+            loadMore(); // On lance la recharge discrète !
         }
-    }, [phase, currentRoundIndex, playlist.length, nextRound]);
+    }, [currentRoundIndex, playlist.length, isFetchingMore, isCatalogExhausted, loadMore]);
 
+    const sessionId = useMemo(() => crypto.randomUUID(), []);
     // --- LOGIQUE PARTAGÉE : JOUER ---
     const handlePlay = useCallback(() => {
         if (audioRef.current) {
@@ -48,11 +57,41 @@ export default function FillyricsGameScreen() {
         setPhase('playing');
     }, []);
 
+    // --- LOGIQUE PARTAGÉE : PASSER À LA SUIVANTE ---
+    const triggerNext = useCallback(() => {
+        if (phase !== 'preview') return;
+        if (currentRoundIndex < playlist.length - 1) {
+            nextRound();
+        } else if (isCatalogExhausted) {
+            navigate('/mode/fillyrics/exhausted'); // 👈 La magie opère ici !
+        } else {
+            handlePlay();
+        }
+    }, [
+        phase,
+        currentRoundIndex,
+        playlist.length,
+        nextRound,
+        isCatalogExhausted,
+        handlePlay,
+        navigate,
+    ]);
+
     // --- GESTION DE LA FIN DU ROUND ---
     const handleRoundEnd = useCallback(
         (won: boolean, points: number) => {
             setGlobalScore((prev) => prev + points);
             setPlayedRoundsCount((prev) => prev + 1);
+
+            const advanceOrExhaust = () => {
+                if (currentRoundIndex >= playlist.length - 1 && isCatalogExhausted) {
+                    navigate('/mode/fillyrics/exhausted'); // 👈 Et ici aussi !
+                } else {
+                    nextRound();
+                    setChoiceCountdown(30);
+                    setPhase('preview');
+                }
+            };
 
             if (!won) {
                 setLives((prev) => {
@@ -60,25 +99,15 @@ export default function FillyricsGameScreen() {
                     if (newLives <= 0) {
                         setPhase('summary');
                     } else {
-                        // On a perdu une vie, on passe à la suite de la playlist
-                        setTimeout(() => {
-                            nextRound();
-                            setChoiceCountdown(30); // On remet le chrono à 30s
-                            setPhase('preview');
-                        }, 500); // Petit délai pour laisser souffler
+                        setTimeout(advanceOrExhaust, 500); // 👈 Utilisée ici
                     }
                     return newLives;
                 });
             } else {
-                // Victoire ! On enchaîne
-                setTimeout(() => {
-                    nextRound();
-                    setChoiceCountdown(30); // On remet le chrono à 30s
-                    setPhase('preview');
-                }, 500);
+                setTimeout(advanceOrExhaust, 500); // 👈 Et utilisée ici
             }
         },
-        [nextRound]
+        [nextRound, currentRoundIndex, playlist.length, isCatalogExhausted]
     );
 
     // --- LOGIQUE DU CYCLE DE VIE ---

@@ -37,7 +37,6 @@ export default function FillyricsGameRound({
         gameStatus,
         scorePercentage,
         handleInputChange,
-        setGameStatus,
         scorePoints,
         lastFoundWord,
         thresholdPercent,
