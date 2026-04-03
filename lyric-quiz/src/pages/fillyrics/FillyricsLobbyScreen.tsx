@@ -4,7 +4,7 @@ import SharedSearch from '@/components/shared/SharedSearch';
 import ArtistCard from '@/components/shared/ArtistCard';
 import { Artist } from '@/types';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, X, Mic, ChevronDown, ChevronUp, Zap } from 'lucide-react';
+import { ArrowLeft, Play, ChevronDown, ChevronUp, Zap } from 'lucide-react';
 import UserMenuButton from '@/components/layout/UserMenuButton';
 import { featureFlags } from '@/lib/featureFlags';
 
@@ -50,21 +50,6 @@ const itemVariants: Variants = {
     exit: { opacity: 0, scale: 0.5, transition: { duration: 0.2 } },
 };
 
-const buttonVariants: Variants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-        opacity: 1,
-        y: 0,
-        transition: {
-            type: 'spring',
-            stiffness: 300,
-            damping: 20,
-            delay: 0.15,
-        },
-    },
-    exit: { opacity: 0, y: 10, transition: { duration: 0.2 } },
-};
-
 export default function FillyricsLobbyScreen() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -72,7 +57,7 @@ export default function FillyricsLobbyScreen() {
     const isZeroFrictionEnabled = featureFlags.fillyricsZeroFriction && !isClassicOverride;
     const [selection, setSelection] = useState<SelectionItem[]>([]);
 
-    const [isExpanded, setIsExpanded] = useState(true);
+    const [isExpanded, setIsExpanded] = useState(false);
     const MAX_ITEMS = 10;
 
     const toggleSelection = (item: Artist) => {
@@ -83,7 +68,6 @@ export default function FillyricsLobbyScreen() {
             setSelection((prev) => prev.filter((s) => s.id !== itemId));
         } else {
             if (selection.length >= MAX_ITEMS) {
-                alert(`Tu as sélectionné assez d'artistes ! (${MAX_ITEMS} max)`);
                 return;
             }
 
@@ -207,20 +191,64 @@ export default function FillyricsLobbyScreen() {
                 >
                     <motion.div
                         layout
-                        className={`flex items-center justify-between transition-colors duration-300 ${isExpanded ? 'mb-4 border-b border-white/10 pb-3' : ''}`}
+                        className={`flex items-center justify-between gap-2 transition-colors duration-300 ${isExpanded ? 'mb-4 border-b border-white/10 pb-3' : ''}`}
                     >
-                        <h2 className="font-titre flex items-center gap-2 text-base text-white sm:text-lg">
-                            <Mic className="text-secondary h-4 w-4" /> Ton panier
-                        </h2>
+                        {/* Le bouton de lancement dynamique (prend la place restante) */}
+                        <motion.div layout className="min-w-0 flex-grow py-1 pl-1">
+                            <Button
+                                onClick={() =>
+                                    navigate('/mode/fillyrics/play', {
+                                        state: { selection },
+                                    })
+                                }
+                                /* 👉 Ajout de overflow-hidden et relative sur le bouton pour masquer le texte qui glisse en dehors */
+                                className="font-texte bg-secondary text-secondary-foreground hover:bg-secondary/80 relative flex h-9 w-full items-center justify-center gap-2 overflow-hidden rounded-full px-4 text-sm shadow-[0_0_10px_rgba(64,201,255,0.3)] transition-all sm:h-10 sm:text-base"
+                            >
+                                <Play
+                                    className="h-4 w-4 flex-shrink-0 sm:h-4 sm:w-4"
+                                    fill="currentColor"
+                                />
 
-                        <div className="flex items-center gap-2 sm:gap-3">
-                            <span className="font-titre rounded-full bg-white/5 px-3 py-0.5 text-sm text-white/70 sm:text-base">
-                                {selection.length} artiste(s)
-                            </span>
+                                {/* 👉 NOUVEAU : Animation de roulette pour le texte */}
+                                <AnimatePresence mode="popLayout" initial={false}>
+                                    <motion.span
+                                        key={selection.length === 0 ? 'pourtoi' : 'artistes'}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -20 }}
+                                        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                                        className="truncate whitespace-nowrap"
+                                    >
+                                        {selection.length === 0 ? 'Lancer mes pourtoi' : 'Lancer'}
+                                    </motion.span>
+                                </AnimatePresence>
+                            </Button>
+                        </motion.div>
 
-                            <button
+                        {/* Le bloc droit (Compteur + Flèche) protégé contre l'écrasement */}
+                        <motion.div
+                            layout
+                            className="flex flex-shrink-0 items-center gap-2 sm:gap-3"
+                        >
+                            <AnimatePresence>
+                                {selection.length > 0 && (
+                                    <motion.span
+                                        layout
+                                        initial={{ opacity: 0, scale: 0.8, width: 0 }}
+                                        animate={{ opacity: 1, scale: 1, width: 'auto' }}
+                                        exit={{ opacity: 0, scale: 0.8, width: 0 }}
+                                        className="font-titre rounded-full bg-white/5 px-3 py-0.5 text-sm whitespace-nowrap text-white/70 sm:text-base"
+                                    >
+                                        {selection.length} artiste(s)
+                                    </motion.span>
+                                )}
+                            </AnimatePresence>
+
+                            {/* La flèche TOUJOURS PRÉSENTE */}
+                            <motion.button
+                                layout
                                 onClick={() => setIsExpanded(!isExpanded)}
-                                className="rounded-full border border-white/10 bg-white/5 p-1.5 text-white/70 transition-colors hover:bg-white/15 hover:text-white"
+                                className="flex-shrink-0 rounded-full border border-white/10 bg-white/5 p-1.5 text-white/70 transition-colors hover:bg-white/15 hover:text-white"
                                 title={isExpanded ? 'Réduire le panneau' : 'Agrandir le panneau'}
                             >
                                 {isExpanded ? (
@@ -228,8 +256,8 @@ export default function FillyricsLobbyScreen() {
                                 ) : (
                                     <ChevronUp className="h-4 w-4 sm:h-5 sm:w-5" />
                                 )}
-                            </button>
-                        </div>
+                            </motion.button>
+                        </motion.div>
                     </motion.div>
 
                     <AnimatePresence initial={false}>
@@ -268,55 +296,27 @@ export default function FillyricsLobbyScreen() {
                                                         initial="hidden"
                                                         animate="visible"
                                                         exit="exit"
-                                                        className="group relative aspect-square w-full origin-center"
+                                                        onClick={() =>
+                                                            toggleSelection(item.data as Artist)
+                                                        }
+                                                        className="group relative aspect-square w-full origin-center cursor-pointer" // 👈 Curseur pointeur ajouté
+                                                        title={`Retirer ${item.name}`}
                                                     >
                                                         <img
                                                             src={item.image}
                                                             alt={item.name}
-                                                            className="border-secondary h-full w-full rounded-full border object-cover shadow-[0_0_10px_rgba(64,201,255,0.2)] transition-transform group-hover:scale-105"
-                                                            title={item.name}
+                                                            className={`${
+                                                                selection.length >= MAX_ITEMS
+                                                                    ? 'border-destructive shadow-[0_0_10px_rgba(255,42,95,0.4)]'
+                                                                    : 'border-secondary shadow-[0_0_10px_rgba(64,201,255,0.2)]'
+                                                            } hover:border-destructive h-full w-full rounded-full border object-cover transition-all duration-300 group-hover:scale-95 group-hover:opacity-70`}
                                                         />
-                                                        <button
-                                                            onClick={() =>
-                                                                toggleSelection(item.data as Artist)
-                                                            }
-                                                            className="bg-destructive absolute -top-1.5 -right-1.5 rounded-full p-0.5 text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100 hover:scale-110 sm:-top-2 sm:-right-2 sm:p-1"
-                                                            title={`Retirer ${item.name}`}
-                                                        >
-                                                            <X className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                                                        </button>
+                                                        {/* La croix rouge a été complètement supprimée ! */}
                                                     </motion.div>
                                                 ))}
                                             </AnimatePresence>
                                         </motion.div>
                                     )}
-                                </motion.div>
-
-                                <motion.div
-                                    variants={buttonVariants}
-                                    initial="hidden"
-                                    animate="visible"
-                                    exit="exit"
-                                    className="mt-4 w-full pt-2 sm:mt-5"
-                                >
-                                    <Button
-                                        onClick={() =>
-                                            navigate('/mode/fillyrics/play', {
-                                                state: { selection }, // 👈 On envoie uniquement la sélection
-                                            })
-                                        }
-                                        className="font-texte bg-secondary text-secondary-foreground hover:bg-secondary/80 flex h-10 w-full items-center justify-center gap-2 rounded-full px-4 text-base shadow-[0_0_15px_rgba(64,201,255,0.3)] transition-all sm:h-12 sm:px-6 sm:text-lg"
-                                    >
-                                        <Play
-                                            className="h-4 w-4 sm:h-5 sm:w-5"
-                                            fill="currentColor"
-                                        />
-                                        <span>
-                                            {selection.length === 0
-                                                ? 'Jouer les Tendances'
-                                                : 'Lancer la Partie'}
-                                        </span>
-                                    </Button>
                                 </motion.div>
                             </motion.div>
                         )}

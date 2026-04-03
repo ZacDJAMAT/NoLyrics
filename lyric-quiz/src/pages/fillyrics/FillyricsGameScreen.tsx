@@ -193,9 +193,6 @@ export default function FillyricsGameScreen() {
                 <h2 className="font-titre mt-4 text-2xl tracking-widest text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]">
                     PRÉPARATION DU MIX
                 </h2>
-                <p className="font-texte text-sm tracking-widest text-white/50 uppercase">
-                    Gravure sur disque d'or...
-                </p>
             </div>
         );
     }
