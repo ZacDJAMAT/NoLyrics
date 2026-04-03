@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useState, useEffect } from 'react'; // 👈 Ajout de useEffect
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'; // 👈 Ajout de useLocation
+import { ArrowLeft, Play, ChevronDown, ChevronUp, Zap, AlertCircle, X } from 'lucide-react'; // 👈 Ajout des icônes
 import SharedSearch from '@/components/shared/SharedSearch';
 import ArtistCard from '@/components/shared/ArtistCard';
 import { Artist } from '@/types';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, ChevronDown, ChevronUp, Zap } from 'lucide-react';
 import UserMenuButton from '@/components/layout/UserMenuButton';
 import { featureFlags } from '@/lib/featureFlags';
 
@@ -59,6 +59,22 @@ export default function FillyricsLobbyScreen() {
 
     const [isExpanded, setIsExpanded] = useState(false);
     const MAX_ITEMS = 10;
+    const location = useLocation();
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    // --- GESTION DES ERREURS PROVENANT DU JEU ---
+    useEffect(() => {
+        if (location.state?.error) {
+            setErrorMessage(location.state.error);
+
+            // 1. On efface l'erreur de l'historique de navigation pour qu'elle ne réapparaisse pas si on rafraîchit la page
+            window.history.replaceState({}, document.title);
+
+            // 2. On cache le message automatiquement après 5 secondes
+            const timer = setTimeout(() => setErrorMessage(null), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [location]);
 
     const toggleSelection = (item: Artist) => {
         const itemId = item.id.toString();
@@ -142,6 +158,29 @@ export default function FillyricsLobbyScreen() {
 
     return (
         <div className="bg-background text-foreground selection:bg-secondary selection:text-secondary-foreground min-h-screen overflow-x-hidden p-4 pb-40 font-sans md:p-6">
+            <AnimatePresence>
+                {errorMessage && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -50, x: '-50%' }}
+                        animate={{ opacity: 1, y: 0, x: '-50%' }}
+                        exit={{ opacity: 0, y: -50, x: '-50%' }}
+                        className="border-destructive/50 fixed top-6 left-1/2 z-50 flex w-[90%] max-w-md items-center justify-between gap-4 rounded-2xl border bg-black/80 p-4 shadow-[0_0_30px_rgba(255,42,95,0.3)] backdrop-blur-xl md:top-10"
+                    >
+                        <div className="flex items-center gap-3">
+                            <AlertCircle className="text-destructive h-6 w-6 flex-shrink-0" />
+                            <p className="font-texte text-sm text-white/90 md:text-base">
+                                {errorMessage}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setErrorMessage(null)}
+                            className="text-white/50 transition-colors hover:text-white"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
             <header className="border-border relative mb-12 flex flex-col items-center border-b pb-8">
                 <div className="absolute top-0 left-0 z-20">
                     <Button variant="back" onClick={() => navigate('/')} className="font-texte">

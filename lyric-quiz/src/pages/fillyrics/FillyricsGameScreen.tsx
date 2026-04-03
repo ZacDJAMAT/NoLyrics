@@ -5,6 +5,7 @@ import { useFillyricsPlaylist } from '@/hooks/useFillyricsPlaylist';
 import { Button } from '@/components/ui/button';
 import { Heart, Play, ChevronUp, Timer, ChevronDown } from 'lucide-react';
 import FillyricsGameRound from '@/features/fillyrics/FillyricsGameRound.tsx';
+import FillyricsSummaryScreen from '@/pages/fillyrics/FillyricsSummaryScreen.tsx';
 
 export default function FillyricsGameScreen() {
     const location = useLocation();
@@ -14,8 +15,16 @@ export default function FillyricsGameScreen() {
     // --- ÉTATS GLOBAUX ---
     const [phase, setPhase] = useState<'mixing' | 'preview' | 'playing' | 'summary'>('mixing');
     const [lives, setLives] = useState(3);
-    const [globalScore, setGlobalScore] = useState(0);
     const [playedRoundsCount, setPlayedRoundsCount] = useState(0);
+
+    const [roundResults, setRoundResults] = useState<
+        {
+            song: (typeof playlist)[0];
+            won: boolean;
+            points: number;
+            stats: { foundWords: number; totalWords: number; speedBonus: number };
+        }[]
+    >([]);
 
     // Timer global remis à 30 secondes
     const [choiceCountdown, setChoiceCountdown] = useState(30);
@@ -79,9 +88,17 @@ export default function FillyricsGameScreen() {
 
     // --- GESTION DE LA FIN DU ROUND ---
     const handleRoundEnd = useCallback(
-        (won: boolean, points: number) => {
-            setGlobalScore((prev) => prev + points);
+        (
+            won: boolean,
+            points: number,
+            stats: { foundWords: number; totalWords: number; speedBonus: number }
+        ) => {
             setPlayedRoundsCount((prev) => prev + 1);
+
+            setRoundResults((prev) => [
+                ...prev,
+                { song: playlist[currentRoundIndex], won, points, stats },
+            ]);
 
             const advanceOrExhaust = () => {
                 if (currentRoundIndex >= playlist.length - 1 && isCatalogExhausted) {
@@ -141,6 +158,18 @@ export default function FillyricsGameScreen() {
         window.addEventListener('wheel', handleWheel);
         return () => window.removeEventListener('wheel', handleWheel);
     }, [phase, isMixing, currentSong, triggerNext]);
+
+    // --- GESTION DES ERREURS DE PLAYLIST ---
+    useEffect(() => {
+        if (mixError) {
+            // On renvoie au lobby en remplaçant l'historique (replace: true)
+            // et on passe le message d'erreur dans le "state"
+            navigate('/mode/fillyrics', {
+                state: { error: mixError },
+                replace: true,
+            });
+        }
+    }, [mixError, navigate]);
 
     // --- SWIPE TACTILE ---
     const handleSwipeSkip = (_e: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
@@ -222,15 +251,6 @@ export default function FillyricsGameScreen() {
                 <h2 className="font-titre mt-4 text-2xl tracking-widest text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]">
                     PRÉPARATION DU MIX
                 </h2>
-            </div>
-        );
-    }
-
-    if (mixError) {
-        return (
-            <div className="bg-background flex min-h-screen flex-col items-center justify-center p-6 text-center">
-                <p className="font-texte text-destructive mb-4 text-xl">{mixError}</p>
-                <Button onClick={() => navigate('/mode/fillyrics')}>Retour</Button>
             </div>
         );
     }
@@ -357,21 +377,11 @@ export default function FillyricsGameScreen() {
     // ==========================================
     if (phase === 'summary') {
         return (
-            <div className="bg-background flex min-h-screen flex-col items-center justify-center p-6 text-center">
-                <h1 className="font-titre titre-neon-destructive mb-4 text-6xl">GAME OVER</h1>
-                <p className="font-texte mb-8 text-2xl text-white">
-                    Score final : <span className="text-secondary font-bold">{globalScore}</span>{' '}
-                    pts
-                </p>
-                <div className="flex gap-4">
-                    <Button onClick={() => window.location.reload()} variant="neon-glass">
-                        Rejouer
-                    </Button>
-                    <Button onClick={() => navigate('/mode/fillyrics')} variant="outline">
-                        Quitter
-                    </Button>
-                </div>
-            </div>
+            <FillyricsSummaryScreen
+                results={roundResults}
+                onReplay={() => window.location.reload()}
+                onQuit={() => navigate('/mode/fillyrics')}
+            />
         );
     }
 

@@ -13,7 +13,11 @@ interface FillyricsGameRoundProps {
     song: Song;
     sessionId: string;
     roundIndex: number;
-    onRoundEnd: (won: boolean, points: number) => void;
+    onRoundEnd: (
+        won: boolean,
+        points: number,
+        stats: { foundWords: number; totalWords: number; speedBonus: number }
+    ) => void;
 }
 
 export default function FillyricsGameRound({
@@ -47,6 +51,8 @@ export default function FillyricsGameRound({
         setCurrentInput,
         cycleNextWord,
         skipRound,
+        foundWordsCount,
+        totalWords,
     } = useFillyricsGame(sessionId, song, roundIndex, handleError);
 
     // 1. Le useEffect qui s'occupe JUSTE de baisser le chrono
@@ -70,10 +76,22 @@ export default function FillyricsGameRound({
         if ((gameStatus === 'won' || gameStatus === 'lost') && nextRoundTimer === 0) {
             if (!hasEnded.current) {
                 hasEnded.current = true;
-                onRoundEnd(gameStatus === 'won', scorePoints);
+                onRoundEnd(gameStatus === 'won', scorePoints, {
+                    foundWords: foundWordsCount,
+                    totalWords: totalWords,
+                    speedBonus: speedBonusMultiplier,
+                });
             }
         }
-    }, [nextRoundTimer, gameStatus, onRoundEnd, scorePoints]);
+    }, [
+        nextRoundTimer,
+        gameStatus,
+        onRoundEnd,
+        scorePoints,
+        foundWordsCount,
+        totalWords,
+        speedBonusMultiplier,
+    ]);
 
     return (
         <div className="bg-background selection:bg-secondary selection:text-secondary-foreground relative flex min-h-screen flex-col overflow-clip font-sans">
