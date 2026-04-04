@@ -9,7 +9,8 @@ import { saveFillyricsResult, trackUserEvent } from '@/lib/history';
 export const useFillyricsGame = (
     sessionId: string,
     song: Song,
-    roundIndex: number, // 👈 Le round actuel dicte la difficulté !
+    roundIndex: number,
+    currentContractTime: number,
     onError: (message: string) => void
 ) => {
     const [lyricsData, setLyricsData] = useState<Word[][] | null>(null);
@@ -27,6 +28,7 @@ export const useFillyricsGame = (
     const [totalTime, setTotalTime] = useState<number>(0);
     const [gameStatus, setGameStatus] = useState<GameStatus>('idle');
     const [lastFoundWord, setLastFoundWord] = useState<string | null>(null);
+    const securedTimeRef = useRef<number | null>(null);
 
     const sessionStartTimeRef = useRef<number>(Date.now());
     const hasCommittedRef = useRef<boolean>(false);
@@ -83,9 +85,9 @@ export const useFillyricsGame = (
                 // On cherche le tout premier mot à deviner
                 findNextTarget(parsedLyrics, 0, -1);
 
-                const calculatedTime = 30 + actualWords * 5;
-                setTimeLeft(calculatedTime);
-                setTotalTime(calculatedTime);
+                setTimeLeft(currentContractTime);
+                setTotalTime(30);
+                securedTimeRef.current = null;
                 setFoundWordsCount(0);
                 setBasePoints(0);
                 setCurrentInput('');
@@ -138,6 +140,15 @@ export const useFillyricsGame = (
     }, [foundWordsCount, totalWords]);
 
     const isContractSecured = scorePercentage >= thresholdPercent;
+
+    // 👉 NOUVEAU : Dès que le contrat est sécurisé, on fige sa valeur pour le round suivant
+    useEffect(() => {
+        if (isContractSecured && securedTimeRef.current === null) {
+            securedTimeRef.current = timeLeft;
+        }
+    }, [isContractSecured, timeLeft]);
+
+    const savedContractTime = securedTimeRef.current !== null ? securedTimeRef.current : timeLeft;
 
     const speedBonusMultiplier = useMemo(() => {
         if (totalTime === 0 || isTimerDisabled) return 0;
@@ -326,5 +337,7 @@ export const useFillyricsGame = (
         setActiveWordCoords,
         setCurrentInput,
         cycleNextWord,
+        currentContractTime,
+        savedContractTime,
     };
 };

@@ -5,18 +5,19 @@ import { useFillyricsGame } from '@/hooks/useFillyricsGame';
 
 import { SkipForward, HeartCrack, CheckCircle2, Disc3 } from 'lucide-react';
 import LyricsGrid from '@/features/allmusic/LyricsGrid';
-import ContractProgressBar from './ContractProgressBar';
-import SpeedBonusBar from './SpeedBonusBar';
 import FillyricsInlineComposer from './FillyricsInlineComposer';
+
+import ContractHUD from './ContractHUD';
 
 interface FillyricsGameRoundProps {
     song: Song;
     sessionId: string;
     roundIndex: number;
+    currentContractTime: number;
     onRoundEnd: (
         won: boolean,
         points: number,
-        stats: { foundWords: number; totalWords: number; speedBonus: number }
+        stats: { foundWords: number; totalWords: number; speedBonus: number; timeLeftRound: number } // 👈 NOUVEAU
     ) => void;
 }
 
@@ -25,6 +26,7 @@ export default function FillyricsGameRound({
     song,
     roundIndex,
     onRoundEnd,
+    currentContractTime,
 }: FillyricsGameRoundProps) {
     const [nextRoundTimer, setNextRoundTimer] = useState(5);
     const hasEnded = useRef(false);
@@ -53,7 +55,8 @@ export default function FillyricsGameRound({
         skipRound,
         foundWordsCount,
         totalWords,
-    } = useFillyricsGame(sessionId, song, roundIndex, handleError);
+        savedContractTime,
+    } = useFillyricsGame(sessionId, song, roundIndex, currentContractTime, handleError);
 
     // 1. Le useEffect qui s'occupe JUSTE de baisser le chrono
     useEffect(() => {
@@ -80,6 +83,7 @@ export default function FillyricsGameRound({
                     foundWords: foundWordsCount,
                     totalWords: totalWords,
                     speedBonus: speedBonusMultiplier,
+                    timeLeftRound: savedContractTime,
                 });
             }
         }
@@ -91,6 +95,8 @@ export default function FillyricsGameRound({
         foundWordsCount,
         totalWords,
         speedBonusMultiplier,
+        timeLeft,
+        savedContractTime,
     ]);
 
     return (
@@ -130,16 +136,14 @@ export default function FillyricsGameRound({
 
             {/* 📝 ZONE CENTRALE */}
             <main className="relative z-10 mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center p-4 pt-24 pb-32 md:p-8">
-                {/* ⚡ JAUGES DE TENSION */}
-                <div className="mb-12 flex w-full max-w-xl flex-col gap-8 px-4">
-                    {gameStatus === 'playing' && (
-                        <SpeedBonusBar multiplier={speedBonusMultiplier} seconds={timeLeft} />
-                    )}
-
-                    <ContractProgressBar
-                        percent={scorePercentage}
-                        threshold={thresholdPercent}
-                        isSuccess={isContractSecured}
+                {/* ⚡ JAUGE DE TENSION (LE CONTRAT) */}
+                <div className="mb-4 flex w-full max-w-xl flex-col items-center gap-8 px-4">
+                    <ContractHUD
+                        timeLeft={timeLeft}
+                        maxTime={30}
+                        currentPercent={scorePercentage}
+                        thresholdPercent={thresholdPercent}
+                        isSecured={isContractSecured}
                     />
                 </div>
 
