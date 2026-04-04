@@ -12,7 +12,7 @@ export default function HubScreen() {
             <div className="absolute top-4 right-4 z-20 flex items-center gap-3 md:top-6 md:right-6 md:gap-4">
                 <Button
                     variant="glass-icon-blue"
-                    onClick={() => navigate('/search')}
+                    onClick={() => navigate('/mode/fillyrics/quick-play')}
                     className="flex h-10 w-10 items-center justify-center rounded-full p-0 md:h-12 md:w-12"
                     title="Recherche globale"
                 >

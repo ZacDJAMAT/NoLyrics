@@ -27,7 +27,7 @@ import { useSongStats } from '../../hooks/useSongStats.ts';
 function GameContent({ song }: { song: Song }) {
     const navigate = useNavigate();
     const { modeId } = useParams();
-    const { user, isGuest, loginWithGoogle } = useAuth();
+    const { user, loginWithGoogle } = useAuth();
 
     const [showSaveModal, setShowSaveModal] = useState<boolean>(false);
     const [hasGivenUp, setHasGivenUp] = useState<boolean>(false);
@@ -100,7 +100,6 @@ function GameContent({ song }: { song: Song }) {
 
             saveGameResult(
                 user,
-                isGuest,
                 song,
                 scorePercentage,
                 finalStatus,
@@ -117,7 +116,6 @@ function GameContent({ song }: { song: Song }) {
         timeLeft,
         hasUsedHint,
         user,
-        isGuest,
         song,
         foundWordsCount,
         totalWords,
@@ -145,7 +143,6 @@ function GameContent({ song }: { song: Song }) {
             const missing = foundWordsCount === totalWords ? [] : getMissingWords();
             saveGameResult(
                 user,
-                isGuest,
                 song,
                 scorePercentage,
                 finalStatus,
@@ -176,7 +173,6 @@ function GameContent({ song }: { song: Song }) {
             const missing = foundWordsCount === totalWords ? [] : getMissingWords();
             saveGameResult(
                 user,
-                isGuest,
                 song,
                 scorePercentage,
                 finalStatus,

@@ -44,6 +44,7 @@ export function useTrendingSongs() {
                                 '',
                         },
                         duration: track.duration,
+                        preview: track.preview || '',
                     }));
 
                     setTrendingSongs(formattedSongs);

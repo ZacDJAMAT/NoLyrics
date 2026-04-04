@@ -15,6 +15,7 @@ export interface Song {
     artist: Artist;
     album: Album;
     duration: number;
+    preview?: string;
 }
 
 export interface SearchResult {
@@ -37,9 +38,24 @@ export interface ParsedLyricsResult {
 
 export type GameStatus = 'idle' | 'ready' | 'playing' | 'won' | 'lost';
 
+// On s'assure que LRCLIBTrack gère bien le texte synchronisé
 export interface LRCLIBTrack {
     id: number;
     trackName: string;
     artistName: string;
     plainLyrics: string | null;
+    syncedLyrics?: string | null; // 👉 NOUVEAU
 }
+
+// 👉 NOUVELLES INTERFACES POUR LE MODE SURVIE
+export interface SyncedLine {
+    timeMs: number; // Le timestamp de la ligne en millisecondes
+    text: string; // Le texte original complet
+    words: Word[]; // Les mots découpés (avec isHidden, isFound, etc.)
+}
+
+export interface SyncedLyricsResult {
+    lines: SyncedLine[];
+    totalHiddenWords: number;
+}
+

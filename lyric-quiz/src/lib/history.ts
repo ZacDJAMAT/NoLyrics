@@ -39,7 +39,9 @@ export const saveFillyricsResult = async (
     threshold: number,
     targetWords: number,
     status: GameStatus,
-    sessionId: string
+    sessionId: string,
+    roundIndex: number, // 👈 Nouveau paramètre
+    speedMultiplier: number // 👈 Nouveau paramètre
 ) => {
     if (!user) return;
 
@@ -54,10 +56,75 @@ export const saveFillyricsResult = async (
                 points: points,
                 contract_threshold: threshold,
                 target_words: targetWords,
+                round_index: roundIndex, // 👈 Nouvelle colonne
+                speed_multiplier: speedMultiplier, // 👈 Nouvelle colonne
                 status: status === 'won' ? 'won' : 'lost',
             },
         ]);
-    } catch {
-        // Échec silencieux
+    } catch (error) {
+        console.error('Erreur de sauvegarde Supabase :', error);
+    }
+};
+
+export const trackUserEvent = async (
+    user: User | null,
+    songId: string | number,
+    artistName: string, // 👈 NOUVEAU
+    actionType: 'skip' | 'commit' | 'won' | 'lost',
+    durationMs: number
+) => {
+    if (!user) return;
+
+    try {
+        await supabase.from('user_events').insert([
+            {
+                user_id: user.id,
+                song_id: songId.toString(),
+                artist_name: artistName, // 👈 NOUVEAU
+                action_type: actionType,
+                duration_ms: durationMs,
+            },
+        ]);
+    } catch (error) {
+        console.error('Erreur télémétrie Supabase :', error);
+    }
+};
+
+export const getSmartArtists = async (user: User | null): Promise<string[]> => {
+    if (!user) return [];
+    try {
+        const { data, error } = await supabase.rpc('get_smart_artists_v2', { p_user_id: user.id });
+        if (error || !data) return [];
+
+        // On ne garde que les artistes que l'utilisateur n'a pas rejetés massivement (score >= 0)
+        return data
+            .filter((row: any) => row.affinity_score >= 0)
+            .map((row: any) => row.artist_name);
+    } catch (err) {
+        console.error('Erreur récupération recommandations:', err);
+        return [];
+    }
+};
+
+// ⚡ NOUVEAU : Le Défibrillateur (Trouver une victoire passée)
+export const getEasyWinSongId = async (user: User | null): Promise<string | null> => {
+    if (!user) return null;
+    try {
+        // On cherche jusqu'à 20 victoires passées du joueur
+        const { data, error } = await supabase
+            .from('history_fillyrics')
+            .select('song_id')
+            .eq('user_id', user.id)
+            .eq('status', 'won')
+            .limit(20);
+
+        if (error || !data || data.length === 0) return null;
+
+        // On en tire une au hasard pour créer la surprise positive
+        const randomTrack = data[Math.floor(Math.random() * data.length)];
+        return randomTrack.song_id;
+    } catch (err) {
+        console.error('Erreur Défibrillateur:', err);
+        return null;
     }
 };

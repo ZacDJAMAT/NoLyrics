@@ -1,4 +1,5 @@
-import { Word, GameStatus } from '@/types.ts';
+import { ReactNode } from 'react';
+import { Word, GameStatus } from '@/types';
 
 interface LyricsGridProps {
     lyricsData: Word[][] | null;
@@ -6,7 +7,11 @@ interface LyricsGridProps {
     gameStatus: GameStatus;
     lastFoundWord?: string | null;
     alignment?: 'left' | 'center' | 'right';
-    gameMode?: 'allmusic' | 'fillyrics'; // 👈 AJOUT POUR PROTÉGER ALLMUSIC
+    gameMode?: 'allmusic' | 'fillyrics';
+    topContent?: ReactNode;
+    activeWordCoords?: { l: number; w: number } | null;
+    currentInput?: string;
+    onWordClick?: (l: number, w: number) => void;
 }
 
 export default function LyricsGrid({
@@ -15,7 +20,10 @@ export default function LyricsGrid({
     gameStatus,
     lastFoundWord,
     alignment = 'center',
-    gameMode = 'allmusic', // 👈 Par défaut sur AllMusic
+    topContent,
+    activeWordCoords,
+    currentInput = '',
+    onWordClick,
 }: LyricsGridProps) {
     if (isFetchingLyrics) {
         return (
@@ -40,6 +48,7 @@ export default function LyricsGrid({
             translate="no"
             className="glass-panel notranslate flex min-h-[300px] flex-col items-center p-4 md:min-h-[400px] md:p-8"
         >
+            {topContent}
             <div className="w-fit max-w-full space-y-4 text-lg leading-relaxed select-none md:space-y-6 md:text-xl">
                 {lyricsData.map((line, lineIndex) => (
                     <div
@@ -50,55 +59,71 @@ export default function LyricsGrid({
                             const isContextWord = word.isHidden === false;
                             const isUserFoundWord = word.isFound && word.isHidden !== false;
 
-                            let styleClass = 'glass-cell';
+                            // 👉 NOUVEAU : Est-ce que c'est le mot qu'on est en train de taper ?
+                            const isActiveTarget =
+                                activeWordCoords?.l === lineIndex &&
+                                activeWordCoords?.w === wordIndex &&
+                                gameStatus === 'playing';
 
-                            if (isContextWord) {
-                                styleClass = 'bg-transparent text-foreground/80 font-texte';
-                            } else if (isUserFoundWord) {
-                                const isLastFound =
-                                    word.normalized === lastFoundWord && gameStatus === 'playing';
-                                styleClass = `bg-transparent font-texte animate-pop-word transition-colors duration-500 ${
-                                    isLastFound ? 'text-neon-secondary shadow' : 'text-foreground'
-                                }`;
-                            } else if (gameStatus === 'lost' || gameStatus === 'won') {
-                                styleClass =
-                                    'text-destructive bg-transparent font-texte opacity-80';
+                            // 1. LE MOT ACTIF (IN-LINE)
+                            if (isActiveTarget) {
+                                return (
+                                    <span
+                                        key={wordIndex}
+                                        className="bg-secondary/10 text-secondary border-secondary inline-block min-w-[40px] animate-pulse rounded border-b-2 px-2 py-0.5 text-center font-bold shadow-[0_0_15px_rgba(64,201,255,0.3)] md:py-1"
+                                    >
+                                        {/* On affiche ce que le joueur tape, ou le motif vide par défaut */}
+                                        {currentInput || '_'.repeat(word.original.length)}
+                                    </span>
+                                );
                             }
 
+                            // 2. MOTS DE CONTEXTE
+                            if (isContextWord) {
+                                return (
+                                    <span
+                                        key={wordIndex}
+                                        className="text-foreground/80 font-texte inline-block bg-transparent px-1.5 py-0.5 md:px-2 md:py-1"
+                                    >
+                                        {word.original}
+                                    </span>
+                                );
+                            }
+
+                            // 3. MOTS TROUVÉS PAR LE JOUEUR
+                            if (isUserFoundWord) {
+                                const isLastFound =
+                                    word.normalized === lastFoundWord && gameStatus === 'playing';
+                                return (
+                                    <span
+                                        key={wordIndex}
+                                        className={`font-texte animate-pop-word inline-block rounded bg-transparent px-1.5 py-0.5 transition-colors duration-500 md:px-2 md:py-1 ${isLastFound ? 'text-neon-secondary shadow' : 'text-secondary [text-shadow:0_0_10px_rgba(64,201,255,0.5)]'}`}
+                                    >
+                                        {word.original}
+                                    </span>
+                                );
+                            }
+
+                            // 4. FIN DE PARTIE (Mots Ratés)
+                            if (gameStatus === 'lost' || gameStatus === 'won') {
+                                return (
+                                    <span
+                                        key={wordIndex}
+                                        className="text-destructive font-texte inline-block bg-transparent px-1.5 py-0.5 font-semibold opacity-80 md:px-2 md:py-1"
+                                    >
+                                        {word.original}
+                                    </span>
+                                );
+                            }
+
+                            // 5. MOTS CACHÉS (Trous standards)
                             return (
                                 <span
                                     key={wordIndex}
-                                    className={`inline-block rounded px-1.5 py-0.5 md:px-2 md:py-1 ${styleClass}`}
+                                    onClick={() => onWordClick && onWordClick(lineIndex, wordIndex)}
+                                    className="glass-cell inline-block cursor-pointer px-1.5 py-0.5 opacity-30 transition-opacity hover:bg-white/20 hover:opacity-80 md:px-2 md:py-1"
                                 >
-                                    {isContextWord ? (
-                                        <span>{word.original}</span>
-                                    ) : isUserFoundWord ? (
-                                        <span
-                                            className={`transition-all duration-500 ${
-                                                gameMode === 'fillyrics' ||
-                                                word.normalized === lastFoundWord
-                                                    ? 'text-secondary [text-shadow:0_0_15px_rgba(64,201,255,0.8)]'
-                                                    : 'text-foreground'
-                                            }`}
-                                        >
-                                            {word.original}
-                                        </span>
-                                    ) : gameStatus === 'lost' || gameStatus === 'won' ? (
-                                        <span className="text-destructive font-semibold">
-                                            {word.original}
-                                        </span>
-                                    ) : word.isHinted ? (
-                                        <span className="text-primary/80 font-bold">
-                                            {word.original.charAt(0)}
-                                            <span className="ml-0.5 text-[0.6em] tracking-widest opacity-60">
-                                                ...
-                                            </span>
-                                        </span>
-                                    ) : (
-                                        <span className="opacity-30">
-                                            {'_'.repeat(word.original.length)}
-                                        </span>
-                                    )}
+                                    {'_'.repeat(word.original.length)}
                                 </span>
                             );
                         })}

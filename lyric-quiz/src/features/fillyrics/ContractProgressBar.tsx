@@ -10,35 +10,37 @@ export default function ContractProgressBar({
     isSuccess,
 }: ContractProgressBarProps) {
     return (
-        <div className="mb-3 flex w-full flex-col gap-2">
-            <div className="font-texte flex justify-between text-xs tracking-widest uppercase">
+        <div className="relative flex w-full flex-col gap-2">
+            <div className="font-texte z-10 flex justify-between px-1 text-[10px] tracking-widest uppercase">
                 <span
-                    className={`transition-colors duration-500 ${isSuccess ? 'text-secondary font-bold drop-shadow-[0_0_5px_rgba(64,201,255,0.8)]' : 'text-destructive'}`}
+                    className={`transition-colors duration-700 ${isSuccess ? 'text-secondary drop-shadow-[0_0_8px_rgba(64,201,255,1)]' : 'text-white/40'}`}
                 >
-                    Contrat : {isSuccess ? 'Sécurisé' : 'En cours...'}
+                    Contrat {isSuccess ? 'Validé' : 'En attente'}
                 </span>
-                <span className="text-white/50">Seuil : {threshold}%</span>
+                <span className="text-white/40">
+                    {percent}% / {threshold}%
+                </span>
             </div>
 
-            {/* Conteneur de la barre (Plus épais) */}
-            <div className="relative h-4 w-full overflow-hidden rounded-full border border-white/10 bg-black/60 shadow-inner">
-                {/* Le marqueur de seuil (Ligne blanche éclatante) */}
+            {/* Le Rail de fond */}
+            <div className="relative h-1.5 w-full overflow-visible rounded-full bg-white/5">
+                {/* Le marqueur de Seuil (Petit losange lumineux) */}
                 <div
-                    className="absolute top-0 bottom-0 z-20 w-[2px] bg-white/90 shadow-[0_0_5px_white]"
-                    style={{ left: `${threshold}%` }}
+                    className="absolute top-1/2 z-20 h-2 w-2 -translate-y-1/2 rotate-45 bg-white shadow-[0_0_10px_white] transition-all"
+                    style={{ left: `calc(${threshold}% - 4px)` }}
                 />
 
-                {/* La jauge de remplissage avec dégradé et halo */}
+                {/* Le "Plasma" de remplissage */}
                 <div
-                    className={`absolute top-0 bottom-0 left-0 z-10 rounded-full transition-all duration-500 ease-out ${
+                    className={`absolute top-0 bottom-0 left-0 rounded-full transition-all duration-700 ease-out ${
                         isSuccess
-                            ? 'from-secondary/40 to-secondary bg-gradient-to-r shadow-[0_0_15px_rgba(64,201,255,0.8)]'
-                            : 'from-destructive/40 to-destructive bg-gradient-to-r shadow-[0_0_10px_rgba(255,42,95,0.8)]'
+                            ? 'bg-secondary shadow-[0_0_20px_rgba(64,201,255,0.8),_0_0_40px_rgba(64,201,255,0.4)]'
+                            : 'bg-white/40 shadow-[0_0_10px_rgba(255,255,255,0.2)]'
                     }`}
                     style={{ width: `${Math.min(100, percent)}%` }}
                 >
-                    {/* Tête de lecture lumineuse (Le bout du néon) */}
-                    <div className="absolute top-0 right-0 bottom-0 w-4 rounded-full bg-white/40 blur-[2px]" />
+                    {/* Tête de lecture (L'étincelle au bout) */}
+                    <div className="absolute top-1/2 -right-1 h-3 w-3 -translate-y-1/2 rounded-full bg-white blur-[2px]" />
                 </div>
             </div>
         </div>

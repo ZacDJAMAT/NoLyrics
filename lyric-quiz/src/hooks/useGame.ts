@@ -18,7 +18,7 @@ export const useGame = (song: Song, onError: (message: string) => void) => {
     const [gameStatus, setGameStatus] = useState<GameStatus>('idle');
     const [lastFoundWord, setLastFoundWord] = useState<string | null>(null);
 
-    const { user, isGuest } = useAuth();
+    const { user } = useAuth();
     const [hasSaved, setHasSaved] = useState<boolean>(false);
     const [hasUsedHint, setHasUsedHint] = useState<boolean>(false);
     const [isTimerDisabled, setIsTimerDisabled] = useState<boolean>(false);
@@ -205,7 +205,6 @@ export const useGame = (song: Song, onError: (message: string) => void) => {
             // On envoie les nouvelles données !
             saveGameResult(
                 user,
-                isGuest,
                 song,
                 scorePercentage,
                 gameStatus,
@@ -219,7 +218,6 @@ export const useGame = (song: Song, onError: (message: string) => void) => {
         gameStatus,
         hasSaved,
         user,
-        isGuest,
         song,
         scorePercentage,
         timeLeft,
