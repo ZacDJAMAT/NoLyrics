@@ -151,6 +151,9 @@ export const useFillyricsPlaylist = (initialSelection: SelectionItem[], reloadKe
                         const tracks = await getArtistTopTracks(id, 100);
                         allTracks = [...allTracks, ...tracks];
                     }
+
+                    // 🚨 HOTFIX : On remplit le réservoir principal !
+                    candidatePool.current = shuffleArray(allTracks);
                 } else {
                     // 🚀 MODE "POUR TOI" (Panier vide)
                     const smartArtistNames = await getSmartArtists(user);
