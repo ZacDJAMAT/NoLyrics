@@ -39,6 +39,7 @@ export default function FillyricsGameScreen() {
     const {
         playlist,
         currentSong,
+        nextSong,
         currentRoundIndex,
         nextRound,
         isMixing,
@@ -429,6 +430,7 @@ export default function FillyricsGameScreen() {
                 key={currentSong.id}
                 sessionId={sessionId}
                 song={currentSong}
+                nextSong={nextSong}
                 roundIndex={playedRoundsCount}
                 currentContractTime={contracts[0]}
                 onRoundEnd={handleRoundEnd}

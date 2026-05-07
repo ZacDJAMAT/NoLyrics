@@ -192,7 +192,6 @@ export const useFillyricsGame = (
                     );
                     hasCommittedRef.current = true;
                 }
-                // AJOUT DES POINTS (Longueur du mot * 10)
                 const wordPoints = targetWord.original.length * 10;
                 setBasePoints((prev) => prev + wordPoints);
 

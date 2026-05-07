@@ -42,6 +42,8 @@ export const useFillyricsPlaylist = (initialSelection: SelectionItem[], reloadKe
     // 👉 NOUVEAU : Mémoire à court terme pour l'anti-répétition
     const recentArtistIds = useRef<string[]>([]);
 
+    const allTimeArtistCounts = useRef<Record<string, number>>({});
+
     const calculateCandidateScore = useCallback((candidate: Song) => {
         const artistId = candidate.artist.id.toString();
         let score = Math.random(); // 🎲 Base : Exploration aléatoire (entre 0 et 1)
@@ -79,13 +81,28 @@ export const useFillyricsPlaylist = (initialSelection: SelectionItem[], reloadKe
             // 🧠 1. On prend jusqu'à 15 candidats en haut du tas ACTIF
             const candidatesToScore = activePool.current.slice(0, 15);
 
+            // 🛡️ NOUVEAU : RÈGLE DES 30% MAXIMUM
+            const totalSelected = loadedSongIds.current.size + newTracks.length;
+            // Math.max(2, ...) permet de garantir au moins 2 musiques du même artiste au début sans bloquer
+            const maxAllowed = Math.max(2, Math.ceil((totalSelected + 1) * 0.3));
+
+            const validCandidates = candidatesToScore.filter((c) => {
+                const count = allTimeArtistCounts.current[c.artist.id.toString()] || 0;
+                return count < maxAllowed;
+            });
+
+            // Fallback de sécurité : si le joueur a sélectionné UN SEUL artiste dans le lobby,
+            // validCandidates deviendra vide. Dans ce cas, on relâche la règle pour ne pas crasher.
+            const finalCandidates =
+                validCandidates.length > 0 ? validCandidates : candidatesToScore;
+
             // 🧠 2. On les trie du meilleur au pire selon notre algorithme
-            candidatesToScore.sort((a, b) => {
+            finalCandidates.sort((a, b) => {
                 return calculateCandidateScore(b) - calculateCandidateScore(a);
             });
 
             // 🧠 3. Le gagnant est le premier de la liste !
-            const bestCandidate = candidatesToScore[0];
+            const bestCandidate = finalCandidates[0];
 
             // On l'enlève du réservoir principal pour ne pas le re-tester à l'infini
             const indexToRemove = activePool.current.findIndex((c) => c.id === bestCandidate.id);
@@ -106,8 +123,13 @@ export const useFillyricsPlaylist = (initialSelection: SelectionItem[], reloadKe
                     newTracks.push(bestCandidate);
                     loadedSongIds.current.add(bestCandidate.id); // On la marque comme utilisée
 
-                    // 👉 NOUVEAU : On ajoute l'artiste à la mémoire récente
-                    recentArtistIds.current.push(bestCandidate.artist.id.toString());
+                    const artistIdStr = bestCandidate.artist.id.toString();
+
+                    allTimeArtistCounts.current[artistIdStr] =
+                        (allTimeArtistCounts.current[artistIdStr] || 0) + 1;
+
+                    // On ajoute l'artiste à la mémoire récente (pénalité de répétition immédiate)
+                    recentArtistIds.current.push(artistIdStr);
                     // On garde une mémoire des 10 derniers artistes maximum pour qu'ils puissent revenir plus tard
                     if (recentArtistIds.current.length > 10) {
                         recentArtistIds.current.shift();
@@ -138,6 +160,7 @@ export const useFillyricsPlaylist = (initialSelection: SelectionItem[], reloadKe
             candidatePool.current = [];
             loadedSongIds.current.clear();
             recentArtistIds.current = [];
+            allTimeArtistCounts.current = {};
 
             try {
                 const artists = initialSelection.filter((item) => item.type === 'artist');
@@ -332,6 +355,7 @@ export const useFillyricsPlaylist = (initialSelection: SelectionItem[], reloadKe
     return {
         playlist,
         currentSong: playlist[currentRoundIndex],
+        nextSong: playlist[currentRoundIndex + 1] || null,
         currentRoundIndex,
         totalRounds: playlist.length,
         isMixing,

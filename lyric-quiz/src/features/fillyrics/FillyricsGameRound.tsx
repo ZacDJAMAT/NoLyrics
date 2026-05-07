@@ -11,9 +11,11 @@ import ContractHUD from './ContractHUD';
 
 interface FillyricsGameRoundProps {
     song: Song;
+    nextSong: Song | null;
     sessionId: string;
     roundIndex: number;
     currentContractTime: number;
+
     onRoundEnd: (
         won: boolean,
         points: number,
@@ -24,6 +26,7 @@ interface FillyricsGameRoundProps {
 export default function FillyricsGameRound({
     sessionId,
     song,
+    nextSong,
     roundIndex,
     onRoundEnd,
     currentContractTime,
@@ -101,13 +104,27 @@ export default function FillyricsGameRound({
 
     return (
         <div className="bg-background selection:bg-secondary selection:text-secondary-foreground relative flex min-h-screen flex-col overflow-clip font-sans">
+            <AnimatePresence>
+                {(gameStatus === 'won' || gameStatus === 'lost') && nextSong && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 0.6 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 1.5, ease: 'easeInOut' }} // Transition très douce
+                        className="pointer-events-none absolute inset-0 z-0 bg-cover bg-center bg-no-repeat blur-[100px] saturate-200"
+                        style={{
+                            // On affiche stricement la NOUVELLE pochette
+                            backgroundImage: `url(${nextSong.album.cover_xl})`,
+                        }}
+                    />
+                )}
+            </AnimatePresence>
             <FillyricsInlineComposer
                 currentInput={currentInput}
                 onInputChange={handleInputChange}
                 gameStatus={gameStatus}
                 onTabPress={cycleNextWord}
             />
-
             {/* 🎮 HUD FLOTTANT */}
             <div className="pointer-events-none absolute top-6 right-6 left-6 z-30 flex items-start justify-between">
                 <div className="flex flex-col">
@@ -133,7 +150,6 @@ export default function FillyricsGameRound({
                     </button>
                 </div>
             </div>
-
             {/* 📝 ZONE CENTRALE */}
             <main className="relative z-10 mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center p-4 pt-24 pb-32 md:p-8">
                 {/* ⚡ JAUGE DE TENSION (LE CONTRAT) */}
@@ -163,11 +179,9 @@ export default function FillyricsGameRound({
                     />
                 </div>
             </main>
-
             {/* ============================================================ */}
             {/* 🌬️ TRANSITIONS DISCRÈTES (Smooth avec Framer Motion) */}
             {/* ============================================================ */}
-
             {/* 👉 NOUVEAU : Wrapper AnimatePresence */}
             <AnimatePresence mode="wait">
                 {(gameStatus === 'won' || gameStatus === 'lost') && (

@@ -106,10 +106,15 @@ export default function ContractHUD({
 
                 {!isSecured && timeLeft > 0 && burnPercentage > 0 && (
                     <motion.div
-                        className="absolute right-0 left-0 z-20 h-2 rounded-full bg-[#FFE87C] shadow-[0_0_20px_6px_#FF3366,0_0_8px_3px_#FF7B00]"
-                        animate={{ top: `${burnPercentage}%` }}
-                        transition={{ duration: 0.1, ease: 'linear' }}
-                    />
+                        animate={
+                            timeLeft <= 5
+                                ? {
+                                      scale: [1, 1.1, 1],
+                                      transition: { repeat: Infinity, duration: 0.5 },
+                                  }
+                                : {}
+                        }
+                    ></motion.div>
                 )}
             </div>
 
