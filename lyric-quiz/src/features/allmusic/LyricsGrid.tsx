@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { Word, GameStatus } from '@/types';
+import { memo } from 'react';
 
 interface LyricsGridProps {
     lyricsData: Word[][] | null;
@@ -14,7 +15,7 @@ interface LyricsGridProps {
     onWordClick?: (l: number, w: number) => void;
 }
 
-export default function LyricsGrid({
+function LyricsGrid({
     lyricsData,
     isFetchingLyrics,
     gameStatus,
@@ -133,3 +134,4 @@ export default function LyricsGrid({
         </div>
     );
 }
+export default memo(LyricsGrid);

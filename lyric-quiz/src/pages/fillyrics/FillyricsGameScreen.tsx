@@ -315,10 +315,12 @@ export default function FillyricsGameScreen() {
         return (
             <div className="bg-background text-foreground relative flex min-h-screen flex-col items-center justify-center overflow-hidden">
                 <div
-                    className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-40 transition-all duration-700"
+                    // 👉 On applique le blur directement ici, on ajoute scale-110 et transform-gpu
+                    className="absolute inset-0 z-0 scale-110 transform-gpu bg-cover bg-center bg-no-repeat opacity-40 blur-2xl transition-all duration-700"
                     style={{ backgroundImage: `url(${currentSong.album.cover_xl})` }}
                 />
-                <div className="absolute inset-0 z-0 bg-black/60 backdrop-blur-xl" />
+                {/* 👉 On supprime le backdrop-blur-xl ! */}
+                <div className="absolute inset-0 z-0 bg-black/60" />
 
                 <div className="absolute top-6 z-30 flex w-full max-w-xl items-center justify-between px-6">
                     <div className="mt-2 flex gap-1.5">

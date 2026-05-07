@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ContractIcon } from '@/components/icons/ContractIcon';
 import { CheckCircle2 } from 'lucide-react';
@@ -11,13 +11,13 @@ interface ContractHUDProps {
     isSecured: boolean;
 }
 
-export default function ContractHUD({
+const ContractHUD = ({
     timeLeft,
     maxTime,
     currentPercent,
     thresholdPercent,
     isSecured,
-}: ContractHUDProps) {
+}: ContractHUDProps) => {
     // 👉 1. LA MÉMOIRE INTERNE DE FIGEAGE
     // Le composant retient le pourcentage exact de brûlure au moment où le contrat est sécurisé
     const [frozenBurnPercent, setFrozenBurnPercent] = useState<number | null>(null);
@@ -138,4 +138,6 @@ export default function ContractHUD({
             </div>
         </div>
     );
-}
+};
+
+export default memo(ContractHUD);

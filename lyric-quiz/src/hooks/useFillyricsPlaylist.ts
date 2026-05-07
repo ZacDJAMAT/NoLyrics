@@ -170,10 +170,10 @@ export const useFillyricsPlaylist = (initialSelection: SelectionItem[], reloadKe
                 if (artists.length > 0) {
                     // 🟢 MODE CLASSIQUE (Panier rempli)
                     const artistIdsToFetch = artists.map((a) => a.data.id);
-                    for (const id of artistIdsToFetch) {
-                        const tracks = await getArtistTopTracks(id, 100);
-                        allTracks = [...allTracks, ...tracks];
-                    }
+                    const tracksArrays = await Promise.all(
+                        artistIdsToFetch.map((id) => getArtistTopTracks(id, 100))
+                    );
+                    allTracks = tracksArrays.flat();
 
                     // 🚨 HOTFIX : On remplit le réservoir principal !
                     candidatePool.current = shuffleArray(allTracks);
@@ -184,16 +184,19 @@ export const useFillyricsPlaylist = (initialSelection: SelectionItem[], reloadKe
                     if (smartArtistNames.length > 0) {
                         // 🔥 WARM START : L'algorithme a trouvé des affinités !
                         const topNames = smartArtistNames.slice(0, 4);
-                        for (const name of topNames) {
-                            const searchResult = await searchArtists(name, 1, 1);
-                            if (searchResult.results.length > 0) {
-                                const tracks = await getArtistTopTracks(
-                                    searchResult.results[0].id,
-                                    100
-                                );
-                                allTracks = [...allTracks, ...tracks];
-                            }
-                        }
+                        const smartTracksArrays = await Promise.all(
+                            topNames.map(async (name) => {
+                                const searchResult = await searchArtists(name, 1, 1);
+                                if (searchResult.results.length > 0) {
+                                    return await getArtistTopTracks(
+                                        searchResult.results[0].id,
+                                        100
+                                    );
+                                }
+                                return [];
+                            })
+                        );
+                        allTracks = smartTracksArrays.flat();
                         // Pour les habitués, on mélange tout !
                         candidatePool.current = shuffleArray(allTracks);
                     } else {
@@ -202,15 +205,24 @@ export const useFillyricsPlaylist = (initialSelection: SelectionItem[], reloadKe
                             const trendingArtists = await getTopArtists(10);
                             if (trendingArtists.length > 0) {
                                 const top3 = trendingArtists.slice(0, 3);
-                                for (const artist of top3) {
-                                    const tracks = await getArtistTopTracks(artist.id, 1);
-                                    allTracks = [...allTracks, ...tracks];
-                                }
                                 const rest = trendingArtists.slice(3, 8);
-                                for (const artist of rest) {
-                                    const tracks = await getArtistTopTracks(artist.id, 5);
-                                    allTracks = [...allTracks, ...tracks];
-                                }
+
+                                // On lance les deux requêtes lourdes (top3 et le reste) en même temps !
+                                const [top3Arrays, restArrays] = await Promise.all([
+                                    Promise.all(
+                                        top3.map((artist) => getArtistTopTracks(artist.id, 1))
+                                    ),
+                                    Promise.all(
+                                        rest.map((artist) => getArtistTopTracks(artist.id, 5))
+                                    ),
+                                ]);
+
+                                // On garde l'ordre : le Top 3 d'abord, puis le reste
+                                allTracks = [
+                                    ...allTracks,
+                                    ...top3Arrays.flat(),
+                                    ...restArrays.flat(),
+                                ];
                             }
                         } catch (err) {
                             console.error('Erreur récupération tendances :', err);
@@ -218,10 +230,10 @@ export const useFillyricsPlaylist = (initialSelection: SelectionItem[], reloadKe
 
                         if (allTracks.length === 0) {
                             const fallbackIds = ['4050205', '1188', '1063640']; // Jul, Gims, Angèle
-                            for (const id of fallbackIds) {
-                                const tracks = await getArtistTopTracks(id, 5);
-                                allTracks = [...allTracks, ...tracks];
-                            }
+                            const fallbackArrays = await Promise.all(
+                                fallbackIds.map((id) => getArtistTopTracks(id, 5))
+                            );
+                            allTracks = fallbackArrays.flat();
                         }
 
                         // IMPORTANT : On garde l'ordre des 3 Hits pour le Cold Start !
@@ -239,12 +251,10 @@ export const useFillyricsPlaylist = (initialSelection: SelectionItem[], reloadKe
                             .slice(0, 3)
                             .map((a) => a.id);
 
-                        let exploreTracks: Song[] = [];
-                        for (const id of explorationIds) {
-                            const tracks = await getArtistTopTracks(id, 10);
-                            exploreTracks = [...exploreTracks, ...tracks];
-                        }
-                        explorationPool.current = shuffleArray(exploreTracks);
+                        const exploreArrays = await Promise.all(
+                            explorationIds.map((id) => getArtistTopTracks(id, 10))
+                        );
+                        explorationPool.current = shuffleArray(exploreArrays.flat());
                     } catch (e) {
                         console.error('Erreur pool exploration', e);
                     }
@@ -307,12 +317,10 @@ export const useFillyricsPlaylist = (initialSelection: SelectionItem[], reloadKe
 
         // 3. On force des artistes "Secours" très accessibles (Pop/Variété : Stromae, Vianney, Soprano)
         const SECURE_ARTISTS = ['215920', '4201083', '11800'];
-        let newTracks: Song[] = [];
-        for (const id of SECURE_ARTISTS) {
-            const tracks = await getArtistTopTracks(id, 5);
-            newTracks = [...newTracks, ...tracks];
-        }
-        candidatePool.current = shuffleArray(newTracks);
+        const secureArrays = await Promise.all(
+            SECURE_ARTISTS.map((id) => getArtistTopTracks(id, 5))
+        );
+        candidatePool.current = shuffleArray(secureArrays.flat());
 
         // 4. On relance le moteur pour remplir la suite du buffer
         setIsFetchingMore(false);
@@ -362,7 +370,6 @@ export const useFillyricsPlaylist = (initialSelection: SelectionItem[], reloadKe
         mixError,
         nextRound,
         isLastRound: currentRoundIndex === playlist.length - 1,
-        // 👉 On exporte les nouveaux outils
         loadMore,
         isFetchingMore,
         isCatalogExhausted,

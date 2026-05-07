@@ -61,6 +61,14 @@ export default function FillyricsGameRound({
         savedContractTime,
     } = useFillyricsGame(sessionId, song, roundIndex, currentContractTime, handleError);
 
+    const handleWordClick = useCallback(
+        (l: number, w: number) => {
+            setActiveWordCoords({ l, w });
+            setCurrentInput('');
+        },
+        [setActiveWordCoords, setCurrentInput]
+    );
+
     // 1. Le useEffect qui s'occupe JUSTE de baisser le chrono
     useEffect(() => {
         if (gameStatus === 'won' || gameStatus === 'lost') {
@@ -111,9 +119,9 @@ export default function FillyricsGameRound({
                         animate={{ opacity: 0.6 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 1.5, ease: 'easeInOut' }} // Transition très douce
-                        className="pointer-events-none absolute inset-0 z-0 bg-cover bg-center bg-no-repeat blur-[100px] saturate-200"
+                        className="pointer-events-none absolute inset-0 z-0 scale-110 transform-gpu bg-cover bg-center bg-no-repeat blur-3xl saturate-150"
                         style={{
-                            // On affiche stricement la NOUVELLE pochette
+                            willChange: 'opacity',
                             backgroundImage: `url(${nextSong.album.cover_xl})`,
                         }}
                     />
@@ -172,10 +180,7 @@ export default function FillyricsGameRound({
                         alignment="center"
                         activeWordCoords={activeWordCoords}
                         currentInput={currentInput}
-                        onWordClick={(l, w) => {
-                            setActiveWordCoords({ l, w });
-                            setCurrentInput('');
-                        }}
+                        onWordClick={handleWordClick}
                     />
                 </div>
             </main>
@@ -195,10 +200,10 @@ export default function FillyricsGameRound({
                     >
                         {/* 1. Halo lumineux subtil sur les bords de l'écran */}
                         <div
-                            className={`absolute inset-0 opacity-20 transition-all duration-1000 ${
+                            className={`absolute inset-0 transition-all duration-1000 ${
                                 gameStatus === 'won'
-                                    ? 'shadow-[inset_0_0_150px_rgba(64,201,255,1)]'
-                                    : 'shadow-[inset_0_0_150px_rgba(255,42,95,1)]'
+                                    ? 'bg-[radial-gradient(ellipse_at_center,_transparent_0%,_rgba(64,201,255,0.15)_100%)]'
+                                    : 'bg-[radial-gradient(ellipse_at_center,_transparent_0%,_rgba(255,42,95,0.15)_100%)]'
                             }`}
                         />
 
