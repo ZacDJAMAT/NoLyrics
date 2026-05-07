@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { useFillyricsPlaylist } from '@/hooks/useFillyricsPlaylist';
 import { Button } from '@/components/ui/button';
-import { Play, ChevronUp, Timer, ChevronDown } from 'lucide-react';
+import { Play, ChevronUp, Timer, ChevronDown, Loader2 } from 'lucide-react';
 import FillyricsGameRound from '@/features/fillyrics/FillyricsGameRound.tsx';
 import FillyricsSummaryScreen from '@/pages/fillyrics/FillyricsSummaryScreen.tsx';
 import { ContractIcon } from '@/components/icons/ContractIcon';
@@ -80,12 +80,18 @@ export default function FillyricsGameScreen() {
     // --- LOGIQUE PARTAGÉE : PASSER À LA SUIVANTE ---
     const triggerNext = useCallback(() => {
         if (phase !== 'preview') return;
+
         if (currentRoundIndex < playlist.length - 1) {
             nextRound();
         } else if (isCatalogExhausted) {
-            navigate('/mode/fillyrics/exhausted'); // 👈 La magie opère ici !
+            navigate('/mode/fillyrics/exhausted');
         } else {
-            handlePlay();
+            // 🛡️ CORRECTION : Le buffer est vide mais on attend la réponse de l'API.
+            // On ne fait RIEN, on empêche juste de lancer la musique.
+            // Si jamais la requête a planté, on la relance :
+            if (!isFetchingMore) {
+                loadMore();
+            }
         }
     }, [
         phase,
@@ -93,7 +99,8 @@ export default function FillyricsGameScreen() {
         playlist.length,
         nextRound,
         isCatalogExhausted,
-        handlePlay,
+        isFetchingMore, // 👈 Ajouté aux dépendances
+        loadMore, // 👈 Ajouté aux dépendances
         navigate,
     ]);
 
@@ -389,10 +396,19 @@ export default function FillyricsGameScreen() {
                             <Button
                                 onClick={triggerNext}
                                 variant="ghost"
-                                className="group flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-black/40 shadow-xl backdrop-blur-md hover:bg-white/10"
+                                // On désactive le bouton si on est coincé au bout de la liste le temps du chargement
+                                disabled={
+                                    isFetchingMore && currentRoundIndex === playlist.length - 1
+                                }
+                                className="group flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-black/40 shadow-xl backdrop-blur-md hover:bg-white/10 disabled:opacity-50"
                                 title="Passer à la suivante"
                             >
-                                <ChevronDown className="h-8 w-8 text-white/70 transition-all group-hover:scale-110 group-hover:text-white" />
+                                {/* 🔄 Indication visuelle du rechargement de la file d'attente */}
+                                {isFetchingMore && currentRoundIndex === playlist.length - 1 ? (
+                                    <Loader2 className="h-8 w-8 animate-spin text-white/50" />
+                                ) : (
+                                    <ChevronDown className="h-8 w-8 text-white/70 transition-all group-hover:scale-110 group-hover:text-white" />
+                                )}
                             </Button>
                         </div>
                     </div>
