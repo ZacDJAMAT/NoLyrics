@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import UserMenuButton from '../../components/layout/UserMenuButton.tsx';
-import { Music, Mic, Sparkles, Search } from 'lucide-react';
+import { Music, Mic, Sparkles, Search, Headphones } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button.tsx';
 
@@ -34,7 +34,7 @@ export default function HubScreen() {
                     Choisis ton mode de jeu
                 </p>
 
-                <div className="grid w-full max-w-3xl grid-cols-1 gap-6 md:grid-cols-2 md:gap-10">
+                <div className="grid w-full max-w-5xl grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                     {/* CARTE 1 : ALLyrics (Active) */}
                     <Link
                         to="/mode/allyrics"
@@ -68,6 +68,24 @@ export default function HubScreen() {
                         </h2>
                         <p className="text-muted-foreground font-texte text-lg transition-colors group-hover:text-white/90">
                             Complète les paroles manquantes.
+                        </p>
+                    </Link>
+                    {/* CARTE 3 : Blind Test Extrême */}
+                    <Link
+                        to="/mode/blindtest"
+                        className="group hover:border-primary/50 relative flex flex-col items-center rounded-3xl border border-white/10 bg-white/5 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-md transition-all duration-500 hover:-translate-y-2 hover:bg-white/10 hover:shadow-[0_0_40px_rgba(255,42,95,0.3)] md:p-10"
+                    >
+                        <div className="from-destructive/10 absolute inset-0 rounded-3xl bg-gradient-to-b to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                        <Headphones
+                            className="text-destructive mb-6 h-20 w-20 drop-shadow-[0_0_15px_rgba(255,42,95,0.5)] transition-transform duration-500 group-hover:scale-110 md:h-24 md:w-24"
+                            strokeWidth={1.5}
+                        />
+                        <h2 className="font-titre mb-3 text-center text-2xl text-white md:text-3xl">
+                            BLIND TEST
+                            <br />
+                        </h2>
+                        <p className="text-muted-foreground font-texte text-center text-sm transition-colors group-hover:text-white/90 md:text-base">
+                            Trouve la musique en écoutant un extrait de 0.5 seconde.
                         </p>
                     </Link>
                 </div>

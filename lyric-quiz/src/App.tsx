@@ -13,6 +13,8 @@ import GlobalSearchScreen from './pages/GlobalSearchScreen.tsx';
 import HubScreen from './pages/hub/HubScreen.tsx';
 import LobbyScreen from './pages/hub/LobbyScreen.tsx';
 import FillyricsExhaustedScreen from './pages/fillyrics/FillyricsExhaustedScreen.tsx';
+import BlindTestLobbyScreen from './pages/blindtest/BlindTestLobbyScreen.tsx';
+import BlindTestGameScreen from './pages/blindtest/BlindTestGameScreen.tsx';
 
 function App() {
     const [showSyncModal, setShowSyncModal] = useState<boolean>(true);
@@ -46,6 +48,9 @@ function App() {
                 <Route path="/mode/fillyrics" element={<FillyricsLobbyScreen />} />
                 <Route path="/mode/fillyrics/play" element={<FillyricsGameScreen />} />
                 <Route path="/mode/fillyrics/exhausted" element={<FillyricsExhaustedScreen />} />
+
+                <Route path="/mode/blindtest" element={<BlindTestLobbyScreen />} />
+                <Route path="/mode/blindtest/play" element={<BlindTestGameScreen />} />
 
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
