@@ -3,9 +3,10 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { useFillyricsPlaylist } from '@/hooks/useFillyricsPlaylist';
 import { Button } from '@/components/ui/button';
-import { Heart, Play, ChevronUp, Timer, ChevronDown } from 'lucide-react';
+import { Play, ChevronUp, Timer, ChevronDown, Loader2 } from 'lucide-react';
 import FillyricsGameRound from '@/features/fillyrics/FillyricsGameRound.tsx';
 import FillyricsSummaryScreen from '@/pages/fillyrics/FillyricsSummaryScreen.tsx';
+import { ContractIcon } from '@/components/icons/ContractIcon';
 
 export default function FillyricsGameScreen() {
     const location = useLocation();
@@ -14,15 +15,19 @@ export default function FillyricsGameScreen() {
 
     // --- ÉTATS GLOBAUX ---
     const [phase, setPhase] = useState<'mixing' | 'preview' | 'playing' | 'summary'>('mixing');
-    const [lives, setLives] = useState(3);
+    const [contracts, setContracts] = useState<number[]>([30, 30, 30, 30, 30]);
     const [playedRoundsCount, setPlayedRoundsCount] = useState(0);
-
     const [roundResults, setRoundResults] = useState<
         {
             song: (typeof playlist)[0];
             won: boolean;
             points: number;
-            stats: { foundWords: number; totalWords: number; speedBonus: number };
+            stats: {
+                foundWords: number;
+                totalWords: number;
+                speedBonus: number;
+                timeLeftRound: number;
+            };
         }[]
     >([]);
 
@@ -34,6 +39,7 @@ export default function FillyricsGameScreen() {
     const {
         playlist,
         currentSong,
+        nextSong,
         currentRoundIndex,
         nextRound,
         isMixing,
@@ -74,12 +80,18 @@ export default function FillyricsGameScreen() {
     // --- LOGIQUE PARTAGÉE : PASSER À LA SUIVANTE ---
     const triggerNext = useCallback(() => {
         if (phase !== 'preview') return;
+
         if (currentRoundIndex < playlist.length - 1) {
             nextRound();
         } else if (isCatalogExhausted) {
-            navigate('/mode/fillyrics/exhausted'); // 👈 La magie opère ici !
+            navigate('/mode/fillyrics/exhausted');
         } else {
-            handlePlay();
+            // 🛡️ CORRECTION : Le buffer est vide mais on attend la réponse de l'API.
+            // On ne fait RIEN, on empêche juste de lancer la musique.
+            // Si jamais la requête a planté, on la relance :
+            if (!isFetchingMore) {
+                loadMore();
+            }
         }
     }, [
         phase,
@@ -87,7 +99,8 @@ export default function FillyricsGameScreen() {
         playlist.length,
         nextRound,
         isCatalogExhausted,
-        handlePlay,
+        isFetchingMore, // 👈 Ajouté aux dépendances
+        loadMore, // 👈 Ajouté aux dépendances
         navigate,
     ]);
 
@@ -96,7 +109,12 @@ export default function FillyricsGameScreen() {
         (
             won: boolean,
             points: number,
-            stats: { foundWords: number; totalWords: number; speedBonus: number }
+            stats: {
+                foundWords: number;
+                totalWords: number;
+                speedBonus: number;
+                timeLeftRound: number;
+            }
         ) => {
             // 🚨 DÉTECTION DU HARD SKIP (Zéro mot trouvé et perdu)
             if (!won && stats?.foundWords === 0) {
@@ -120,7 +138,7 @@ export default function FillyricsGameScreen() {
             // Si 3 défaites de suite, on sort les palettes !
             // Note: Comme on a que 3 vies de base, pour voir l'effet sur la même partie, on le règle à 2 pour le test, ou on le laisse à 3 si tu comptes donner plus de vies.
             // Mettons-le à 2 échecs consécutifs pour garantir qu'il sauve le joueur avant le Game Over (qui arrive à 0 vie).
-            if (consecutiveLossesRef.current === 2 && lives > 1) {
+            if (consecutiveLossesRef.current === 2 && contracts.length > 1) {
                 defibrillatorAlgorithm(currentRoundIndex);
                 consecutiveLossesRef.current = 0; // On désarme le défibrillateur
             }
@@ -142,19 +160,34 @@ export default function FillyricsGameScreen() {
                 }
             };
 
-            if (!won) {
-                setLives((prev) => {
-                    const newLives = prev - 1;
-                    if (newLives <= 0) {
-                        setPhase('summary');
+            // 💼 GESTION DU TABLEAU DE CONTRATS
+            setContracts((prev) => {
+                const newContracts = [...prev];
+
+                if (!won) {
+                    // ❌ CONTRAT BRÛLÉ : On le retire de la pile
+                    newContracts.shift();
+                } else {
+                    // ✅ VICTOIRE : On vérifie si c'est un Perfect
+                    if (stats.foundWords === stats.totalWords) {
+                        // 🌟 PERFECT : Le contrat est nettoyé et régénéré à 30s !
+                        newContracts[0] = 30;
                     } else {
-                        setTimeout(advanceOrExhaust, 500); // 👈 Utilisée ici
+                        // 🔒 SÉCURISÉ : On sauvegarde son état entamé
+                        // (Math.max empêche de sauvegarder 0s)
+                        newContracts[0] = Math.max(1, stats.timeLeftRound);
                     }
-                    return newLives;
-                });
-            } else {
-                setTimeout(advanceOrExhaust, 500); // 👈 Et utilisée ici
-            }
+                }
+
+                // Vérification du GAME OVER
+                if (newContracts.length <= 0) {
+                    setPhase('summary');
+                } else {
+                    setTimeout(advanceOrExhaust, 500);
+                }
+
+                return newContracts;
+            });
         },
         [nextRound, currentRoundIndex, playlist.length, isCatalogExhausted]
     );
@@ -289,19 +322,32 @@ export default function FillyricsGameScreen() {
         return (
             <div className="bg-background text-foreground relative flex min-h-screen flex-col items-center justify-center overflow-hidden">
                 <div
-                    className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-40 transition-all duration-700"
+                    // 👉 On applique le blur directement ici, on ajoute scale-110 et transform-gpu
+                    className="absolute inset-0 z-0 scale-110 transform-gpu bg-cover bg-center bg-no-repeat opacity-40 blur-2xl transition-all duration-700"
                     style={{ backgroundImage: `url(${currentSong.album.cover_xl})` }}
                 />
-                <div className="absolute inset-0 z-0 bg-black/60 backdrop-blur-xl" />
+                {/* 👉 On supprime le backdrop-blur-xl ! */}
+                <div className="absolute inset-0 z-0 bg-black/60" />
 
                 <div className="absolute top-6 z-30 flex w-full max-w-xl items-center justify-between px-6">
-                    <div className="flex gap-1">
-                        {[...Array(3)].map((_, i) => (
-                            <Heart
-                                key={i}
-                                className={`h-8 w-8 ${i < lives ? 'text-destructive fill-destructive drop-shadow-[0_0_10px_rgba(255,42,95,0.8)]' : 'text-white/20'}`}
-                            />
-                        ))}
+                    <div className="mt-2 flex gap-1.5">
+                        {[...Array(5)].map((_, i) => {
+                            const isActive = i < contracts.length;
+                            const isCurrent = i === 0 && isActive;
+                            const isDamaged = isCurrent && contracts[0] < 30;
+
+                            return (
+                                <div
+                                    key={i}
+                                    className={`relative h-10 w-8 transition-all duration-300 ${isActive ? 'opacity-100 drop-shadow-[0_0_8px_rgba(255,232,124,0.5)]' : 'opacity-20 grayscale'}`}
+                                >
+                                    <ContractIcon className="h-full w-full" />
+                                    {isDamaged && (
+                                        <div className="bg-destructive absolute right-1 -bottom-1 left-1 h-0.5 rounded-full" />
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                     <div
                         className={`font-titre flex items-center gap-2 text-3xl ${choiceCountdown <= 5 ? 'text-destructive animate-pulse' : 'text-secondary'}`}
@@ -350,10 +396,19 @@ export default function FillyricsGameScreen() {
                             <Button
                                 onClick={triggerNext}
                                 variant="ghost"
-                                className="group flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-black/40 shadow-xl backdrop-blur-md hover:bg-white/10"
+                                // On désactive le bouton si on est coincé au bout de la liste le temps du chargement
+                                disabled={
+                                    isFetchingMore && currentRoundIndex === playlist.length - 1
+                                }
+                                className="group flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-black/40 shadow-xl backdrop-blur-md hover:bg-white/10 disabled:opacity-50"
                                 title="Passer à la suivante"
                             >
-                                <ChevronDown className="h-8 w-8 text-white/70 transition-all group-hover:scale-110 group-hover:text-white" />
+                                {/* 🔄 Indication visuelle du rechargement de la file d'attente */}
+                                {isFetchingMore && currentRoundIndex === playlist.length - 1 ? (
+                                    <Loader2 className="h-8 w-8 animate-spin text-white/50" />
+                                ) : (
+                                    <ChevronDown className="h-8 w-8 text-white/70 transition-all group-hover:scale-110 group-hover:text-white" />
+                                )}
                             </Button>
                         </div>
                     </div>
@@ -393,7 +448,9 @@ export default function FillyricsGameScreen() {
                 key={currentSong.id}
                 sessionId={sessionId}
                 song={currentSong}
+                nextSong={nextSong}
                 roundIndex={playedRoundsCount}
+                currentContractTime={contracts[0]}
                 onRoundEnd={handleRoundEnd}
             />
         );

@@ -5,26 +5,31 @@ import { useFillyricsGame } from '@/hooks/useFillyricsGame';
 
 import { SkipForward, HeartCrack, CheckCircle2, Disc3 } from 'lucide-react';
 import LyricsGrid from '@/features/allmusic/LyricsGrid';
-import ContractProgressBar from './ContractProgressBar';
-import SpeedBonusBar from './SpeedBonusBar';
 import FillyricsInlineComposer from './FillyricsInlineComposer';
+
+import ContractHUD from './ContractHUD';
 
 interface FillyricsGameRoundProps {
     song: Song;
+    nextSong: Song | null;
     sessionId: string;
     roundIndex: number;
+    currentContractTime: number;
+
     onRoundEnd: (
         won: boolean,
         points: number,
-        stats: { foundWords: number; totalWords: number; speedBonus: number }
+        stats: { foundWords: number; totalWords: number; speedBonus: number; timeLeftRound: number } // 👈 NOUVEAU
     ) => void;
 }
 
 export default function FillyricsGameRound({
     sessionId,
     song,
+    nextSong,
     roundIndex,
     onRoundEnd,
+    currentContractTime,
 }: FillyricsGameRoundProps) {
     const [nextRoundTimer, setNextRoundTimer] = useState(5);
     const hasEnded = useRef(false);
@@ -53,7 +58,16 @@ export default function FillyricsGameRound({
         skipRound,
         foundWordsCount,
         totalWords,
-    } = useFillyricsGame(sessionId, song, roundIndex, handleError);
+        savedContractTime,
+    } = useFillyricsGame(sessionId, song, roundIndex, currentContractTime, handleError);
+
+    const handleWordClick = useCallback(
+        (l: number, w: number) => {
+            setActiveWordCoords({ l, w });
+            setCurrentInput('');
+        },
+        [setActiveWordCoords, setCurrentInput]
+    );
 
     // 1. Le useEffect qui s'occupe JUSTE de baisser le chrono
     useEffect(() => {
@@ -80,6 +94,7 @@ export default function FillyricsGameRound({
                     foundWords: foundWordsCount,
                     totalWords: totalWords,
                     speedBonus: speedBonusMultiplier,
+                    timeLeftRound: savedContractTime,
                 });
             }
         }
@@ -91,17 +106,33 @@ export default function FillyricsGameRound({
         foundWordsCount,
         totalWords,
         speedBonusMultiplier,
+        timeLeft,
+        savedContractTime,
     ]);
 
     return (
         <div className="bg-background selection:bg-secondary selection:text-secondary-foreground relative flex min-h-screen flex-col overflow-clip font-sans">
+            <AnimatePresence>
+                {(gameStatus === 'won' || gameStatus === 'lost') && nextSong && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 0.6 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 1.5, ease: 'easeInOut' }} // Transition très douce
+                        className="pointer-events-none absolute inset-0 z-0 scale-110 transform-gpu bg-cover bg-center bg-no-repeat blur-3xl saturate-150"
+                        style={{
+                            willChange: 'opacity',
+                            backgroundImage: `url(${nextSong.album.cover_xl})`,
+                        }}
+                    />
+                )}
+            </AnimatePresence>
             <FillyricsInlineComposer
                 currentInput={currentInput}
                 onInputChange={handleInputChange}
                 gameStatus={gameStatus}
                 onTabPress={cycleNextWord}
             />
-
             {/* 🎮 HUD FLOTTANT */}
             <div className="pointer-events-none absolute top-6 right-6 left-6 z-30 flex items-start justify-between">
                 <div className="flex flex-col">
@@ -127,19 +158,16 @@ export default function FillyricsGameRound({
                     </button>
                 </div>
             </div>
-
             {/* 📝 ZONE CENTRALE */}
             <main className="relative z-10 mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center p-4 pt-24 pb-32 md:p-8">
-                {/* ⚡ JAUGES DE TENSION */}
-                <div className="mb-12 flex w-full max-w-xl flex-col gap-8 px-4">
-                    {gameStatus === 'playing' && (
-                        <SpeedBonusBar multiplier={speedBonusMultiplier} seconds={timeLeft} />
-                    )}
-
-                    <ContractProgressBar
-                        percent={scorePercentage}
-                        threshold={thresholdPercent}
-                        isSuccess={isContractSecured}
+                {/* ⚡ JAUGE DE TENSION (LE CONTRAT) */}
+                <div className="mb-4 flex w-full max-w-xl flex-col items-center gap-8 px-4">
+                    <ContractHUD
+                        timeLeft={timeLeft}
+                        maxTime={30}
+                        currentPercent={scorePercentage}
+                        thresholdPercent={thresholdPercent}
+                        isSecured={isContractSecured}
                     />
                 </div>
 
@@ -152,18 +180,13 @@ export default function FillyricsGameRound({
                         alignment="center"
                         activeWordCoords={activeWordCoords}
                         currentInput={currentInput}
-                        onWordClick={(l, w) => {
-                            setActiveWordCoords({ l, w });
-                            setCurrentInput('');
-                        }}
+                        onWordClick={handleWordClick}
                     />
                 </div>
             </main>
-
             {/* ============================================================ */}
             {/* 🌬️ TRANSITIONS DISCRÈTES (Smooth avec Framer Motion) */}
             {/* ============================================================ */}
-
             {/* 👉 NOUVEAU : Wrapper AnimatePresence */}
             <AnimatePresence mode="wait">
                 {(gameStatus === 'won' || gameStatus === 'lost') && (
@@ -177,10 +200,10 @@ export default function FillyricsGameRound({
                     >
                         {/* 1. Halo lumineux subtil sur les bords de l'écran */}
                         <div
-                            className={`absolute inset-0 opacity-20 transition-all duration-1000 ${
+                            className={`absolute inset-0 transition-all duration-1000 ${
                                 gameStatus === 'won'
-                                    ? 'shadow-[inset_0_0_150px_rgba(64,201,255,1)]'
-                                    : 'shadow-[inset_0_0_150px_rgba(255,42,95,1)]'
+                                    ? 'bg-[radial-gradient(ellipse_at_center,_transparent_0%,_rgba(64,201,255,0.15)_100%)]'
+                                    : 'bg-[radial-gradient(ellipse_at_center,_transparent_0%,_rgba(255,42,95,0.15)_100%)]'
                             }`}
                         />
 

@@ -128,3 +128,34 @@ export const getEasyWinSongId = async (user: User | null): Promise<string | null
         return null;
     }
 };
+
+// ⚡ NOUVEAU : Sauvegarde d'un round du Blind Test Extrême
+export const saveBlindTestResult = async (
+    user: User | null,
+    sessionId: string,
+    song: Song,
+    roundIndex: number,
+    status: 'won' | 'lost',
+    timeLeft: number,
+    pointsEarned: number
+) => {
+    if (!user) return; // Les guests ont un `user`, donc ça passera !
+
+    try {
+        await supabase.from('history_blindtest').insert([
+            {
+                session_id: sessionId,
+                user_id: user.id,
+                song_id: song.id.toString(),
+                song_title: song.title,
+                artist_name: song.artist.name,
+                round_index: roundIndex,
+                status: status,
+                time_left: timeLeft,
+                points_earned: pointsEarned,
+            },
+        ]);
+    } catch (error) {
+        console.error('Erreur sauvegarde Blind Test :', error);
+    }
+};

@@ -10,6 +10,18 @@ import { featureFlags } from '@/lib/featureFlags';
 
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 
+import { useFavorites } from '@/hooks/useFavorites';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+
 export interface SelectionItem {
     id: string;
     type: 'artist';
@@ -62,6 +74,21 @@ export default function FillyricsLobbyScreen() {
     const location = useLocation();
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+    const { favorites, isLoadingFavs } = useFavorites();
+    const favoriteArtistsCount = favorites.filter((f) => f.item_type === 'artist').length;
+    const [isFavModalOpen, setIsFavModalOpen] = useState(false);
+
+    // L'intercepteur qui vérifie la règle des 5 favoris
+    const handleLaunchPourToi = (path: string, stateObj?: any) => {
+        if (isLoadingFavs) return; // On empêche le clic si ça charge encore
+
+        if (favoriteArtistsCount < 5) {
+            setIsFavModalOpen(true); // 🛑 Bloqué ! On ouvre la modale
+        } else {
+            navigate(path, stateObj); // ✅ Autorisé ! On lance la partie
+        }
+    };
+
     // --- GESTION DES ERREURS PROVENANT DU JEU ---
     useEffect(() => {
         if (location.state?.error) {
@@ -102,6 +129,49 @@ export default function FillyricsLobbyScreen() {
         }
     };
 
+    // 👉 NOUVEAU : La modale d'explication (Dark Pattern positif pour forcer l'engagement)
+    const renderFavoritesModal = () => (
+        <AlertDialog open={isFavModalOpen} onOpenChange={setIsFavModalOpen}>
+            <AlertDialogContent className="border-secondary/50 bg-black/95 backdrop-blur-xl">
+                <AlertDialogHeader>
+                    <AlertDialogTitle className="font-titre titre-neon-secondary text-2xl uppercase">
+                        Données insuffisantes
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="font-texte mt-2 text-base text-white/80">
+                        Pour que l'algorithme{' '}
+                        <span className="text-secondary font-bold">"Pour Toi"</span> puisse te créer
+                        des contrats sur-mesure, tu dois ajouter au moins{' '}
+                        <strong>5 artistes favoris</strong> à ton profil.
+                        <br />
+                        <br />
+                        <span className="flex items-center gap-2">
+                            Artistes actuels :{' '}
+                            <strong
+                                className={
+                                    favoriteArtistsCount < 5 ? 'text-destructive' : 'text-secondary'
+                                }
+                            >
+                                {favoriteArtistsCount} / 5
+                            </strong>
+                        </span>
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="mt-6">
+                    <AlertDialogCancel className="font-texte border-white/10 bg-white/5 text-white hover:bg-white/10">
+                        Fermer
+                    </AlertDialogCancel>
+                    {/* Optionnel : tu pourrais rediriger vers la page de recherche globale si tu en as une */}
+                    <AlertDialogAction
+                        onClick={() => setIsFavModalOpen(false)}
+                        className="font-texte bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                    >
+                        J'ai compris
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    );
+
     if (isZeroFrictionEnabled) {
         return (
             <div className="bg-background text-foreground min-h-screen overflow-x-hidden p-4 md:p-6">
@@ -135,8 +205,9 @@ export default function FillyricsLobbyScreen() {
                         <p className="font-texte text-white/65">
                             Playlist auto, aucune selection manuelle, enchainement direct.
                         </p>
+                        {renderFavoritesModal()}{' '}
                         <Button
-                            onClick={() => navigate('/mode/fillyrics/quick-play')}
+                            onClick={() => handleLaunchPourToi('/mode/fillyrics/quick-play')} // 👈 On utilise l'intercepteur
                             className="font-texte bg-secondary text-secondary-foreground hover:bg-secondary/80 h-12 rounded-xl text-lg"
                         >
                             <Play className="h-5 w-5" fill="currentColor" />
@@ -234,13 +305,20 @@ export default function FillyricsLobbyScreen() {
                     >
                         {/* Le bouton de lancement dynamique (prend la place restante) */}
                         <motion.div layout className="min-w-0 flex-grow py-1 pl-1">
+                            {renderFavoritesModal()}{' '}
+                            {/* 👈 On injecte la modale ici pour le mode Classique */}
                             <Button
-                                onClick={() =>
-                                    navigate('/mode/fillyrics/play', {
-                                        state: { selection },
-                                    })
-                                }
-                                /* 👉 Ajout de overflow-hidden et relative sur le bouton pour masquer le texte qui glisse en dehors */
+                                onClick={() => {
+                                    if (selection.length === 0) {
+                                        // Mode Pour Toi -> On passe par l'intercepteur !
+                                        handleLaunchPourToi('/mode/fillyrics/play', {
+                                            state: { selection },
+                                        });
+                                    } else {
+                                        // Mode Manuel -> Lancement classique autorisé
+                                        navigate('/mode/fillyrics/play', { state: { selection } });
+                                    }
+                                }}
                                 className="font-texte bg-secondary text-secondary-foreground hover:bg-secondary/80 relative flex h-9 w-full items-center justify-center gap-2 overflow-hidden rounded-full px-4 text-sm shadow-[0_0_10px_rgba(64,201,255,0.3)] transition-all sm:h-10 sm:text-base"
                             >
                                 <Play
