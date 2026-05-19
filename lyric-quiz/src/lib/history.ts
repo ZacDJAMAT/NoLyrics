@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import { User } from '@supabase/supabase-js';
-import { Song, GameStatus } from '../types';
+import { GameStatus, Song } from '../types';
 
 export const saveGameResult = async (
     user: User | null,
@@ -129,7 +129,7 @@ export const getEasyWinSongId = async (user: User | null): Promise<string | null
     }
 };
 
-// ⚡ NOUVEAU : Sauvegarde d'un round du Blind Test Extrême
+// ⚡ NOUVEAU : Sauvegarde d'un round du Blind Test Extrême (Mis à jour)
 export const saveBlindTestResult = async (
     user: User | null,
     sessionId: string,
@@ -137,7 +137,9 @@ export const saveBlindTestResult = async (
     roundIndex: number,
     status: 'won' | 'lost',
     timeLeft: number,
-    pointsEarned: number
+    pointsEarned: number,
+    artistId: string, // 👈 NOUVEAU
+    artistImage: string // 👈 NOUVEAU
 ) => {
     if (!user) return; // Les guests ont un `user`, donc ça passera !
 
@@ -153,9 +155,74 @@ export const saveBlindTestResult = async (
                 status: status,
                 time_left: timeLeft,
                 points_earned: pointsEarned,
+                artist_id: artistId, // 👈 NOUVEAU
+                artist_image: artistImage, // 👈 NOUVEAU
             },
         ]);
     } catch (error) {
         console.error('Erreur sauvegarde Blind Test :', error);
+    }
+};
+
+// ⚡ NOUVEAU : Sauvegarde d'une SESSION de Blind Test (Intention initiale)
+export const saveBlindTestSession = async (
+    user: User | null,
+    sessionId: string,
+    selection: any[]
+) => {
+    if (!user || !selection || selection.length === 0) return;
+
+    try {
+        await supabase.from('blindtest_sessions').insert([
+            {
+                session_id: sessionId,
+                user_id: user.id,
+                selected_artists: selection, // Supabase va automatiquement le transformer en JSONB
+            },
+        ]);
+    } catch (error) {
+        console.error('Erreur sauvegarde Session Blind Test :', error);
+    }
+};
+
+// ==============================================================
+// 🧠 ALGORITHME DE RÉCUPÉRATION DES PARTIES RÉCENTES (BLIND TEST)
+// ==============================================================
+
+export interface RecentGame {
+    id: string;
+    artists: any[]; // Notre tableau d'artistes
+    timestamp: number;
+}
+
+export const getRecentBlindTestSessions = async (user: User | null): Promise<RecentGame[]> => {
+    if (!user) return [];
+
+    try {
+        // 1. On interroge DIRECTEMENT notre nouvelle table (beaucoup plus rapide !)
+        const { data, error } = await supabase
+            .from('blindtest_sessions')
+            .select('session_id, selected_artists, created_at')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(5); // On ne prend que les 5 plus récentes
+
+        if (error || !data) {
+            console.error('Erreur SQL récupération sessions :', error);
+            return [];
+        }
+
+        // 2. On transforme les données SQL pour notre affichage
+
+        return data.map((row) => {
+            return {
+                id: row.session_id,
+                artists: row.selected_artists, // Magie : Supabase parse le JSONB automatiquement !
+                timestamp: new Date(row.created_at).getTime(),
+            };
+        });
+    } catch (err) {
+        console.error('Erreur getRecentBlindTestSessions:', err);
+        return [];
     }
 };
