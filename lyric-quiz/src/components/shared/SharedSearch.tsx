@@ -14,6 +14,9 @@ interface SharedSearchProps {
     allowedTabs?: ('songs' | 'artists')[];
     defaultTab?: 'songs' | 'artists';
     onDisplayedItemsChange?: (items: (Song | Artist)[]) => void;
+    maxResults?: number;
+    disableTrending?: boolean; // 👈 NOUVEAU
+    disablePagination?: boolean;
 
     // INVERSION DE CONTRÔLE : C'est le parent qui dessine la carte !
     renderSongCard?: (
@@ -37,6 +40,9 @@ export default function SharedSearch({
     renderArtistCard,
     headerChildren,
     onDisplayedItemsChange,
+    maxResults,
+    disableTrending = false,
+    disablePagination = false,
 }: SharedSearchProps) {
     const { user, isGuest } = useAuth();
     const { favorites, isFavorite, toggleFavorite } = useFavorites();
@@ -61,7 +67,7 @@ export default function SharedSearch({
     const [totalSearchItems, setTotalSearchItems] = useState(0);
     const itemsPerSearchPage = 12;
 
-    const showTrending = activeQuery.trim() === '' && !showFavoritesOnly;
+    const showTrending = !disableTrending && activeQuery.trim() === '' && !showFavoritesOnly;
 
     // 👉 NOUVEAU : Fonction dédiée pour fetcher une page précise de la recherche
     const fetchSearchResults = async (page: number, searchQuery: string) => {
@@ -172,6 +178,9 @@ export default function SharedSearch({
               currentTrendingPage * itemsPerTrendingPage
           )
         : currentList;
+
+    // 👉 NOUVEAU : On coupe la liste si une limite est demandée
+    const displayList = maxResults ? paginatedList.slice(0, maxResults) : paginatedList;
 
     const totalTrendingPages = Math.ceil(currentList.length / itemsPerTrendingPage);
     // 👉 NOUVEAU : Calcul du nombre total de pages pour la recherche API
@@ -294,9 +303,11 @@ export default function SharedSearch({
             ) : (
                 <>
                     {activeTab === 'artists' && renderArtistCard && (
-                        <div className="animate-in fade-in grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                            {/* 👉 CORRECTION ICI : (paginatedList as Artist[]) */}
-                            {(paginatedList as Artist[]).map((item) =>
+                        // On retire la grille si on a qu'un seul résultat pour le centrer
+                        <div
+                            className={`animate-in fade-in ${maxResults === 1 ? 'flex justify-center' : 'grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'}`}
+                        >
+                            {(displayList as Artist[]).map((item) =>
                                 renderArtistCard(
                                     item,
                                     isFavorite('artist', item.id.toString()),
@@ -307,9 +318,10 @@ export default function SharedSearch({
                     )}
 
                     {activeTab === 'songs' && renderSongCard && (
-                        <div className="animate-in fade-in grid grid-cols-1 gap-4 min-[400px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                            {/* 👉 CORRECTION ICI : (paginatedList as Song[]) */}
-                            {(paginatedList as Song[]).map((item) =>
+                        <div
+                            className={`animate-in fade-in ${maxResults === 1 ? 'flex justify-center' : 'grid grid-cols-1 gap-4 min-[400px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'}`}
+                        >
+                            {(displayList as Song[]).map((item) =>
                                 renderSongCard(
                                     item,
                                     isFavorite('song', item.id.toString()),
@@ -323,7 +335,15 @@ export default function SharedSearch({
 
             {/* 👉 NOUVEAU : Pagination globale (Gère à la fois le mode Tendances et le mode Recherche API) */}
 
-            {showTrending && totalTrendingPages > 1 && (
+            {/* 👉 Message par défaut si les tendances sont désactivées et qu'on n'a pas cherché */}
+            {disableTrending && activeQuery.trim() === '' && !showFavoritesOnly && (
+                <div className="font-texte py-10 text-center text-lg text-white/30">
+                    Tape le nom de la musique pour faire une proposition...
+                </div>
+            )}
+
+            {/* Pagination Tendances */}
+            {!disablePagination && showTrending && totalTrendingPages > 1 && (
                 <div className="mt-8">
                     <Pagination
                         currentPage={currentTrendingPage}
@@ -334,7 +354,8 @@ export default function SharedSearch({
                 </div>
             )}
 
-            {!showTrending && !showFavoritesOnly && totalSearchPages > 1 && (
+            {/* Pagination Recherche */}
+            {!disablePagination && !showTrending && !showFavoritesOnly && totalSearchPages > 1 && (
                 <div className="mt-8">
                     <Pagination
                         currentPage={currentSearchPage}
@@ -345,11 +366,15 @@ export default function SharedSearch({
                 </div>
             )}
 
-            {!showTrending && paginatedList.length === 0 && !isLoadingSearch && (
-                <div className="text-muted-foreground font-texte py-10 text-center text-lg">
-                    Aucun résultat trouvé.
-                </div>
-            )}
+            {/* Message Aucun résultat */}
+            {!showTrending &&
+                paginatedList.length === 0 &&
+                !isLoadingSearch &&
+                activeQuery.trim() !== '' && (
+                    <div className="text-muted-foreground font-texte py-10 text-center text-lg">
+                        Aucun résultat trouvé pour "{activeQuery}".
+                    </div>
+                )}
         </div>
     );
 }

@@ -1,9 +1,22 @@
-import { useState } from 'react';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, Loader2, SkipForward, CheckCircle2, XCircle } from 'lucide-react';
+import {
+    ArrowLeft,
+    Play,
+    Loader2,
+    SkipForward,
+    CheckCircle2,
+    XCircle,
+    Heart,
+    Timer,
+    Trophy,
+} from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { saveBlindTestResult } from '@/lib/history';
 import { useBlindTestAudio } from '@/hooks/useBlindTestAudio';
 import { useBlindTestPlaylist } from '@/hooks/useBlindTestPlaylist';
+import { useBlindTestGame } from '@/hooks/useBlindTestGame';
 import SharedSearch from '@/components/shared/SharedSearch';
 import { Song } from '@/types';
 
@@ -11,9 +24,15 @@ export default function BlindTestGameScreen() {
     const location = useLocation();
     const navigate = useNavigate();
     const selection = location.state?.selection;
+    const { user } = useAuth();
 
-    // État du round : 'pending' (en train de chercher) | 'won' (trouvé) | 'lost' (erreur)
-    const [guessResult, setGuessResult] = useState<'pending' | 'won' | 'lost'>('pending');
+    const [sessionId] = useState(
+        () => `bt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    );
+    const hasSavedRound = useRef(false);
+
+    // 👉 NOUVEAU : Un verrou pour s'assurer de ne faire l'auto-play qu'une seule fois par round
+    const hasAutoPlayed = useRef(false);
 
     if (!selection || selection.length === 0) {
         return <Navigate to="/mode/blindtest" replace />;
@@ -21,32 +40,84 @@ export default function BlindTestGameScreen() {
 
     const { playlist, currentSong, isLoading, error, nextRound, currentRoundIndex } =
         useBlindTestPlaylist(selection);
-    const { isReady, isPlaying, playSnippet } = useBlindTestAudio(
-        currentSong?.preview || null,
-        1500
+
+    // 2. Initialisation de l'Audio
+    const { isReady, isPlaying, playSnippet, hasError } = useBlindTestAudio(
+        currentSong?.preview || null
     );
 
-    // 👉 NOUVEAU : La logique de vérification de la réponse
-    const handleGuess = (selectedSong: Song) => {
-        if (guessResult !== 'pending' || !currentSong) return;
+    // 3. Initialisation du Moteur de Jeu
+    const {
+        lives,
+        score,
+        timeLeft,
+        roundStatus,
+        hintsUsed,
+        currentDurationMs, // 👉 On s'assure d'avoir la durée actuelle
+        useHint,
+        submitGuess,
+        resetRound,
+        isGameOver,
+    } = useBlindTestGame((finalScore) => {
+        // Callback de Game Over : Pour l'instant on alerte, on fera un bel écran à l'étape 6 !
+        alert(`GAME OVER ! Score final : ${finalScore} points.`);
+        navigate('/mode/blindtest');
+    });
 
-        // On vérifie par ID, ou par titre exact (Deezer a parfois plusieurs IDs pour un même son, ex: Album vs Single)
-        const isSameId = selectedSong.id.toString() === currentSong.id.toString();
-        const isSameTitle =
+    useEffect(() => {
+        if (isReady && !hasError && roundStatus === 'playing' && !hasAutoPlayed.current) {
+            hasAutoPlayed.current = true;
+            playSnippet(1500); // On lance toujours 1500ms au démarrage
+        }
+    }, [isReady, hasError, roundStatus, playSnippet]);
+
+    const handleHintClick = () => {
+        useHint(); // Met à jour le cerveau (+1 indice, le score, etc.)
+        playSnippet(currentDurationMs + 500); // Lance le son immédiatement avec la NOUVELLE durée
+    };
+
+    const handleGuess = (selectedSong: Song) => {
+        if (!currentSong) return;
+        const isCorrect =
+            selectedSong.id.toString() === currentSong.id.toString() ||
             selectedSong.title.toLowerCase().trim() === currentSong.title.toLowerCase().trim();
 
-        if (isSameId || isSameTitle) {
-            setGuessResult('won');
-        } else {
-            setGuessResult('lost');
-        }
+        submitGuess(isCorrect);
     };
 
-    // 👉 NOUVEAU : Passer à la manche suivante et remettre à zéro
     const handleNextRound = () => {
-        setGuessResult('pending');
-        nextRound();
+        hasSavedRound.current = false;
+        hasAutoPlayed.current = false; // 🔓 On réarme l'auto-play pour la prochaine musique
+        resetRound();
+        if (!isGameOver) nextRound();
     };
+
+    // 🤖 NOUVEAU : L'Auto-play intelligent
+    useEffect(() => {
+        if (isReady && !hasError && roundStatus === 'playing' && !hasAutoPlayed.current) {
+            hasAutoPlayed.current = true;
+            playSnippet(currentDurationMs);
+        }
+    }, [isReady, hasError, roundStatus, currentDurationMs, playSnippet]);
+
+    // Sauvegarde en Base de Données à la fin du round
+    useEffect(() => {
+        if (roundStatus !== 'playing' && currentSong && !hasSavedRound.current) {
+            hasSavedRound.current = true;
+            // 🧮 Calcul identique à celui du hook (pour être raccord en base)
+            const pointsEarned = roundStatus === 'won' ? 500 - hintsUsed * 50 : 0;
+
+            saveBlindTestResult(
+                user,
+                sessionId,
+                currentSong,
+                currentRoundIndex,
+                roundStatus,
+                timeLeft,
+                pointsEarned
+            );
+        }
+    }, [roundStatus, currentSong, currentRoundIndex, timeLeft, user, sessionId, hintsUsed]);
 
     if (isLoading) {
         return (
@@ -61,116 +132,181 @@ export default function BlindTestGameScreen() {
 
     if (error || !currentSong) {
         return (
-            <div className="bg-background flex min-h-screen flex-col items-center justify-center p-6">
-                <h2 className="font-titre text-destructive mb-4 text-2xl">Fin de partie !</h2>
-                <p className="font-texte mb-8 text-white/70">
-                    {error || 'Tu as terminé toutes les musiques disponibles.'}
-                </p>
-                <Button variant="outline" onClick={() => navigate('/mode/blindtest')}>
-                    Retour au menu
+            <div className="bg-background flex min-h-screen flex-col items-center justify-center p-6 text-center">
+                <Trophy className="mb-6 h-20 w-20 text-[#d4af37] drop-shadow-[0_0_20px_rgba(212,175,55,0.5)]" />
+                <h2 className="font-titre mb-2 text-4xl text-white">PLAYLIST TERMINÉE !</h2>
+                <p className="font-texte text-secondary mb-8 text-2xl">Score Final : {score} pts</p>
+                <Button
+                    onClick={() => navigate('/mode/blindtest')}
+                    className="font-texte rounded-full bg-white px-8 text-black hover:bg-white/80"
+                >
+                    Nouveau Test
                 </Button>
             </div>
         );
     }
 
     return (
-        <div className="bg-background text-foreground relative flex min-h-screen flex-col items-center p-6 pt-20">
-            <Button
-                variant="ghost"
-                onClick={() => navigate('/mode/blindtest')}
-                className="font-texte absolute top-6 left-6"
-            >
-                <ArrowLeft className="mr-2 h-5 w-5" /> Quitter
-            </Button>
+        <div className="bg-background text-foreground relative flex min-h-screen flex-col items-center p-6 pt-24">
+            {/* HUD (Affichage Tête Haute) */}
+            <div className="absolute top-6 right-6 left-6 z-50 flex items-start justify-between">
+                <Button
+                    variant="ghost"
+                    onClick={() => navigate('/mode/blindtest')}
+                    className="font-texte shrink-0"
+                >
+                    <ArrowLeft className="mr-2 h-5 w-5" /> Quitter
+                </Button>
 
-            {/* EN-TÊTE FIXE : Compteur et Bouton Play */}
-            <div className="mb-8 flex w-full shrink-0 flex-col items-center">
-                <h1 className="font-titre text-destructive mb-2 text-6xl drop-shadow-[0_0_20px_rgba(255,42,95,0.5)] md:text-7xl">
-                    500 MS
-                </h1>
-                <p className="font-texte mb-8 text-lg text-white/50">
-                    Piste {currentRoundIndex + 1} / {playlist.length}
-                </p>
-
-                <div className="relative mb-4">
-                    {isPlaying && (
-                        <div className="border-destructive absolute -inset-4 animate-ping rounded-full border-2 opacity-50" />
-                    )}
-                    <Button
-                        onClick={playSnippet}
-                        disabled={!isReady || isPlaying}
-                        className="bg-destructive hover:bg-destructive/80 h-28 w-28 rounded-full shadow-[0_0_40px_rgba(255,42,95,0.4)] transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 md:h-32 md:w-32"
-                    >
-                        {!isReady ? (
-                            <Loader2 className="h-10 w-10 animate-spin text-white md:h-12 md:w-12" />
-                        ) : (
-                            <Play
-                                className="ml-2 h-12 w-12 text-white md:h-14 md:w-14"
-                                fill="currentColor"
+                <div className="flex flex-col items-end gap-2">
+                    {/* 👉 NOUVEAU : 5 Vies au lieu de 3 */}
+                    <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map((life) => (
+                            <Heart
+                                key={life}
+                                className={`h-5 w-5 transition-all duration-300 md:h-6 md:w-6 ${life <= lives ? 'text-destructive fill-destructive drop-shadow-[0_0_8px_rgba(255,42,95,0.8)]' : 'text-white/20'}`}
                             />
-                        )}
-                    </Button>
+                        ))}
+                    </div>
+                    {/* Le Score */}
+                    <div className="font-titre text-2xl text-white drop-shadow-md">
+                        {score} <span className="text-sm text-white/50">pts</span>
+                    </div>
                 </div>
             </div>
 
-            {/* ZONE INTERACTIVE : Recherche OU Résultat */}
+            {/* EN-TÊTE FIXE : Compteur Audio et Temps */}
+            <div className="mb-6 flex w-full shrink-0 flex-col items-center">
+                <div
+                    className={`font-titre mb-2 flex items-center gap-4 text-6xl transition-colors md:text-7xl ${timeLeft <= 5 && roundStatus === 'playing' ? 'animate-pulse text-orange-500' : 'text-destructive drop-shadow-[0_0_20px_rgba(255,42,95,0.5)]'}`}
+                >
+                    <Timer className="h-12 w-12 md:h-16 md:w-16" />
+                    {timeLeft}s
+                </div>
+                <p className="font-texte mb-8 text-sm tracking-widest text-white/50 uppercase">
+                    Piste {currentRoundIndex + 1} / {playlist.length}
+                </p>
+
+                {/* 👉 NOUVEL AFFICHAGE DES CONTRÔLES : Positionnement Relatif */}
+                <div className="relative mb-4">
+                    {/* Anneau de lecture dynamique */}
+                    {isPlaying && (
+                        <div className="border-destructive absolute -inset-4 animate-ping rounded-full border-2 opacity-50" />
+                    )}
+
+                    {/* Gros Bouton Play Central */}
+                    <Button
+                        // On passe la durée actuelle (1500, 2000...) au moteur !
+                        onClick={() =>
+                            hasError ? handleNextRound() : playSnippet(currentDurationMs)
+                        }
+                        disabled={(!isReady && !hasError) || isPlaying || roundStatus !== 'playing'}
+                        className={`h-28 w-28 rounded-full transition-all disabled:opacity-50 disabled:hover:scale-100 md:h-32 md:w-32 ${
+                            hasError
+                                ? 'bg-orange-500 shadow-[0_0_40px_rgba(249,115,22,0.4)] hover:bg-orange-600'
+                                : 'bg-destructive hover:bg-destructive/80 shadow-[0_0_40px_rgba(255,42,95,0.4)] hover:scale-105'
+                        }`}
+                    >
+                        {hasError ? (
+                            <SkipForward className="h-10 w-10 text-white" />
+                        ) : !isReady ? (
+                            <Loader2 className="h-10 w-10 animate-spin text-white" />
+                        ) : (
+                            <Play className="ml-2 h-12 w-12 text-white" fill="currentColor" />
+                        )}
+                    </Button>
+
+                    {/* 👉 NOUVEAU BOUTON : Positionnement Absolu en haut à droite */}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleHintClick} // 👈 ICI : On appelle notre nouvelle fonction combinée
+                        disabled={
+                            hintsUsed >= 5 || roundStatus !== 'playing' || hasError || isPlaying
+                        }
+                        className="absolute -top-3 -right-3 h-10 w-10 rounded-full border-white/20 bg-white/5 p-0 text-white shadow-lg backdrop-blur-sm transition-all hover:scale-110 hover:bg-white/10"
+                    >
+                        <span className="font-texte text-xs font-bold">+0.5s</span>
+                    </Button>
+                </div>
+
+                {/* Plus d'autre texte descriptif ici */}
+            </div>
+
+            {/* ZONE INTERACTIVE */}
             <div className="flex w-full max-w-3xl flex-1 flex-col items-center">
-                {guessResult === 'pending' ? (
-                    // 🔍 PHASE 1 : RECHERCHE
+                {roundStatus === 'playing' ? (
                     <div className="animate-in fade-in slide-in-from-bottom-4 w-full duration-500">
                         <SharedSearch
                             allowedTabs={['songs']}
                             defaultTab="songs"
+                            maxResults={1}
+                            disableTrending={true}
+                            disablePagination={true}
                             renderSongCard={(song) => (
-                                // 👉 Mini-carte de résultat de recherche, spécifique au Blind Test
                                 <div
                                     key={`search-${song.id}`}
                                     onClick={() => handleGuess(song)}
-                                    className="group flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-3 transition-colors hover:bg-white/10"
+                                    className="mx-auto flex w-full max-w-sm cursor-pointer flex-col items-center gap-4 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl transition-all hover:scale-105 hover:bg-white/10"
                                 >
                                     <img
-                                        src={song.album.cover_small || song.album.cover_xl}
+                                        src={song.album.cover_xl}
                                         alt={song.title}
-                                        className="h-12 w-12 rounded-md object-cover"
+                                        className="h-40 w-40 rounded-2xl object-cover shadow-lg"
                                     />
-                                    <div className="min-w-0 flex-1">
-                                        <h3 className="font-titre group-hover:text-secondary truncate text-lg text-white transition-colors">
+                                    <div className="w-full px-2 text-center">
+                                        <h3 className="font-titre line-clamp-1 text-xl text-white">
                                             {song.title}
                                         </h3>
-                                        <p className="font-texte truncate text-sm text-white/50">
+                                        <p className="font-texte text-white/50">
                                             {song.artist.name}
                                         </p>
                                     </div>
                                     <Button
-                                        size="sm"
+                                        size="lg"
                                         variant="secondary"
-                                        className="font-texte mr-2 rounded-full"
+                                        className="font-texte w-full rounded-full bg-white text-black hover:bg-gray-200"
                                     >
-                                        Choisir
+                                        Valider cette réponse
                                     </Button>
                                 </div>
                             )}
                         />
                     </div>
                 ) : (
-                    // 🎉 PHASE 2 : RÉSULTAT
-                    <div className="animate-in zoom-in-95 mt-8 flex w-full max-w-md flex-col items-center rounded-3xl border border-white/10 bg-black/40 p-8 backdrop-blur-md duration-300">
-                        {guessResult === 'won' ? (
+                    <div className="animate-in zoom-in-95 flex w-full max-w-md flex-col items-center rounded-3xl border border-white/10 bg-black/40 p-8 backdrop-blur-md duration-300">
+                        {roundStatus === 'won' ? (
                             <CheckCircle2 className="text-secondary mb-4 h-20 w-20 drop-shadow-[0_0_15px_rgba(64,201,255,0.5)]" />
                         ) : (
                             <XCircle className="text-destructive mb-4 h-20 w-20 drop-shadow-[0_0_15px_rgba(255,42,95,0.5)]" />
                         )}
 
                         <h2
-                            className={`font-titre mb-6 text-4xl ${guessResult === 'won' ? 'text-secondary' : 'text-destructive'}`}
+                            className={`font-titre mb-2 text-center text-4xl ${roundStatus === 'won' ? 'text-secondary' : 'text-destructive'}`}
                         >
-                            {guessResult === 'won' ? 'BIEN JOUÉ !' : 'RATÉ !'}
+                            {roundStatus === 'won'
+                                ? 'BIEN JOUÉ !'
+                                : timeLeft === 0
+                                  ? 'TEMPS ÉCOULÉ !'
+                                  : 'RATÉ !'}
                         </h2>
+
+                        {roundStatus === 'won' && (
+                            <div className="mb-6 flex flex-col items-center">
+                                <p className="font-texte text-secondary text-xl">
+                                    + {500 - hintsUsed * 50} pts
+                                </p>
+                                <p className="font-texte text-sm text-white/40">
+                                    ({hintsUsed} indice{hintsUsed > 1 ? 's' : ''} utilisé
+                                    {hintsUsed > 1 ? 's' : ''})
+                                </p>
+                            </div>
+                        )}
 
                         <img
                             src={currentSong.album.cover_xl}
                             alt="Cover"
-                            className="mb-6 h-40 w-40 rounded-xl object-cover shadow-2xl"
+                            className={`mb-6 h-40 w-40 rounded-xl object-cover shadow-2xl ${roundStatus === 'lost' ? 'opacity-50 grayscale' : ''}`}
                         />
 
                         <p className="font-titre mb-1 text-center text-2xl text-white">
@@ -182,20 +318,14 @@ export default function BlindTestGameScreen() {
 
                         <Button
                             onClick={handleNextRound}
-                            className="font-texte h-14 w-full rounded-full bg-white text-lg text-black shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all hover:scale-105 hover:bg-white/80"
+                            className={`font-texte h-14 w-full rounded-full text-lg shadow-lg transition-all hover:scale-105 ${isGameOver ? 'bg-destructive hover:bg-destructive/80 text-white' : 'bg-white text-black hover:bg-white/80'}`}
                         >
-                            Piste Suivante <SkipForward className="ml-2 h-5 w-5" />
+                            {isGameOver ? 'Voir le score final' : 'Piste Suivante'}{' '}
+                            <SkipForward className="ml-2 h-5 w-5" />
                         </Button>
                     </div>
                 )}
             </div>
-
-            {/* Le cheat est toujours là pour tester */}
-            {guessResult === 'pending' && (
-                <p className="pointer-events-none fixed bottom-2 font-mono text-[10px] text-white/20">
-                    Cheat: {currentSong.title}
-                </p>
-            )}
         </div>
     );
 }

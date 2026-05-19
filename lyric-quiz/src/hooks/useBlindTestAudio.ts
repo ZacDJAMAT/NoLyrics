@@ -1,41 +1,43 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-export const useBlindTestAudio = (url: string | null, durationMs: number = 1500) => {
+export const useBlindTestAudio = (url: string | null) => {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const [isReady, setIsReady] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [hasError, setHasError] = useState(false); // 👈 NOUVEL ÉTAT
 
     useEffect(() => {
+        // Reset global à chaque nouvelle musique
+        setIsReady(false);
+        setHasError(false);
+        setIsPlaying(false);
+
         if (!url) {
-            setIsReady(false);
+            setHasError(true);
             return;
         }
 
-        setIsReady(false);
         const audio = new Audio();
-
-        // 1. On retire crossOrigin qui bloquait les requêtes vers Deezer
         audio.preload = 'auto';
 
         const handleReady = () => {
             setIsReady(true);
+            setHasError(false);
         };
 
-        const handleError = (e: any) => {
-            console.error('Erreur de chargement audio :', e);
-            // Même en cas d'erreur réseau mineure, on débloque le bouton
-            // pour permettre au navigateur de retenter au clic.
-            setIsReady(true);
+        const handleError = () => {
+            console.warn('⚠️ Lien audio mort ou bloqué :', url);
+            setHasError(true);
+            setIsReady(false); // On empêche la lecture !
         };
 
-        // 2. On écoute plusieurs événements pour être sûr de ne pas rater le coche
         audio.addEventListener('canplay', handleReady);
         audio.addEventListener('canplaythrough', handleReady);
         audio.addEventListener('loadeddata', handleReady);
         audio.addEventListener('error', handleError);
 
         audio.src = url;
-        audio.load(); // 3. On force explicitement le navigateur à chercher le fichier
+        audio.load();
 
         audioRef.current = audio;
 
@@ -45,54 +47,40 @@ export const useBlindTestAudio = (url: string | null, durationMs: number = 1500)
             audio.removeEventListener('loadeddata', handleReady);
             audio.removeEventListener('error', handleError);
             audio.pause();
-            audio.src = '';
+            audio.removeAttribute('src'); // Nettoyage plus propre que src = ''
             audioRef.current = null;
         };
     }, [url]);
 
-    const playSnippet = useCallback(() => {
-        if (!audioRef.current || !isReady || isPlaying) {
-            console.log('⚠️ Clic ignoré :', { isReady, isPlaying, hasAudio: !!audioRef.current });
-            return;
-        }
+    const playSnippet = useCallback(
+        (customDurationMs: number = 1500) => {
+            if (!audioRef.current || !isReady || isPlaying || hasError) return;
 
-        const audio = audioRef.current;
+            const audio = audioRef.current;
+            setIsPlaying(true);
 
-        // On bloque le bouton immédiatement pour éviter les doubles clics
-        setIsPlaying(true);
-
-        try {
-            // Sur certains navigateurs mobiles, cela peut planter si on le fait trop tôt.
-            if (audio.currentTime > 0) {
-                audio.currentTime = 0;
+            try {
+                if (audio.currentTime > 0) audio.currentTime = 0;
+            } catch (e) {
+                // Ignoré silencieusement
             }
-        } catch (e) {
-            console.warn("Impossible de rembobiner l'audio :", e);
-        }
 
-        console.log("▶️ Lancement de l'audio...");
-
-        audio
-            .play()
-            .then(() => {
-                console.log('✅ Audio en cours de lecture pour', durationMs, 'ms');
-
-                setTimeout(() => {
-                    audio.pause();
-                    console.log('⏸️ Audio coupé pile à temps !');
+            audio
+                .play()
+                .then(() => {
+                    setTimeout(() => {
+                        audio.pause();
+                        setIsPlaying(false);
+                    }, customDurationMs); // 👈 On utilise la durée dynamique ici !
+                })
+                .catch((err) => {
+                    console.error('❌ Erreur de lecture :', err);
                     setIsPlaying(false);
-                }, durationMs);
-            })
-            .catch((err) => {
-                console.error('❌ Le navigateur a bloqué la lecture :', err);
-                setIsPlaying(false);
-                alert('Erreur de lecture. Regarde la console (F12) !');
-            });
-    }, [isReady, isPlaying, durationMs]);
+                    setHasError(true);
+                });
+        },
+        [isReady, isPlaying, hasError]
+    );
 
-    return {
-        isReady,
-        isPlaying,
-        playSnippet,
-    };
+    return { isReady, isPlaying, playSnippet, hasError }; // 👈 On exporte l'erreur
 };
