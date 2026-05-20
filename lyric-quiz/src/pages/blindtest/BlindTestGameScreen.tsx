@@ -24,6 +24,7 @@ export default function BlindTestGameScreen() {
     const location = useLocation();
     const navigate = useNavigate();
     const selection = location.state?.selection;
+    const [showEndScreen, setShowEndScreen] = useState(false);
     const { user } = useAuth();
 
     const [sessionId] = useState(
@@ -62,16 +63,12 @@ export default function BlindTestGameScreen() {
         timeLeft,
         roundStatus,
         hintsUsed,
-        currentDurationMs, // 👉 On s'assure d'avoir la durée actuelle
+        currentDurationMs,
         useHint,
         submitGuess,
         resetRound,
         isGameOver,
-    } = useBlindTestGame((finalScore) => {
-        // Callback de Game Over : Pour l'instant on alerte, on fera un bel écran à l'étape 6 !
-        alert(`GAME OVER ! Score final : ${finalScore} points.`);
-        navigate('/mode/blindtest');
-    });
+    } = useBlindTestGame(() => {});
 
     useEffect(() => {
         if (isReady && !hasError && roundStatus === 'playing' && !hasAutoPlayed.current) {
@@ -96,9 +93,14 @@ export default function BlindTestGameScreen() {
 
     const handleNextRound = () => {
         hasSavedRound.current = false;
-        hasAutoPlayed.current = false; // 🔓 On réarme l'auto-play pour la prochaine musique
+        hasAutoPlayed.current = false;
         resetRound();
-        if (!isGameOver) nextRound();
+
+        if (!isGameOver) {
+            nextRound();
+        } else {
+            setShowEndScreen(true);
+        }
     };
 
     // 🤖 NOUVEAU : L'Auto-play intelligent
@@ -169,6 +171,73 @@ export default function BlindTestGameScreen() {
                 >
                     Nouveau Test
                 </Button>
+            </div>
+        );
+    }
+
+    if (showEndScreen) {
+        return (
+            <div className="bg-background flex min-h-screen flex-col items-center justify-center p-6 text-center">
+                <div className="animate-in zoom-in-95 flex w-full max-w-md flex-col items-center rounded-3xl border border-white/10 bg-black/40 p-8 shadow-2xl backdrop-blur-md duration-500">
+                    <Trophy className="mb-6 h-24 w-24 text-[#d4af37] drop-shadow-[0_0_30px_rgba(212,175,55,0.6)]" />
+
+                    <h2 className="font-titre mb-2 text-5xl text-white">PARTIE TERMINÉE</h2>
+                    <p className="font-texte text-muted-foreground mb-8 text-lg">
+                        {lives > 0 ? 'Tu as survécu à la playlist !' : "Tu n'as plus de vies..."}
+                    </p>
+
+                    {/* Bloc de statistiques */}
+                    <div className="mb-8 w-full rounded-2xl border border-white/10 bg-white/5 p-6">
+                        <div className="mb-4 flex flex-col items-center justify-center">
+                            <span className="font-texte mb-1 text-sm tracking-widest text-white/50 uppercase">
+                                Score Final
+                            </span>
+                            <span className="font-titre text-secondary text-5xl drop-shadow-[0_0_15px_rgba(64,201,255,0.5)]">
+                                {score} <span className="text-xl text-white/50">pts</span>
+                            </span>
+                        </div>
+
+                        <div className="flex justify-between border-t border-white/10 px-2 pt-4">
+                            <div className="flex flex-col items-center">
+                                <span className="font-texte text-xs text-white/40 uppercase">
+                                    Pistes jouées
+                                </span>
+                                <span className="font-titre text-xl text-white">
+                                    {currentRoundIndex + 1} / {playlist.length}
+                                </span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <span className="font-texte text-xs text-white/40 uppercase">
+                                    Vies restantes
+                                </span>
+                                <div className="mt-1 flex">
+                                    {[1, 2, 3, 4, 5].map((life) => (
+                                        <Heart
+                                            key={`end-life-${life}`}
+                                            className={`h-4 w-4 ${life <= lives ? 'text-destructive fill-destructive' : 'text-white/20'}`}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex w-full flex-col gap-3">
+                        <Button
+                            onClick={() => navigate('/mode/blindtest')}
+                            className="font-texte w-full rounded-full bg-white py-6 text-lg text-black transition-transform hover:scale-105 hover:bg-white/80"
+                        >
+                            Nouveau Test (Lobby)
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={() => navigate('/')}
+                            className="font-texte w-full rounded-full border-white/20 bg-transparent py-6 text-lg text-white hover:bg-white/10"
+                        >
+                            Retour au Hub
+                        </Button>
+                    </div>
+                </div>
             </div>
         );
     }

@@ -82,7 +82,8 @@ export default function BlindTestLobbyScreen() {
                             </h2>
                         </div>
 
-                        <div className="scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent flex snap-x gap-4 overflow-x-auto pb-4">
+                        <div className="scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent flex snap-x items-start gap-4 overflow-x-auto pb-4">
+                            {' '}
                             {recentGames.map((game: RecentGame) => (
                                 <div
                                     key={game.id}

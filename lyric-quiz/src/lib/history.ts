@@ -199,28 +199,46 @@ export const getRecentBlindTestSessions = async (user: User | null): Promise<Rec
     if (!user) return [];
 
     try {
-        // 1. On interroge DIRECTEMENT notre nouvelle table (beaucoup plus rapide !)
+        // 1. On récupère un plus grand lot (ex: 30) pour avoir de la marge lors du filtrage
         const { data, error } = await supabase
             .from('blindtest_sessions')
             .select('session_id, selected_artists, created_at')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
-            .limit(5); // On ne prend que les 5 plus récentes
+            .limit(30);
 
         if (error || !data) {
             console.error('Erreur SQL récupération sessions :', error);
             return [];
         }
 
-        // 2. On transforme les données SQL pour notre affichage
+        // 2. On filtre pour ne garder que les combinaisons UNIQUES
+        const recentGames: RecentGame[] = [];
+        const seenCombos = new Set<string>();
 
-        return data.map((row) => {
-            return {
-                id: row.session_id,
-                artists: row.selected_artists, // Magie : Supabase parse le JSONB automatiquement !
-                timestamp: new Date(row.created_at).getTime(),
-            };
-        });
+        for (const row of data) {
+            // On crée une empreinte unique en triant les IDs des artistes (ex: "123-456")
+            const comboId = row.selected_artists
+                .map((a: any) => a.id)
+                .sort()
+                .join('-');
+
+            // Si on n'a jamais vu cette combinaison précise, on l'ajoute
+            if (!seenCombos.has(comboId)) {
+                seenCombos.add(comboId);
+
+                recentGames.push({
+                    id: row.session_id, // L'ID de la session la plus récente pour cette combo
+                    artists: row.selected_artists,
+                    timestamp: new Date(row.created_at).getTime(),
+                });
+            }
+
+            // On s'arrête net dès qu'on a nos 5 cartes uniques
+            if (recentGames.length >= 5) break;
+        }
+
+        return recentGames;
     } catch (err) {
         console.error('Erreur getRecentBlindTestSessions:', err);
         return [];
