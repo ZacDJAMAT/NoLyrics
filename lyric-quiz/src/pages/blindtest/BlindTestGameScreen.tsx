@@ -13,7 +13,7 @@ import {
     Trophy,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { saveBlindTestResult } from '@/lib/history';
+import { saveBlindTestResult, saveBlindTestSession } from '@/lib/history';
 import { useBlindTestAudio } from '@/hooks/useBlindTestAudio';
 import { useBlindTestPlaylist } from '@/hooks/useBlindTestPlaylist';
 import { useBlindTestGame } from '@/hooks/useBlindTestGame';
@@ -30,6 +30,15 @@ export default function BlindTestGameScreen() {
         () => `bt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     );
     const hasSavedRound = useRef(false);
+
+    const hasSavedSession = useRef(false);
+
+    useEffect(() => {
+        if (!hasSavedSession.current && selection && selection.length > 0) {
+            hasSavedSession.current = true;
+            saveBlindTestSession(user, sessionId, selection);
+        }
+    }, [user, sessionId, selection]);
 
     // 👉 NOUVEAU : Un verrou pour s'assurer de ne faire l'auto-play qu'une seule fois par round
     const hasAutoPlayed = useRef(false);
@@ -104,8 +113,15 @@ export default function BlindTestGameScreen() {
     useEffect(() => {
         if (roundStatus !== 'playing' && currentSong && !hasSavedRound.current) {
             hasSavedRound.current = true;
-            // 🧮 Calcul identique à celui du hook (pour être raccord en base)
             const pointsEarned = roundStatus === 'won' ? 500 - hintsUsed * 50 : 0;
+
+            // 🔍 On retrouve la belle image de l'artiste depuis notre sélection initiale
+            const artistSelection = selection.find(
+                (s: any) => s.id === currentSong.artist.id.toString()
+            );
+            const artistImage = artistSelection
+                ? artistSelection.image
+                : currentSong.album.cover_xl;
 
             saveBlindTestResult(
                 user,
@@ -114,10 +130,21 @@ export default function BlindTestGameScreen() {
                 currentRoundIndex,
                 roundStatus,
                 timeLeft,
-                pointsEarned
+                pointsEarned,
+                currentSong.artist.id.toString(), // 👈 NOUVEAU : ID de l'artiste
+                artistImage // 👈 NOUVEAU : Image de l'artiste
             );
         }
-    }, [roundStatus, currentSong, currentRoundIndex, timeLeft, user, sessionId, hintsUsed]);
+    }, [
+        roundStatus,
+        currentSong,
+        currentRoundIndex,
+        timeLeft,
+        user,
+        sessionId,
+        hintsUsed,
+        selection,
+    ]);
 
     if (isLoading) {
         return (
