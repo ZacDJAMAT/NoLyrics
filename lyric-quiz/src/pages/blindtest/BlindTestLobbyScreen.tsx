@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, Clock, Loader2 } from 'lucide-react';
+import { ArrowLeft, Play, Clock, Loader2, Users } from 'lucide-react';
 import SharedSearch from '@/components/shared/SharedSearch';
 import ArtistCard from '@/components/shared/ArtistCard';
 import { Artist } from '@/types';
 import { SelectionItem } from '@/pages/fillyrics/FillyricsLobbyScreen';
+import { createMatch } from '@/lib/multiplayer';
+import { getArtistTopTracks } from '@/utils/api';
 
 // 👉 NOUVEAUX IMPORTS POUR LA BASE DE DONNÉES
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,6 +21,52 @@ export default function BlindTestLobbyScreen() {
     // 👉 NOUVEAUX ÉTATS POUR SUPABASE
     const [recentGames, setRecentGames] = useState<RecentGame[]>([]);
     const [isLoadingRecent, setIsLoadingRecent] = useState(true);
+    // État pour le bouton de chargement multijoueur
+    const [isCreatingMatch, setIsCreatingMatch] = useState(false);
+
+    // 👉 NOUVELLE FONCTION : Pré-générer la playlist et créer le duel
+    const handleCreateMultiplayerMatch = async (finalSelection: SelectionItem[]) => {
+        if (!user) return;
+        setIsCreatingMatch(true);
+
+        try {
+            // 1. Récupérer les musiques de l'API (comme le fait le mode solo en coulisses)
+            const artists = finalSelection.filter((item) => item.type === 'artist');
+            const artistIds = artists.map((a) => a.data.id);
+            const tracksArrays = await Promise.all(
+                artistIds.map((id) => getArtistTopTracks(id, 50))
+            );
+
+            // 2. Filtrer les musiques valides
+            const validTracks = tracksArrays
+                .flat()
+                .filter((track) => track.preview && track.preview.trim() !== '');
+
+            if (validTracks.length === 0) {
+                alert('Aucun extrait audio disponible pour ces artistes.');
+                setIsCreatingMatch(false);
+                return;
+            }
+
+            // 3. Mélanger la playlist (Algorithme de Fisher-Yates rapide)
+            const shuffledPlaylist = validTracks.sort(() => Math.random() - 0.5);
+
+            // 4. Créer le match dans Supabase
+            const matchId = await createMatch(user.id, shuffledPlaylist);
+
+            if (matchId) {
+                // 5. Rediriger vers notre nouvelle salle d'attente
+                navigate(`/mode/blindtest/multi/${matchId}`);
+            } else {
+                alert('Erreur lors de la création du match.');
+            }
+        } catch (err) {
+            console.error('Erreur création multi :', err);
+            alert('Erreur lors de la création.');
+        } finally {
+            setIsCreatingMatch(false);
+        }
+    };
 
     // 👉 RÉCUPÉRATION DES PARTIES RÉCENTES AU CHARGEMENT
     useEffect(() => {
@@ -135,15 +183,31 @@ export default function BlindTestLobbyScreen() {
                 )}
             />
 
-            {/* BOUTON FLOTTANT GÉNÉRER */}
+            {/* BOUTONS FLOTTANTS GÉNÉRER */}
             {selection.length > 0 && (
-                <div className="animate-in slide-in-from-bottom-10 fixed bottom-8 left-1/2 z-50 -translate-x-1/2">
+                <div className="animate-in slide-in-from-bottom-10 fixed bottom-8 left-1/2 z-50 flex -translate-x-1/2 gap-4">
+                    {/* Bouton Solo (Léger) */}
                     <Button
                         onClick={() => handleStartGame(selection)}
-                        className="bg-destructive hover:bg-destructive/80 font-titre rounded-full px-8 py-6 text-xl text-white shadow-[0_0_30px_rgba(255,42,95,0.5)] transition-all hover:scale-105"
+                        variant="secondary"
+                        className="font-titre rounded-full px-6 py-6 text-xl transition-all hover:scale-105"
                     >
                         <Play className="mr-2 h-6 w-6" fill="currentColor" />
-                        GÉNÉRER ({selection.length} artistes)
+                        SOLO ({selection.length})
+                    </Button>
+
+                    {/* Bouton Duel (Principal et Fluorescent) */}
+                    <Button
+                        onClick={() => handleCreateMultiplayerMatch(selection)}
+                        disabled={isCreatingMatch}
+                        className="bg-secondary hover:bg-secondary/80 text-secondary-foreground font-titre rounded-full px-8 py-6 text-xl shadow-[0_0_30px_rgba(64,201,255,0.5)] transition-all hover:scale-105"
+                    >
+                        {isCreatingMatch ? (
+                            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                        ) : (
+                            <Users className="mr-2 h-6 w-6" />
+                        )}
+                        DUEL EN LIGNE
                     </Button>
                 </div>
             )}

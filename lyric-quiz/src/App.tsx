@@ -15,6 +15,8 @@ import LobbyScreen from './pages/hub/LobbyScreen.tsx';
 import FillyricsExhaustedScreen from './pages/fillyrics/FillyricsExhaustedScreen.tsx';
 import BlindTestLobbyScreen from './pages/blindtest/BlindTestLobbyScreen.tsx';
 import BlindTestGameScreen from './pages/blindtest/BlindTestGameScreen.tsx';
+import MultiplayerLobbyScreen from './pages/blindtest/MultiplayerLobbyScreen.tsx';
+import MultiplayerGameScreen from './pages/blindtest/MultiplayerGameScreen.tsx';
 
 function App() {
     const [showSyncModal, setShowSyncModal] = useState<boolean>(true);
@@ -51,6 +53,12 @@ function App() {
 
                 <Route path="/mode/blindtest" element={<BlindTestLobbyScreen />} />
                 <Route path="/mode/blindtest/play" element={<BlindTestGameScreen />} />
+                <Route path="/mode/blindtest/multi/:matchId" element={<MultiplayerLobbyScreen />} />
+                <Route path="/mode/blindtest/multi/:matchId" element={<MultiplayerLobbyScreen />} />
+                <Route
+                    path="/mode/blindtest/multi/:matchId/play"
+                    element={<MultiplayerGameScreen />}
+                />
 
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

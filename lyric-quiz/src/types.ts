@@ -59,3 +59,15 @@ export interface SyncedLyricsResult {
     totalHiddenWords: number;
 }
 
+export type MatchStatus = 'waiting' | 'playing' | 'finished' | 'abandoned';
+
+export interface MultiplayerMatch {
+    id: string;
+    host_id: string;
+    guest_id: string | null;
+    playlist: Song[]; // La playlist est figée dans le temps pour les deux joueurs !
+    status: MatchStatus;
+    host_score: number;
+    guest_score: number;
+    created_at: string;
+}
